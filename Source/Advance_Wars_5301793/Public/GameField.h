@@ -64,7 +64,8 @@ protected:
 	// Called when an instance of this class is placed (in editor) or spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	float NextCellPositionMultiplier;
 
 
 	// Size of the game field (number of tiles in each dimension)
@@ -89,7 +90,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
 	float CellPadding;
 
-	UPROPERTY(Transient)
-	float NextCellPositionMultiplier;
+
 
 };

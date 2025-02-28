@@ -61,7 +61,7 @@ void AGameField::GenerateField()
 FVector AGameField::GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const
 {
     // Calculate the relative location of the tile based on its grid position, tile size, and the multiplier
-    return TileSize * NextCellPositionMultiplier * FVector(InX, InY, 0);
+    return (TileSize * NextCellPositionMultiplier) * FVector(InX, InY, 0);
 }
 
 // Get a tile at the specified grid position
