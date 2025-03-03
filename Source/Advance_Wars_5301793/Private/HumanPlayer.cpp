@@ -1,4 +1,5 @@
 #include "HumanPlayer.h"
+#include "Tile.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -25,9 +26,13 @@ AHumanPlayer::AHumanPlayer()
     Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
     Camera->bUsePawnControlRotation = false;
 
+    //get the game istance refernce
+    // GameIstnce = Cast<UTT_GameIstance>(UGameplayStatics::GetGameIstance(GetWorld()));
+    //RootComponent = Camera;
+
     // Initialize default values
     PlayerId = 0; // Human player ID
-    bIsMyTurn = false;
+    //bIsMyTurn = false;
 }
 
 // Called when the game starts or when spawned
@@ -47,6 +52,7 @@ void AHumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+    /*
     // Enhanced Input
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetWorld()))
     {
@@ -60,6 +66,7 @@ void AHumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
             EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AHumanPlayer::OnClick);
         }
     }
+    */
 }
 
 void AHumanPlayer::OnTurn()
@@ -96,6 +103,11 @@ void AHumanPlayer::OnClick()
 
                 // Perform actions based on the clicked tile
                 // ...
+
+                //dipende se  la tileche clicco è : libera , occupata da : amico  nemico ostacolo 
+
+
+                bIsMyTurn = false; 
             }
         }
     }
