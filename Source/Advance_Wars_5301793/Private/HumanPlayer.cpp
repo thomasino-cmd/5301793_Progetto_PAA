@@ -89,26 +89,60 @@ void AHumanPlayer::OnClick()
 {
     if (bIsMyTurn)
     {
-        // Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
-        FHitResult Hit = FHitResult(ForceInit);
-
-        // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
-        GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, true, Hit);
-
-        if (Hit.bBlockingHit)
+        // 1. Get mouse position and convert to world coordinates.
+        FVector2D MousePosition;
+        APlayerController* PC = GetWorld()->GetFirstPlayerController();
+        if (PC)
         {
-            if (ATile* CurrTile = Cast<ATile>(Hit.GetActor()))
+            PC->GetMousePosition(MousePosition.X, MousePosition.Y);
+        }
+        else
+        {
+            return; // No PlayerController found
+        }
+
+        // 2. Perform line trace to detect clicked tile.
+        FHitResult HitResult;
+        PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+
+        if (HitResult.bBlockingHit)
+        {
+            ATile* ClickedTile = Cast<ATile>(HitResult.GetActor());
+            if (ClickedTile)
             {
-                // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Clicked on tile %d, %d"), CurrTile->GridPosition.X, CurrTile->GridPosition.Y);
+                AActor* ClickedActor = ClickedTile->GetUnit();
 
-                // Perform actions based on the clicked tile
-                // ...
-
-                //dipende se  la tileche clicco è : libera , occupata da : amico  nemico ostacolo 
-
-
-                bIsMyTurn = false; 
+                if (ClickedActor)
+                {
+                    if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(ClickedActor))
+                    {
+                        // Handle human player unit (should not happen, clicking on yourself)
+                    }
+                    else if (AComputerPlayer* ClickedComputerUnit = Cast<AComputerPlayer>(ClickedActor))
+                    {
+                        // Handle AI player unit (e.g., attack)
+                        if (SelectedUnit)
+                        {
+                            AttackUnit(ClickedComputerUnit);
+                        }
+                    }
+                    else if (AObstacle* ClickedObstacle = Cast<AObstacle>(ClickedActor))
+                    {
+                        // Handle obstacle (e.g., show info)
+                    }
+                    // ... handle other types as needed
+                }
+                else
+                {
+                    // Handle empty tile (e.g., move selected unit)
+                    if (SelectedUnit)
+                    {
+                        MoveUnit(ClickedTile);
+                    }
+                }
             }
         }
+
+        bIsMyTurn = false; // End turn after processing the click
     }
 }

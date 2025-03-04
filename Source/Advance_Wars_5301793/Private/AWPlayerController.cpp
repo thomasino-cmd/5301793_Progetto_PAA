@@ -1,9 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "AWPlayerController.h"
 #include "Components/InputComponent.h"
-#include "Kismet/GameplayStatics.h"  // Comment out for now
-#include "Engine/World.h" // Include the world header
+#include "HumanPlayer.h"
+#include "Tile.h"
 
 
 AAWPlayerController::AAWPlayerController()
@@ -18,9 +16,6 @@ void AAWPlayerController::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Get the GameInstance
-    //GameInstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())); // Comment out for now
-
     if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
     {
         Subsystem->AddMappingContext(InputContext, 0);
@@ -31,9 +26,6 @@ void AAWPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
-    // Get the InputComponent
-    UInputComponent* InputComponent = GetInputComponent(); // Get the actual InputComponent
-
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
     {
         EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::OnClick);
@@ -42,25 +34,95 @@ void AAWPlayerController::SetupInputComponent()
 
 void AAWPlayerController::OnClick()
 {
-    /*
-    if (!GameInstance->IsPlayerTurn()) // Comment out for now
-    {
-        return;
-    }
-    */
-
+    // 1. Get mouse position and convert to world coordinates.
     FVector2D MousePosition;
     GetMousePosition(MousePosition.X, MousePosition.Y);
 
-    FIntPoint GridCoordinates = GetGridCoordinatesFromScreenLocation(MousePosition);
-
-    // Convert grid coordinates to world location
-    //FVector WorldLocation = GameInstance->GetGameField()->GetTileWorldLocation(GridCoordinates.X, GridCoordinates.Y); // Comment out for now
-
-    // Line trace to find the clicked tile
+    // 2. Perform line trace to detect clicked tile.
     FHitResult HitResult;
-    // Implement the line trace here, similar to how it's done in other parts of your code
-    // ...
+    GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
+
+    if (HitResult.bBlockingHit)
+    {
+        ATile* ClickedTile = Cast<ATile>(HitResult.GetActor());
+        if (ClickedTile)
+        {
+            AActor* ClickedActor = ClickedTile->GetUnit();
+
+            if (ClickedActor)
+            {
+                if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(ClickedActor))
+                {
+                    // Handle human player unit
+                    if (!SelectedUnit)
+                    {
+                        SelectUnit(ClickedUnit);
+                        StartingTile = ClickedTile;
+                    }
+                    // 4. Handle unit movement.
+                    else if (bIsMovingUnit && ClickedTile != StartingTile)
+                    {
+                        MoveUnit(ClickedTile);
+                    }
+                    // 5. Handle unit attack.
+                    else if (SelectedUnit && ClickedTile != StartingTile)
+                    {
+                        AttackUnit(ClickedUnit);
+                    }
+                }
+                else if (AComputerPlayer* ClickedComputerUnit = Cast<AComputerPlayer>(ClickedActor))
+                {
+                    // Handle AI player unit (e.g., show info)
+                }
+                else if (AObstacle* ClickedObstacle = Cast<AObstacle>(ClickedActor))
+                {
+                    // Handle obstacle (e.g., show info)
+                }
+                // ... handle other types as needed
+            }
+            else
+            {
+                // Handle empty tile (e.g., move selected unit)
+                if (SelectedUnit && bIsMovingUnit)
+                {
+                    MoveUnit(ClickedTile);
+                }
+            }
+        }
+    }
 }
 
-// ... (rest of the method implementations)
+void AAWPlayerController::ClickOnGrid()
+{
+    const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
+    if (IsValid(HumanPlayer))
+    {
+        HumanPlayer->OnClick();
+    }
+}
+
+void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
+{
+    SelectedUnit = Unit;
+    // Add logic to highlight the unit or show movement range
+}
+
+void AAWPlayerController::MoveUnit(ATile* Tile)
+{
+    // Add logic to move the SelectedUnit to the Tile
+    // This might involve pathfinding or animation
+    bIsMovingUnit = false;
+}
+
+void AAWPlayerController::AttackUnit(AHumanPlayer* Unit)
+{
+    // Add logic for the SelectedUnit to attack the Unit
+    // This might involve damage calculation or combat animation
+    DeselectUnit();
+}
+
+void AAWPlayerController::DeselectUnit()
+{
+    SelectedUnit = nullptr;
+    // Add logic to clear highlighting or hide movement range
+}

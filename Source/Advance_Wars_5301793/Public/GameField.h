@@ -60,6 +60,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetTileSpacing(float NewTileSpacing);
 
+	// Size of the game field (number of tiles in each dimension)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
+	int32 Size;
+
 protected:
 	// Called when an instance of this class is placed (in editor) or spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -68,9 +72,7 @@ protected:
 	float NextCellPositionMultiplier;
 
 
-	// Size of the game field (number of tiles in each dimension)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
-	int32 Size;
+	
 
 	// Tile size in world units
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")

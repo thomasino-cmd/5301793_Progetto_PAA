@@ -1,14 +1,11 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
-//#include "AWGameInstance.h"  // Comment out GameInstance header for now
 #include "InputActionValue.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "AWPlayerController.generated.h" 
+#include "AWPlayerController.generated.h"
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AAWPlayerController : public APlayerController
@@ -27,13 +24,6 @@ public:
     UFUNCTION()
     void OnClick();
 
-    // Remove RightClickAction
-
-protected:
-    virtual void BeginPlay() override;
-    virtual void SetupInputComponent() override;
-
-private:
     UPROPERTY()
     class AHumanPlayer* SelectedUnit;
 
@@ -43,27 +33,19 @@ private:
     UPROPERTY()
     class ATile* StartingTile;
 
-    //class UAWGameInstance* GameInstance;  // Comment out GameInstance variable
-
     bool bIsMovingUnit;
-
     bool bHasAttacked;
 
-    FIntPoint GetGridCoordinatesFromScreenLocation(const FVector2D& ScreenLocation);
+    void ClickOnGrid();
 
-    void SelectUnit(class AHumanPlayer* Unit);
-
-    void MoveUnit(class ATile* Tile);
-
-    void AttackUnit(class AHumanPlayer* Unit);
-
+    void SelectUnit(AHumanPlayer* Unit);
+    void MoveUnit(ATile* Tile);
+    void AttackUnit(AHumanPlayer* Unit);
     void DeselectUnit();
 
-    void ShowPossibleMovements();
+protected:
+    virtual void BeginPlay() override;
+    virtual void SetupInputComponent() override;
 
-    void ClearPossibleMovements();
 
-    void ShowPossibleAttacks();
-
-    void ClearPossibleAttacks();
 };
