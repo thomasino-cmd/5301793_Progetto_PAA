@@ -2,16 +2,15 @@
 
 #pragma once
 
-#pragma once
-
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerInterface.h"
 #include "AWGameInstance.h"
-#include "AWGameMode.h"
+//#include "AWGameMode.h"
 #include "GameField.h"
 #include "ComputerPlayer.generated.h"
 
+class AAWGameMode; // Forward declaration
 UCLASS()
 class ADVANCE_WARS_5301793_API AComputerPlayer : public APawn, public IPlayerInterface
 {
@@ -21,9 +20,13 @@ public:
     // Sets default values for this pawn's properties
     AComputerPlayer();
 
+    //todo add gameistance reference
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+    
 
 public:
     // Called every frame
@@ -41,9 +44,8 @@ public:
     UAWGameInstance* GetGameInstance();
 
     // Funzione per ottenere un riferimento a GameMode
-    AAWGameMode* GetGameMode();
+     AAWGameMode* GetGameMode();
 
-private:
     // Funzioni di supporto per l'IA (es. valutazione della situazione, scelta del bersaglio)
     // ...
 

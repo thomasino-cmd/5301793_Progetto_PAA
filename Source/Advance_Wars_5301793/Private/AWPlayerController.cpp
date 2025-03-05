@@ -1,6 +1,8 @@
 #include "AWPlayerController.h"
 #include "Components/InputComponent.h"
 #include "HumanPlayer.h"
+#include "ComputerPlayer.h"
+#include "Obstacle.h"
 #include "Tile.h"
 
 

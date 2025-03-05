@@ -26,10 +26,10 @@ void AObstacle::Tick(float DeltaTime)
 // Function to set the obstacle type
 void AObstacle::SetObstacleType(EObstacleType NewType)
 {
-    ObstacleType = NewType;
+    ObstacleType = static_cast<uint8>(NewType); // Cast to uint8
 
     // Load and set the appropriate mesh based on the obstacle type
-    if (ObstacleType == EObstacleType::Mountain)
+    if (ObstacleType == static_cast<uint8>(EObstacleType::Mountain)) // Compare with uint8 value
     {
         // Load and set the mountain mesh
         static ConstructorHelpers::FObjectFinder<UStaticMesh> MountainMeshAsset(TEXT("StaticMesh'/Game/Meshes/Mountain.Mountain'"));
@@ -38,7 +38,7 @@ void AObstacle::SetObstacleType(EObstacleType NewType)
             ObstacleMesh->SetStaticMesh(MountainMeshAsset.Object);
         }
     }
-    else if (ObstacleType == EObstacleType::Tree)
+    else if (ObstacleType == static_cast<uint8>(EObstacleType::Tree)) // Compare with uint8 value
     {
         // Load and set the tree mesh
         static ConstructorHelpers::FObjectFinder<UStaticMesh> TreeMeshAsset(TEXT("StaticMesh'/Game/Meshes/Tree.Tree'"));

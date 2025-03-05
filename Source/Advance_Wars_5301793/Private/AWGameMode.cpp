@@ -2,7 +2,7 @@
 #include "AWPlayerController.h"
 #include "HumanPlayer.h"
 #include "GameField.h"
-//todo include ai player
+#include "ComputerPlayer.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -19,46 +19,37 @@ AAWGameMode::AAWGameMode()
 void AAWGameMode::BeginPlay()
 {
     Super::BeginPlay();
-
-    // Inizializza lo stato del gioco
-    InitializeGame();
-
-    // Crea il campo di gioco
+    AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+    if (!IsValid(HumanPLayer))
+    {
+        UE_LOG(LogTemp, Error, TEXT("No player paen of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
+        return;
+    }
     if (GameFieldClass != nullptr)
     {
-        // Calcola la dimensione del GameField
-        FVector FieldSizeVector = FVector(FieldSize * 100.0f, FieldSize * 100.0f, 0.0f);
-
-        // Calcola la posizione del GameField
-        FVector FieldLocation = FVector::ZeroVector; // Il GameField verrà generato al centro del mondo di gioco
-
-        // Genera il GameField
-        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass, FieldLocation, FRotator::ZeroRotator);
-        GameField->Size = FieldSize;
+        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
+        //USELESS : GameField->Size = FieldSize;
+        
     }
     else
     {
         UE_LOG(LogTemp, Error, TEXT("Game Field is null"));
     }
 
-    // Posiziona la camera
-    if (GetWorld()->GetFirstPlayerController() != nullptr && GetWorld()->GetFirstPlayerController()->GetPawn() != nullptr)
-    {
-        // Calcola la posizione della camera
-        FVector CameraLocation = FVector(FieldSize * 50.0f, FieldSize * 50.0f, 1000.0f); // La camera verrà posizionata sopra il GameField
+    float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
+    float Zposition = 1000.0f;
+    FVector CameraPos(CameraPosX, CameraPosX, Zposition);
+    HumanPlayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
 
-        // Imposta la posizione della camera
-        GetWorld()->GetFirstPlayerController()->GetPawn()->SetActorLocation(CameraLocation);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Player Controller or Pawn is null"));
-    }
+    Players.Add(HumanPLayer);
 
-    // Avvia il gioco per il primo giocatore
-    SwitchPlayer();
+    //add a computer player
+    auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
+    Players.Add(Cast<IPlayerInterface>(AIPlayer)); // Explicitly cast to IPlayerInterface*
+
+
+
 }
-
 
 void AAWGameMode::EndTurn()
 {
@@ -73,7 +64,7 @@ void AAWGameMode::MoveUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
     if (CurrentPlayerPawn)
     {
         // Sposta l'unità del giocatore
-        CurrentPlayerPawn->MoveUnit(FromX, FromY, ToX, ToY);
+        //CurrentPlayerPawn->MoveUnit(FromX, FromY, ToX, ToY);
     }
 }
 
@@ -84,7 +75,7 @@ void AAWGameMode::AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
     if (CurrentPlayerPawn)
     {
         // Fai attaccare l'unità del giocatore
-        CurrentPlayerPawn->AttackUnit(FromX, FromY, ToX, ToY);
+        //CurrentPlayerPawn->AttackUnit(FromX, FromY, ToX, ToY);
     }
 }
 
@@ -139,7 +130,7 @@ void AAWGameMode::SwitchPlayer()
         AHumanPlayer* CurrentPlayerPawn = Cast<AHumanPlayer>(UGameplayStatics::GetPlayerPawn(this, CurrentPlayer));
         if (CurrentPlayerPawn)
         {
-            CurrentPlayerPawn->StartTurn();
+            //CurrentPlayerPawn->StartTurn();
         }
     }
 }

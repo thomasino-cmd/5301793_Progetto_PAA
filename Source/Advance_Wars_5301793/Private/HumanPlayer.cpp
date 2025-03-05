@@ -1,10 +1,13 @@
 #include "HumanPlayer.h"
 #include "Tile.h"
+#include "Obstacle.h"
+#include "ComputerPlayer.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "GameFramework/SpringArmComponent.h"
+
 #include "Kismet/GameplayStatics.h"
+
 
 // Sets default values
 AHumanPlayer::AHumanPlayer()
@@ -15,20 +18,9 @@ AHumanPlayer::AHumanPlayer()
     // Set this pawn to be controlled by the lowest-numbered player
     AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-    // Create a spring arm component
-    SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
-    SpringArm->SetupAttachment(RootComponent);
-    SpringArm->TargetArmLength = 500.0f;
-    SpringArm->bUsePawnControlRotation = true;
-
     // Create a camera component
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-    Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-    Camera->bUsePawnControlRotation = false;
-
-    //get the game istance refernce
-    // GameIstnce = Cast<UTT_GameIstance>(UGameplayStatics::GetGameIstance(GetWorld()));
-    //RootComponent = Camera;
+    RootComponent = Camera; // Imposta la telecamera come componente radice
 
     // Initialize default values
     PlayerId = 0; // Human player ID
@@ -84,6 +76,24 @@ void AHumanPlayer::OnLose()
 {
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("You Lose!"));
 }
+
+
+void AHumanPlayer::MoveUnit(ATile* TargetTile)
+{
+    // Implement your unit movement logic here
+    // This might involve checking for valid movement paths, 
+    // updating unit position, and potentially playing animations.
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving Unit to Tile"));
+}
+
+void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
+{
+    // Implement your attack logic here
+    // This could involve calculating damage, applying effects, 
+    // and handling unit destruction if applicable.
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking Unit"));
+}
+
 
 void AHumanPlayer::OnClick()
 {

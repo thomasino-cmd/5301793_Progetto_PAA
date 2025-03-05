@@ -4,15 +4,16 @@
 #include "GameFramework/Actor.h"
 #include "Obstacle.generated.h"
 
+
 // Enum to define the different types of obstacles
-// Define the EObstacleType enum
 UENUM(BlueprintType)
 enum class EObstacleType : uint8
 {
-    Mountain,
-    Tree
-    // Add more types as needed (e.g., Water, Rock)
+    Mountain UMETA(DisplayName = "Mountain"),
+    Tree UMETA(DisplayName = "Tree"),
+    // ... other members ...
 };
+
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AObstacle : public AActor
@@ -22,18 +23,21 @@ class ADVANCE_WARS_5301793_API AObstacle : public AActor
 public:
     // Sets default values for this actor's properties
     AObstacle();
-
+    
     // Obstacle Type (Mountain, Tree, etc.)
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Obstacle")
-    TEnumAsByte<EObstacleType> ObstacleType;
+    uint8 ObstacleType;
 
     // Function to set the obstacle type
     UFUNCTION(BlueprintCallable, Category = "Obstacle")
     void SetObstacleType(EObstacleType NewType);
-
+    
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Obstacle")
+    AActor* SelectedObstacle;
 
 public:
     // Called every frame

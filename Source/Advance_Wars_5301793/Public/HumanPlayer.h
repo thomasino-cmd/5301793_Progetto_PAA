@@ -4,7 +4,6 @@
 #include "GameFramework/Pawn.h"
 #include "PlayerInterface.h"
 #include "Camera/CameraComponent.h"
-#include "GameFramework/SpringArmComponent.h"
 #include "HumanPlayer.generated.h"
 
 UCLASS()
@@ -29,9 +28,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* Camera;
 
-	// Spring arm component for camera offset
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	USpringArmComponent* SpringArm;
+
 
 	// Implement interface functions
 	virtual void OnTurn() override;
@@ -45,4 +42,14 @@ public:
 protected:
 	// Flag to track player's turn
 	bool bIsMyTurn;
+
+	UFUNCTION()
+	void MoveUnit(ATile* TargetTile);
+
+	UFUNCTION()
+	void AttackUnit(AComputerPlayer* TargetUnit);
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
+	AActor* SelectedUnit;
 };

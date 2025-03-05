@@ -3,6 +3,7 @@
 #include "GameField.h"
 #include "DrawDebugHelpers.h"  // For drawing debug lines
 #include "Kismet/GameplayStatics.h"
+#include "AWGameMode.h"
 
 // Sets default values
 AGameField::AGameField()
@@ -13,8 +14,8 @@ AGameField::AGameField()
     // Initialize default values for the size, tile size, and tile spacing
     Size = 25;
     TileSize = 100.0f;
-    TileSpacing = 10.0f;
-    CellPadding = 0.2f;
+    TileSpacing = 0.0f;
+    CellPadding = 0.0f;
 }
 
 
@@ -62,6 +63,22 @@ FVector AGameField::GetRelativeLocationByXYPosition(const int32 InX, const int32
 {
     // Calculate the relative location of the tile based on its grid position, tile size, and the multiplier
     return (TileSize * NextCellPositionMultiplier) * FVector(InX, InY, 0);
+}
+
+void AGameField::ResetField()
+{
+    for (ATile* Obj : TileArray)
+    {
+        Obj->SetTileStatus(NOT_ASSIGNED, ETileStatus::EMPTY);
+    }
+
+    // send broadcast event to registered objects 
+    //OnResetEvent.Broadcast();
+
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    GameMode->IsGameOver = false;
+    GameMode->MoveCounter = 0;
+    //GameMode->ChoosePlayerAndStartGame();
 }
 
 // Get a tile at the specified grid position

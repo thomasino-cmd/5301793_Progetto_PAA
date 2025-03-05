@@ -14,6 +14,10 @@ class ADVANCE_WARS_5301793_API AGameField : public AActor
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(Transient)
+	TArray<ATile*> TileArray;
+
+	static const int32 NOT_ASSIGNED = -1;
 
 	// BlueprintAssignable Usable with Multicast Delegates only. Exposes the property for assigning in Blueprints.
     // Declare a variable of type FOnReset (delegate)
@@ -31,6 +35,9 @@ public:
 	void GenerateField();
 
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
+
+	UFUNCTION(BlueprintCallable)
+	void ResetField();
 
 	// Get a tile at the specified grid position
 	UFUNCTION(BlueprintCallable)
@@ -64,6 +71,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
 	int32 Size;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
+	float CellPadding;
+
+
+	// Tile size in world units
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
+	float TileSize;
+
+
 protected:
 	// Called when an instance of this class is placed (in editor) or spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
@@ -71,12 +88,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float NextCellPositionMultiplier;
 
-
-	
-
-	// Tile size in world units
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
-	float TileSize;
 
 	// Distance between tiles in world units
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
@@ -88,9 +99,6 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game Field")
 	TSubclassOf<ATile> TileClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
-	float CellPadding;
 
 
 
