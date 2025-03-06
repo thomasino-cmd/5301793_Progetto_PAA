@@ -27,6 +27,8 @@ public:
 
     virtual void BeginPlay() override;
 
+    void ChoosePlayerAndStartGame();
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Settings")
     TSubclassOf<AHumanPlayer> HumanPlayerClass;
 

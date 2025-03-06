@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
 #include "PlayerInterface.h"
+#include "AWGameInstance.h"
 #include "Camera/CameraComponent.h"
 #include "HumanPlayer.generated.h"
 
@@ -25,9 +26,12 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	// Camera component attached to the player pawn
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//NO : UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* Camera;
 
+
+	//GameIstance reference
+	UAWGameInstance* GameIstance;
 
 
 	// Implement interface functions

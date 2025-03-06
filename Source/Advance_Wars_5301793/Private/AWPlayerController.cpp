@@ -10,8 +10,7 @@ AAWPlayerController::AAWPlayerController()
 {
     bShowMouseCursor = true;
     bEnableClickEvents = true;
-    bIsMovingUnit = false;
-    bHasAttacked = false;
+    
 }
 
 void AAWPlayerController::BeginPlay()

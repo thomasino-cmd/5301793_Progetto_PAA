@@ -10,16 +10,34 @@ AAWGameMode::AAWGameMode()
 {
     // Imposta la classe di default per il PlayerController
     PlayerControllerClass = APlayerController::StaticClass();
+
     // Imposta la classe di default per il Pawn
     DefaultPawnClass = AHumanPlayer::StaticClass();
+
     // Imposta la dimensione del campo di gioco
-    FieldSize = 25;
+    //FieldSize = 25;
 }
 
 void AAWGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+    //AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+
+    UWorld* World = GetWorld();
+    if (!IsValid(World))
+    {
+        UE_LOG(LogTemp, Error, TEXT("World is not valid in BeginPlay!"));
+        return; // Esci se il World non è valido.
+    }
+
+    APlayerController* PlayerController = World->GetFirstPlayerController();
+    if (!IsValid(PlayerController)) {
+        UE_LOG(LogTemp, Error, TEXT("PlayerController is not valid in BeginPlay!"));
+        return;
+    }
+
+    AHumanPlayer* HumanPLayer = PlayerController->GetPawn<AHumanPlayer>();
+
     if (!IsValid(HumanPLayer))
     {
         UE_LOG(LogTemp, Error, TEXT("No player paen of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
@@ -41,14 +59,34 @@ void AAWGameMode::BeginPlay()
     FVector CameraPos(CameraPosX, CameraPosX, Zposition);
     HumanPlayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
 
-    Players.Add(HumanPLayer);
+    if (HumanPLayer)
+    {
+       // Players.Add(HumanPLayer);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("HumanPLayer is null!"));
+    }
 
     //add a computer player
     auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
     Players.Add(Cast<IPlayerInterface>(AIPlayer)); // Explicitly cast to IPlayerInterface*
 
 
+    ChoosePlayerAndStartGame();
+}
 
+void AAWGameMode::ChoosePlayerAndStartGame()
+{
+    CurrentPlayer = FMath::RandRange(0, Players.Num() - 1);
+
+    for (int32 IndexI = 0; IndexI < Players.Num(); IndexI++)
+    {
+        Players[IndexI]->PlayerId = IndexI;
+        //Players[IndexI]->Sign = IndexI == CurrentPlayer ? ESign::X : ESign::O;
+    }
+    MoveCounter += 1;
+    Players[CurrentPlayer]->OnTurn();
 }
 
 void AAWGameMode::EndTurn()

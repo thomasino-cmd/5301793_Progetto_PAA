@@ -2,6 +2,7 @@
 #include "Tile.h"
 #include "Obstacle.h"
 #include "ComputerPlayer.h"
+#include "AWGameMode.h"
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
@@ -20,11 +21,13 @@ AHumanPlayer::AHumanPlayer()
 
     // Create a camera component
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));
-    RootComponent = Camera; // Imposta la telecamera come componente radice
 
-    // Initialize default values
-    PlayerId = 0; // Human player ID
-    //bIsMyTurn = false;
+    SetRootComponent(Camera); // Imposta la telecamera come componente radice
+
+    GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+    // default init values
+    PlayerId = -1;
+
 }
 
 // Called when the game starts or when spawned
@@ -65,6 +68,7 @@ void AHumanPlayer::OnTurn()
 {
     bIsMyTurn = true;
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Your Turn"));
+    GameIstance->SetTurnMessage(TEXT("Human Turn"));
 }
 
 void AHumanPlayer::OnWin()
@@ -97,6 +101,7 @@ void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
 
 void AHumanPlayer::OnClick()
 {
+    /*
     if (bIsMyTurn)
     {
         // 1. Get mouse position and convert to world coordinates.
@@ -154,5 +159,26 @@ void AHumanPlayer::OnClick()
         }
 
         bIsMyTurn = false; // End turn after processing the click
+    }
+    */
+
+    //Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
+    FHitResult Hit = FHitResult(ForceInit);
+    // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
+    GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
+    if (Hit.bBlockingHit && bIsMyTurn)
+    {
+        if (ATile* CurrTile = Cast<ATile>(Hit.GetActor()))
+        {
+            if (CurrTile->GetTileStatus() == ETileStatus::EMPTY)
+            {
+                // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("clicked"));
+                CurrTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
+                FVector SpawnPosition = CurrTile->GetActorLocation();
+                AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+                //GameMode->SetCellSign(PlayerId, SpawnPosition);
+                bIsMyTurn = false;
+            }
+        }
     }
 }
