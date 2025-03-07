@@ -53,6 +53,8 @@ protected:
 	UFUNCTION()
 	void AttackUnit(AComputerPlayer* TargetUnit);
 
+	// set the cell sign and the position 
+	void SetCellSign(const int32 PlayerNumber, const FVector& SpawnPosition);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
 	AActor* SelectedUnit;

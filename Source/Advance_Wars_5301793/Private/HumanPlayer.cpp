@@ -98,6 +98,46 @@ void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking Unit"));
 }
 
+void AHumanPlayer::SetCellSign(const int32 PlayerNumber, const FVector& SpawnPosition)
+{
+    if (bIsGameOver || PlayerNumber != CurrentPlayer)
+    {
+        return;
+    }
+
+    //UClass* SignActor = Players[CurrentPlayer]->Sign == ESign::X ? SignXActor : SignOActor;
+    FVector Location = GField->GetActorLocation() + SpawnPosition + FVector(0, 0, 10);
+    GetWorld()->SpawnActor(SignActor, &Location);
+
+    if (GField->IsWinPosition(GField->GetXYPositionByRelativeLocation(SpawnPosition)))
+    {
+        IsGameOver = true;
+        Players[CurrentPlayer]->OnWin();
+        for (int32 IndexI = 0; IndexI < Players.Num(); IndexI++)
+        {
+            if (IndexI != CurrentPlayer)
+            {
+                Players[IndexI]->OnLose();
+            }
+        }
+    }
+    else if (MoveCounter == (FieldSize * FieldSize))
+    {
+        // add a timer (3 seconds)
+        FTimerHandle TimerHandle;
+
+        GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+            {
+                // function to delay
+                GField->ResetField();
+            }, 3, false);
+    }
+    else
+    {
+        TurnNextPlayer();
+    }
+}
+
 
 void AHumanPlayer::OnClick()
 {
@@ -172,11 +212,11 @@ void AHumanPlayer::OnClick()
         {
             if (CurrTile->GetTileStatus() == ETileStatus::EMPTY)
             {
-                // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("clicked"));
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("clicked"));
                 CurrTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
                 FVector SpawnPosition = CurrTile->GetActorLocation();
                 AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-                //GameMode->SetCellSign(PlayerId, SpawnPosition);
+                GameMode->SetCellSign(PlayerId, SpawnPosition);
                 bIsMyTurn = false;
             }
         }

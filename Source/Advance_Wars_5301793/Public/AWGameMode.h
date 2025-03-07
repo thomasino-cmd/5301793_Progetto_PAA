@@ -23,6 +23,10 @@ public:
     // tracks the number of moves in order to signal a drawn game
     int32 MoveCounter;
 
+    int32 CurrentPlayer;
+    // tracks the number of moves in order to signal a drawn game
+    int32 MoveCounter;
+
     AAWGameMode();
 
     virtual void BeginPlay() override;
