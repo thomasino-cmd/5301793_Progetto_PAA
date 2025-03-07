@@ -55,6 +55,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetTileSize() const;
 
+
+	UFUNCTION(BlueprintCallable)
+	void SetGridCellOccupied(const FVector2D& GridPosition, int32 PlayerNumber);
+
 	// Set the tile size in world units
 	UFUNCTION(BlueprintCallable)
 	void SetTileSize(float NewTileSize);

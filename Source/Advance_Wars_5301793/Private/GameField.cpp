@@ -76,9 +76,9 @@ void AGameField::ResetField()
     //OnResetEvent.Broadcast();
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-    GameMode->IsGameOver = false;
+    GameMode->bIsGameOver = false;
     GameMode->MoveCounter = 0;
-    //GameMode->ChoosePlayerAndStartGame();
+    GameMode->ChoosePlayerAndStartGame();
 }
 
 // Get a tile at the specified grid position
@@ -109,6 +109,20 @@ void AGameField::SetSize(int32 NewSize)
 float AGameField::GetTileSize() const
 {
     return TileSize;
+}
+
+void AGameField::SetGridCellOccupied(const FVector2D& GridPosition, int32 PlayerNumber)
+{
+    if (TileMap.Contains(GridPosition))
+    {
+        ATile* Tile = TileMap[GridPosition];
+
+        Tile->SetPlayerOwner(PlayerNumber);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("invalid grid position: %s"), *GridPosition.ToString());
+    }
 }
 
 // Set the tile size in world units

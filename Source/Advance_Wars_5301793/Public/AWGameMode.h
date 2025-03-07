@@ -16,16 +16,30 @@ class ADVANCE_WARS_5301793_API AAWGameMode : public AGameModeBase
 public:
 
     // tracks if the game is over
-    bool IsGameOver;
+    bool bIsGameOver;
+
+    bool bIsPlacementPhaseOver;
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
     // tracks the number of moves in order to signal a drawn game
-    int32 MoveCounter;
+    //int32 MoveCounter;
 
-    int32 CurrentPlayer;
+    //int32 CurrentPlayer;
     // tracks the number of moves in order to signal a drawn game
     int32 MoveCounter;
+
+    int32 UnitsPlaced; 
+    int32 TotalUnitsToPlace;
+
+
+
+    UPROPERTY()
+    int32 CurrentPlayer;
+
+    UPROPERTY()
+    int32 TurnNumber;
+
 
     AAWGameMode();
 
@@ -54,6 +68,8 @@ public:
     UPROPERTY(VisibleAnywhere)
     AGameField* GameField;
 
+    void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
+
 protected:
     UPROPERTY()
     AHumanPlayer* HumanPlayer;
@@ -63,11 +79,7 @@ protected:
     AComputerPlayer* AI;
   
 
-    UPROPERTY()
-    int32 CurrentPlayer;
 
-    UPROPERTY()
-    int32 TurnNumber;
 
     UFUNCTION()
     void InitializeGame();
@@ -80,4 +92,7 @@ protected:
 
     UFUNCTION()
     void EndGame();
+
+
+    
 };
