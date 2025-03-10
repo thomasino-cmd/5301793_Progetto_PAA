@@ -11,7 +11,7 @@
 AAWGameMode::AAWGameMode()
 {
     // Imposta la classe di default per il PlayerController
-    PlayerControllerClass = APlayerController::StaticClass();
+    PlayerControllerClass = AAWPlayerController::StaticClass();
 
     // Imposta la classe di default per il Pawn
     DefaultPawnClass = AHumanPlayer::StaticClass();
@@ -27,22 +27,31 @@ AAWGameMode::AAWGameMode()
 void AAWGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    //AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+    
+    MoveCounter = 0;
+    bIsGameOver = false;
 
+    AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
 
+    /*
     UWorld* World = GetWorld();
     if (!IsValid(World))
     {
         UE_LOG(LogTemp, Error, TEXT("World is not valid in BeginPlay!"));
         return; // Esci se il World non è valido.
     }
+    */
 
-    APlayerController* PlayerController = World->GetFirstPlayerController();
-    if (!IsValid(PlayerController)) {
+    /*
+    AAWPlayerController* PlayerController = World->GetFirstPlayerController();
+    if (!IsValid(PlayerController))
+    {
         UE_LOG(LogTemp, Error, TEXT("PlayerController is not valid in BeginPlay!"));
         return;
     }
-    AHumanPlayer* HumanPLayer = PlayerController->GetPawn<AHumanPlayer>();
+    */
+
+    //AHumanPlayer* HumanPLayer = PlayerController->GetPawn<AHumanPlayer>();
 
     if (!IsValid(HumanPLayer))
     {
@@ -52,7 +61,7 @@ void AAWGameMode::BeginPlay()
     if (GameFieldClass != nullptr)
     {
         GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
-       // GameField->Size = FieldSize;
+        GameField->Size = FieldSize;
         
     }
     else
@@ -61,22 +70,16 @@ void AAWGameMode::BeginPlay()
     }
 
     float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
-    float Zposition = 1000.0f;
+    float Zposition = 2500.0f;
     FVector CameraPos(CameraPosX, CameraPosX, Zposition);
-    HumanPlayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
+    HumanPLayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
 
-    if (HumanPLayer)
-    {
-       //Players.Add(HumanPLayer);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("HumanPLayer is null!"));
-    }
+    Players.Add(HumanPLayer);
+
 
     //add a computer player
     auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
-    //Players.Add(Cast<IPlayerInterface>(AIPlayer)); // Explicitly cast to IPlayerInterface*
+    Players.Add(AIPlayer); // Explicitly cast to IPlayerInterface*
 
 
     ChoosePlayerAndStartGame();
@@ -84,15 +87,28 @@ void AAWGameMode::BeginPlay()
 
 void AAWGameMode::ChoosePlayerAndStartGame()
 {
-    CurrentPlayer = FMath::RandRange(0, Players.Num() - 1);
+    //CurrentPlayer = FMath::RandRange(0, Players.Num() - 1);
+    //temporaneamente faccio cosi 
+    CurrentPlayer = 0;
+
 
     for (int32 IndexI = 0; IndexI < Players.Num(); IndexI++)
     {
         Players[IndexI]->PlayerId = IndexI;
-        //Players[IndexI]->Sign = IndexI == CurrentPlayer ? ESign::X : ESign::O;
+       
     }
     MoveCounter += 1;
     Players[CurrentPlayer]->OnTurn();
+}
+
+int32 AAWGameMode::GetNextPlayer(int32 Player)
+{
+    Player++;
+    if(!Players.IsValidIndex(Player))
+    {
+        Player = 0; 
+    }
+    return Player;
 }
 
 void AAWGameMode::EndTurn()
@@ -123,60 +139,14 @@ void AAWGameMode::AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
     }
 }
 
-void AAWGameMode::InitializeGame()
-{
-    // Inizializza le variabili di stato del gioco
-    CurrentPlayer = 0;
-    TurnNumber = 1;
-
-    // Crea il campo di gioco
-    if (GameFieldClass != nullptr)
-    {
-        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
-        GameField->Size = FieldSize;
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Game Field is null"));
-    }
-
-    // Crea il giocatore umano
-    if (HumanPlayerClass != nullptr)
-    {
-        HumanPlayer = GetWorld()->SpawnActor<AHumanPlayer>(HumanPlayerClass);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Error, TEXT("Human Player is null"));
-    }
-}
 
 void AAWGameMode::SwitchPlayer()
 {
-    // Cambia il giocatore corrente
-    CurrentPlayer = (CurrentPlayer + 1) % 2;
+    // todo : aggiornala ma era troppo complicata prima
+    MoveCounter += 1;
+    CurrentPlayer = GetNextPlayer(CurrentPlayer);
+    Players[CurrentPlayer]->OnTurn();
 
-    // Incrementa il numero del turno se il giocatore corrente è il primo giocatore
-    if (CurrentPlayer == 0)
-    {
-        TurnNumber++;
-    }
-
-    // Controlla se un giocatore ha vinto
-    if (CheckWinCondition())
-    {
-        // Termina il gioco se un giocatore ha vinto
-        EndGame();
-    }
-    else
-    {
-        // Altrimenti, fai iniziare il turno al giocatore corrente
-        AHumanPlayer* CurrentPlayerPawn = Cast<AHumanPlayer>(UGameplayStatics::GetPlayerPawn(this, CurrentPlayer));
-        if (CurrentPlayerPawn)
-        {
-            CurrentPlayerPawn->OnTurn();
-        }
-    }
 }
 
 bool AAWGameMode::CheckWinCondition()
@@ -201,31 +171,16 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
     }
 
     // Definisci la classe dell'unità da spawnare (puoi alternarla manualmente o in base ad altre condizioni)
-    TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Sniper::StaticClass() : AAW_Brawler::StaticClass();
+    TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Sniper : AAW_Brawler;
+    FVector Location = GameField->GetActorLocation() + GridPosition + FVector(0, 0, 10);
 
-    // Calcola la posizione di spawn in base alla posizione della griglia
-    FVector SpawnLocation = GridPosition; //TODO: Potrebbe essere necessario adattare la posizione in base alle dimensioni della cella e dell'unità
+    
 
-    // Spawna l'unità
-    AActor* NewUnit = GetWorld()->SpawnActor(UnitClass, &SpawnLocation);
-    if (NewUnit)
-    {
-        // Imposta la cella come occupata
-        FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
-        GameField->SetGridCellOccupied(GridPosition2D, PlayerNumber);
-
-        //TODO: Altre operazioni necessarie dopo lo spawn dell'unità (es. aggiungerla a un array di unità attive)
-
-        // Aggiorna lo stato del gioco
-        UnitsPlaced++;
-        if (UnitsPlaced >= TotalUnitsToPlace * Players.Num())
-        {
-            bIsPlacementPhaseOver = true;
-            // Inizia la fase di gioco principale
-        }
-        else
-        {
-            EndTurn();
-        }
-    }
+    GetWorld()->SpawnActor(UnitClass, &GridPosition);
+   
+    //todo : rimettere logica per verificare condizione di vittoria 
+    
+    EndTurn();
+        
+    
 }

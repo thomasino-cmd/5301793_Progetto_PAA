@@ -6,7 +6,7 @@
 #include "GameField.generated.h"
 
 // Macro declaration for a dynamic multicast delegate
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReset);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReset);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AGameField : public AActor
@@ -21,8 +21,9 @@ public:
 
 	// BlueprintAssignable Usable with Multicast Delegates only. Exposes the property for assigning in Blueprints.
     // Declare a variable of type FOnReset (delegate)
-	//UPROPERTY(BlueprintAssignable)
-	//FOnReset OnResetEvent;
+	 
+	UPROPERTY(BlueprintAssignable)
+	FOnReset OnResetEvent;
 
 	// Sets default values for this actor's properties
 	AGameField();

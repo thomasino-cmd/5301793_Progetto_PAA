@@ -8,6 +8,10 @@
 #include "GameField.h"
 #include "AWGameMode.generated.h"
 
+class AActor;
+
+struct FPosition;
+
 UCLASS()
 class ADVANCE_WARS_5301793_API AAWGameMode : public AGameModeBase
 {
@@ -22,10 +26,7 @@ public:
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
-    // tracks the number of moves in order to signal a drawn game
-    //int32 MoveCounter;
 
-    //int32 CurrentPlayer;
     // tracks the number of moves in order to signal a drawn game
     int32 MoveCounter;
 
@@ -47,13 +48,18 @@ public:
 
     void ChoosePlayerAndStartGame();
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Settings")
-    TSubclassOf<AHumanPlayer> HumanPlayerClass;
+  
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Settings")
+    UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AGameField> GameFieldClass;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Settings")
+    UPROPERTY(VisibleAnywhere)
+    AGameField* GameField;
+
+    int32 GetNextPlayer(int32 Player);
+
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Settings")
     int32 FieldSize;
 
     UFUNCTION(BlueprintCallable)
@@ -65,24 +71,14 @@ public:
     UFUNCTION(BlueprintCallable)
     void AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY);
 
-    UPROPERTY(VisibleAnywhere)
-    AGameField* GameField;
 
     void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
 
 protected:
-    UPROPERTY()
-    AHumanPlayer* HumanPlayer;
-
-    //not sure if needed 
-    UPROPERTY()
-    AComputerPlayer* AI;
-  
 
 
 
-    UFUNCTION()
-    void InitializeGame();
+
 
     UFUNCTION()
     void SwitchPlayer();

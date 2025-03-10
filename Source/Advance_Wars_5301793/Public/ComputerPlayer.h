@@ -21,6 +21,7 @@ public:
     AComputerPlayer();
 
     //todo add gameistance reference
+    UAWGameInstance* GameIstance;
 
 protected:
     // Called when the game starts or when spawned
@@ -37,18 +38,12 @@ public:
     virtual void OnWin() override;
     virtual void OnLose() override;
 
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override; 
+
     // Funzioni specifiche per l'IA
     void MakeMove();
 
-    // Funzione per ottenere un riferimento a GameInstance
-    UAWGameInstance* GetGameInstance();
-
-    // Funzione per ottenere un riferimento a GameMode
-     AAWGameMode* GetGameMode();
 
     // Funzioni di supporto per l'IA (es. valutazione della situazione, scelta del bersaglio)
     // ...
-
-    // Puntatore a GameField
-    AGameField* GameField;
 };

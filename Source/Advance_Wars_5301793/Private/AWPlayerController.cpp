@@ -29,10 +29,27 @@ void AAWPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
     {
-        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::OnClick);
+        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);
     }
 }
 
+
+
+void AAWPlayerController::ClickOnGrid()
+{
+    const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
+    if (IsValid(HumanPlayer))
+    {
+        HumanPlayer->OnClick();
+    }
+}
+
+
+
+
+
+/// sto sovrascrivendo una copia inutile di una funzione che è già propria di human player
+/*
 void AAWPlayerController::OnClick()
 {
     // 1. Get mouse position and convert to world coordinates.
@@ -92,15 +109,7 @@ void AAWPlayerController::OnClick()
         }
     }
 }
-
-void AAWPlayerController::ClickOnGrid()
-{
-    const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
-    if (IsValid(HumanPlayer))
-    {
-        HumanPlayer->OnClick();
-    }
-}
+*/
 
 void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
 {
@@ -124,6 +133,6 @@ void AAWPlayerController::AttackUnit(AHumanPlayer* Unit)
 
 void AAWPlayerController::DeselectUnit()
 {
-    SelectedUnit = nullptr;
+   // SelectedUnit = nullptr;
     // Add logic to clear highlighting or hide movement range
 }

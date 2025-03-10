@@ -14,8 +14,8 @@ AGameField::AGameField()
     // Initialize default values for the size, tile size, and tile spacing
     Size = 25;
     TileSize = 100.0f;
-    TileSpacing = 0.0f;
-    CellPadding = 0.0f;
+    TileSpacing = 0.01f;
+    CellPadding = 0.02f;
 }
 
 
@@ -73,7 +73,7 @@ void AGameField::ResetField()
     }
 
     // send broadcast event to registered objects 
-    //OnResetEvent.Broadcast();
+    OnResetEvent.Broadcast();
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
     GameMode->bIsGameOver = false;

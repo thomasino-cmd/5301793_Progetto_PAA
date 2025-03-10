@@ -26,7 +26,7 @@ AHumanPlayer::AHumanPlayer()
 
     GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
     // default init values
-    PlayerId = -1;
+    PlayerId = 0;
 
 }
 

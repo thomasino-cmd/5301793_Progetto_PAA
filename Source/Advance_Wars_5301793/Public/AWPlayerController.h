@@ -21,8 +21,8 @@ public:
     UPROPERTY(EditAnywhere, Category = Input)
     UInputAction* ClickAction;
 
-    UFUNCTION()
-    void OnClick();
+   // UFUNCTION()
+    //    void OnClick();
 
     UPROPERTY()
     class AHumanPlayer* SelectedUnit;
