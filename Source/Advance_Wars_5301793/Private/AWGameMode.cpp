@@ -17,7 +17,7 @@ AAWGameMode::AAWGameMode()
     DefaultPawnClass = AHumanPlayer::StaticClass();
 
     bIsPlacementPhaseOver = false;
-    TotalUnitsToPlace = 2;
+    TotalUnitsToPlace = 4;
     UnitsPlaced = 0; 
 
     // Imposta la dimensione del campo di gioco
@@ -161,8 +161,6 @@ void AAWGameMode::EndGame()
     // Termina il gioco (implementazione fittizia)
     // Sostituisci questa implementazione con la tua logica di fine gioco effettiva
 }
-
-
 void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
 {
     if (bIsPlacementPhaseOver || PlayerNumber != CurrentPlayer)
@@ -170,17 +168,28 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         return;
     }
 
-    // Definisci la classe dell'unità da spawnare (puoi alternarla manualmente o in base ad altre condizioni)
-    TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Sniper : AAW_Brawler;
-    FVector Location = GameField->GetActorLocation() + GridPosition + FVector(0, 0, 10);
+    // Definisci la classe del Blueprint dell'unità da spawnare in base al turno
+    //TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Brawler::StaticClass() : AAW_Sniper::StaticClass();
 
-    
+    // Calcola la posizione di spawn sulla griglia
+    //FVector Location = GameField->GetActorLocation() + GridPosition + FVector(0, 0, 10); // Aggiungi un offset in Z se necessario
 
-    GetWorld()->SpawnActor(UnitClass, &GridPosition);
-   
-    //todo : rimettere logica per verificare condizione di vittoria 
-    
+    // Spawna l'unità dal Blueprint
+    AActor* NewBrawler = GetWorld()->SpawnActor(BrawlerClass, &GridPosition);
+
+    // Imposta la rotazione dell'unità (se necessario)
+    // NewUnit->SetActorRotation(...);
+
+    // Incrementa il contatore delle unità piazzate
+    UnitsPlaced++;
+
+    // Controlla se la fase di piazzamento è terminata
+    if (UnitsPlaced >= TotalUnitsToPlace)
+    {
+        bIsPlacementPhaseOver = true;
+        // Inizia la fase di gioco vera e propria
+    }
+
+    // Termina il turno
     EndTurn();
-        
-    
 }

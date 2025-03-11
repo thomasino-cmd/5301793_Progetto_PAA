@@ -27,6 +27,7 @@ public:
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
 
+
     // tracks the number of moves in order to signal a drawn game
     int32 MoveCounter;
 
@@ -77,6 +78,8 @@ public:
 protected:
 
 
+    UPROPERTY(EditDefaultsOnly, Category = "Soldiers")
+    TSubclassOf<AAW_Brawler> BrawlerClass;
 
 
 
