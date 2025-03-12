@@ -41,8 +41,11 @@ public:
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override; 
 
     // Funzioni specifiche per l'IA
+    UFUNCTION()
     void MakeMove();
 
+    UFUNCTION()
+    void PlaceUnit();
 
     // Funzioni di supporto per l'IA (es. valutazione della situazione, scelta del bersaglio)
     // ...

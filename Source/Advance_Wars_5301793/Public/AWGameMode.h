@@ -6,7 +6,10 @@
 #include "UObject/Class.h"
 #include "HumanPlayer.h"
 #include "GameField.h"
+#include "AW_Brawler.h"
+#include "AW_Sniper.h"
 #include "AWGameMode.generated.h"
+
 
 class AActor;
 
@@ -75,11 +78,24 @@ public:
 
     void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
 
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Brawler> BrawlerClassHuman;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Sniper> SniperClassHuman;
+
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Brawler> BrawlerClassAI;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Sniper> SniperClassAI;
+
 protected:
 
 
 
-
+   
 
 
     UFUNCTION()

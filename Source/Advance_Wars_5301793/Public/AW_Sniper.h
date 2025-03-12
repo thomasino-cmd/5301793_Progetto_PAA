@@ -35,6 +35,14 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Soldier")
     float MovementSpeed;
 
+    // Scene component for the tile
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+    USceneComponent* Scene;
+
+    // Static mesh component for the tile's visual representation
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+    UStaticMeshComponent* BrawlerStaticMeshComponent;
+
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;

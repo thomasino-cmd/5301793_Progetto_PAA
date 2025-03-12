@@ -15,7 +15,7 @@ ATile::ATile()
 	StaticMeshComponent->SetupAttachment(Scene); // Attach the static mesh component to the scene component
 
 	// Initialize the tile's properties
-	Status = ETileStatus::EMPTY;
+	
 	Unit = nullptr;
 	GridPosition = FVector2D(0, 0);
 	PlayerOwner = -1;
@@ -26,7 +26,7 @@ void ATile::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// You can add any initialization logic here that needs to happen when the game starts
+	
 }
 
 // Set the status of the tile
@@ -39,6 +39,7 @@ void ATile::SetTileStatus(const int32 TileOwner ,const ETileStatus NewStatus)
 // Get the status of the tile
 ETileStatus ATile::GetTileStatus() const
 {
+	
 	return Status;
 }
 

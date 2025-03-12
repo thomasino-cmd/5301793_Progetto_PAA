@@ -79,7 +79,7 @@ void AAWGameMode::BeginPlay()
 
     //add a computer player
     auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
-    Players.Add(AIPlayer); // Explicitly cast to IPlayerInterface*
+    Players.Add(AIPlayer); 
 
 
     ChoosePlayerAndStartGame();
@@ -106,7 +106,7 @@ int32 AAWGameMode::GetNextPlayer(int32 Player)
     Player++;
     if(!Players.IsValidIndex(Player))
     {
-        Player = 0; 
+        Player = 0 ; 
     }
     return Player;
 }
@@ -161,6 +161,8 @@ void AAWGameMode::EndGame()
     // Termina il gioco (implementazione fittizia)
     // Sostituisci questa implementazione con la tua logica di fine gioco effettiva
 }
+
+/*
 void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
 {
     if (bIsPlacementPhaseOver || PlayerNumber != CurrentPlayer)
@@ -168,29 +170,80 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         return;
     }
 
-    // Definisci la classe del Blueprint dell'unità da spawnare in base al turno
-    //TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Brawler::StaticClass() : AAW_Sniper::StaticClass();
-        
-    TSubclassOf<AActor> BrawlerClass = AAW_Brawler::StaticClass();
-    // Calcola la posizione di spawn sulla griglia
-    //FVector Location = GameField->GetActorLocation() + GridPosition + FVector(0, 0, 10); // Aggiungi un offset in Z se necessario
-
-    // Spawna l'unità dal Blueprint
-    AActor* NewBrawler = GetWorld()->SpawnActor(BrawlerClass, &GridPosition);
-
-    // Imposta la rotazione dell'unità (se necessario)
-    // NewUnit->SetActorRotation(...);
+    AAW_Brawler* Brawler = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassHuman, GridPosition, FRotator::ZeroRotator);
+    Brawler->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
+    
    
-    // Incrementa il contatore delle unità piazzate
-    UnitsPlaced++;
+    UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
 
-    // Controlla se la fase di piazzamento è terminata
-    if (UnitsPlaced >= TotalUnitsToPlace)
-    {
-        bIsPlacementPhaseOver = true;
-        // Inizia la fase di gioco vera e propria
-    }
+    
+    // Incrementa il contatore delle unità piazzate
+    UnitsPlaced += 1;
+
+    
 
     // Termina il turno
     EndTurn();
 }
+*/
+
+void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
+{
+    if (bIsPlacementPhaseOver || PlayerNumber != CurrentPlayer)
+    {
+        return;
+    }
+
+    AActor* UnitToSpawn = nullptr;
+
+    if (PlayerNumber == 0) // Giocatore Umano
+    {
+        if (UnitsPlaced == 0) // Primo brawler umano
+        {
+            UnitToSpawn = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassHuman, GridPosition + FVector(0,0,2), FRotator::ZeroRotator);
+        }
+        else if (UnitsPlaced == 2) // Sniper umano
+        {
+            UnitToSpawn = GetWorld()->SpawnActor<AAW_Sniper>(SniperClassHuman, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
+        }
+    }
+    else if (PlayerNumber == 1) // Giocatore AI
+    {
+        if (UnitsPlaced == 1) // Brawler AI
+        {
+            UnitToSpawn = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
+        }
+        else if (UnitsPlaced == 3) // Sniper AI
+        {
+            UnitToSpawn = GetWorld()->SpawnActor<AAW_Sniper>(SniperClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
+        }
+    }
+
+    if (UnitToSpawn)
+    {
+        UnitToSpawn->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
+
+        UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
+
+        UnitsPlaced++;
+
+        // Segna la tile come occupata
+        if (GameField)
+        {
+            // Converti FVector GridPosition in FVector2D
+            FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
+
+            GameField->SetGridCellOccupied(GridPosition2D, PlayerNumber);
+        }
+
+       
+
+        if (UnitsPlaced >= 4)
+        {
+            bIsPlacementPhaseOver = true;
+        }
+
+        EndTurn();
+    }
+}
+

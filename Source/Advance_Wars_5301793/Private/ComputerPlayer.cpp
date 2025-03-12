@@ -7,6 +7,8 @@ AComputerPlayer::AComputerPlayer()
 {
     PrimaryActorTick.bCanEverTick = true;
     GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+    // default init values
+    PlayerId = 1;
 }
 
 void AComputerPlayer::BeginPlay()
@@ -29,11 +31,27 @@ void AComputerPlayer::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-// Implementazione delle funzioni di PlayerInterface
+
+
 void AComputerPlayer::OnTurn()
 {
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+
+    if (GameMode) // Always check if the pointer is valid!
+    {
+        if (GameMode->bIsPlacementPhaseOver == false)
+        {
+            PlaceUnit();
+        }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("ComputerPlayer: Could not get GameMode!"));
+    }
+
     MakeMove();
 }
+
 
 void AComputerPlayer::OnWin()
 {
@@ -59,5 +77,63 @@ void AComputerPlayer::MakeMove()
 
     // Alla fine del turno, chiama la funzione EndTurn() di GameMode
     GameMode->EndTurn();
+}
+
+void AComputerPlayer::PlaceUnit()
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Random) Turn"));
+    GameIstance->SetTurnMessage(TEXT("AI (Random) Turn"));
+    FTimerHandle TimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+        {
+            AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+            if (!GameMode)
+            {
+                UE_LOG(LogTemp, Error, TEXT("ComputerPlayer: Could not get GameMode!"));
+                return;
+            }
+            AGameField* GameField = GameMode->GameField;
+            if (!GameField)
+            {
+                UE_LOG(LogTemp, Error, TEXT("ComputerPlayer: Could not get GameField from GameMode!"));
+                return;
+            }
+            int32 FieldSize = GameField->Size; // Use the Size from GameField
+            int32 MaxAttempts = FieldSize * FieldSize; // Calculate max attempts
+            for (int32 i = 0; i < MaxAttempts; ++i)
+            {
+                // 1. Choose a random tile using GetTile
+                int32 RandomX = FMath::RandRange(0, FieldSize - 1); // Use FieldSize
+                int32 RandomY = FMath::RandRange(0, FieldSize - 1); // Use FieldSize
+                ATile* RandomTile = GameField->GetTile(RandomX, RandomY);
+                // --- Debug Message for RandomX and RandomY ---
+                if (GEngine)
+                {
+                    FString DebugMessage = FString::Printf(TEXT("RandomX = %d, RandomY = %d"), RandomX, RandomY);
+                    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage, true);
+                }
+                // --- End Debug Message ---
+                // 2. Check if the tile is valid and empty
+                if (RandomTile && RandomTile->GetTileStatus() == ETileStatus::EMPTY)
+                {
+                    // 3. Get the tile's position
+                    FVector TileLocation = RandomTile->GetActorLocation();
+                    // --- Debug Drawing ---
+                    float LineLength = GameField->GetTileSize() / 2.0f;
+                    FVector LineStart1 = TileLocation + FVector(-LineLength, -LineLength, 50.0f);
+                    FVector LineEnd1 = TileLocation + FVector(LineLength, LineLength, 50.0f);
+                    FVector LineStart2 = TileLocation + FVector(-LineLength, LineLength, 50.0f);
+                    FVector LineEnd2 = TileLocation + FVector(LineLength, -LineLength, 50.0f);
+                    DrawDebugLine(GetWorld(), LineStart1, LineEnd1, FColor::Red, false, 5.0f, 0, 2.0f);
+                    DrawDebugLine(GetWorld(), LineStart2, LineEnd2, FColor::Red, false, 5.0f, 0, 2.0f);
+                    // --- End Debug Drawing ---
+                    // 4. Call SetUnitPlacement
+                    GameMode->SetUnitPlacement(PlayerId, TileLocation);
+                    return; // Exit the function after placing the unit
+                }
+            }
+            UE_LOG(LogTemp, Warning, TEXT("ComputerPlayer: Failed to find an empty tile after %d attempts."), MaxAttempts);
+            // Handle the case where no empty tile was found (e.g., log an error, delay and retry, etc.)
+        }, 1, false);
 }
 

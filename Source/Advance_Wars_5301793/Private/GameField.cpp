@@ -53,7 +53,11 @@ void AGameField::GenerateField()
             Obj->SetActorScale3D(FVector(TileScale, TileScale, Zscaling));
             Obj->SetGridPosition(IndexX, IndexY);
             // Add the tile to the TileMap
+            
+            Obj->SetTileStatus(NOT_ASSIGNED, ETileStatus::EMPTY);
+
             TileMap.Add(FVector2D(IndexX, IndexY), Obj);
+            
         }
     }
 }
@@ -118,6 +122,7 @@ void AGameField::SetGridCellOccupied(const FVector2D& GridPosition, int32 Player
         ATile* Tile = TileMap[GridPosition];
 
         Tile->SetPlayerOwner(PlayerNumber);
+        Tile->SetTileStatus(PlayerNumber, ETileStatus::OCCUPIED);
     }
     else
     {

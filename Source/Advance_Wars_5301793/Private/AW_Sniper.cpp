@@ -13,6 +13,17 @@ AAW_Sniper::AAW_Sniper()
     AttackRange = 10;
     RangedAttackDamage = FIntPoint(4, 8); // Danno da 4 a 8
     MovementSpeed = 100.0f;            // Example speed
+
+    // Scene component for the tile
+    Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
+    RootComponent = Scene; // Imposta Scene come RootComponent
+
+
+
+    // Static mesh component for the tile's visual representation
+    BrawlerStaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+    BrawlerStaticMeshComponent->SetupAttachment(RootComponent);
+
 }
 
 // Called when the game starts or when spawned

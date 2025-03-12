@@ -88,7 +88,7 @@ protected:
 	UStaticMeshComponent* StaticMeshComponent;
 
 	// Status of the tile
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Tile")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")
 	ETileStatus Status;
 
 	// Unit on the tile

@@ -5,7 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AW_BaseSoldier.h" // Include the interface header
+
 #include "AW_Brawler.generated.h"
+
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AAW_Brawler : public AActor, public IAW_BaseSoldier
@@ -38,20 +40,23 @@ public:
 
 
 
-    UPROPERTY(EditAnywhere)
-    TSubclassOf<class AAW_Brawler> BrawlerClass;
-    /*
+
+    
     // Scene component for the tile
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     USceneComponent* Scene;
 
     // Static mesh component for the tile's visual representation
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     UStaticMeshComponent* BrawlerStaticMeshComponent;
-    */
+
+
+    
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
+
+  
 
 public:
     // Called every frame
