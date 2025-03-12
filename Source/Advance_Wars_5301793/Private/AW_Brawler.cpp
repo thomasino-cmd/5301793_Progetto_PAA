@@ -14,6 +14,7 @@ AAW_Brawler::AAW_Brawler()
     MeleeAttackDamage = FIntPoint(1, 6); // Danno da 1 a 6
     MovementSpeed = 100.0f;            // Example speed
 
+    /*
     // Create the scene component
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     SetRootComponent(Scene); // Set the scene component as the root component
@@ -21,7 +22,7 @@ AAW_Brawler::AAW_Brawler()
     // Create the static mesh component
     BrawlerStaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
     BrawlerStaticMeshComponent->SetupAttachment(Scene); // Attach the static mesh component to the scene component
-
+    */
 }
 
 // Called when the game starts or when spawned

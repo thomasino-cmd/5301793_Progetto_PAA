@@ -170,7 +170,8 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
 
     // Definisci la classe del Blueprint dell'unità da spawnare in base al turno
     //TSubclassOf<AActor> UnitClass = (UnitsPlaced % 2 == 0) ? AAW_Brawler::StaticClass() : AAW_Sniper::StaticClass();
-
+        
+    TSubclassOf<AActor> BrawlerClass = AAW_Brawler::StaticClass();
     // Calcola la posizione di spawn sulla griglia
     //FVector Location = GameField->GetActorLocation() + GridPosition + FVector(0, 0, 10); // Aggiungi un offset in Z se necessario
 
@@ -179,7 +180,7 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
 
     // Imposta la rotazione dell'unità (se necessario)
     // NewUnit->SetActorRotation(...);
-
+   
     // Incrementa il contatore delle unità piazzate
     UnitsPlaced++;
 

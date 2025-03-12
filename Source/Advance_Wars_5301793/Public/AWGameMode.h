@@ -78,8 +78,7 @@ public:
 protected:
 
 
-    UPROPERTY(EditDefaultsOnly, Category = "Soldiers")
-    TSubclassOf<AAW_Brawler> BrawlerClass;
+
 
 
 

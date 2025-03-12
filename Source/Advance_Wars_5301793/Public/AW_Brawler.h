@@ -37,6 +37,10 @@ public:
 
 
 
+
+    UPROPERTY(EditAnywhere)
+    TSubclassOf<class AAW_Brawler> BrawlerClass;
+    /*
     // Scene component for the tile
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     USceneComponent* Scene;
@@ -44,7 +48,7 @@ public:
     // Static mesh component for the tile's visual representation
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     UStaticMeshComponent* BrawlerStaticMeshComponent;
-
+    */
 protected:
     // Called when the game starts or when spawned
     virtual void BeginPlay() override;
