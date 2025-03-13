@@ -8,6 +8,7 @@
 #include "EnhancedInputSubsystems.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "AWPlayerController.h"
 
 
 // Sets default values
@@ -69,6 +70,7 @@ void AHumanPlayer::OnTurn()
     bIsMyTurn = true;
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Your Turn"));
     GameIstance->SetTurnMessage(TEXT("Human Turn"));
+    
 }
 
 void AHumanPlayer::OnWin()
@@ -103,71 +105,14 @@ void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
 
 void AHumanPlayer::OnClick()
 {
-    /*
-    if (bIsMyTurn)
-    {
-        // 1. Get mouse position and convert to world coordinates.
-        FVector2D MousePosition;
-        APlayerController* PC = GetWorld()->GetFirstPlayerController();
-        if (PC)
-        {
-            PC->GetMousePosition(MousePosition.X, MousePosition.Y);
-        }
-        else
-        {
-            return; // No PlayerController found
-        }
-
-        // 2. Perform line trace to detect clicked tile.
-        FHitResult HitResult;
-        PC->GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
-
-        if (HitResult.bBlockingHit)
-        {
-            ATile* ClickedTile = Cast<ATile>(HitResult.GetActor());
-            if (ClickedTile)
-            {
-                AActor* ClickedActor = ClickedTile->GetUnit();
-
-                if (ClickedActor)
-                {
-                    if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(ClickedActor))
-                    {
-                        // Handle human player unit (should not happen, clicking on yourself)
-                    }
-                    else if (AComputerPlayer* ClickedComputerUnit = Cast<AComputerPlayer>(ClickedActor))
-                    {
-                        // Handle AI player unit (e.g., attack)
-                        if (SelectedUnit)
-                        {
-                            AttackUnit(ClickedComputerUnit);
-                        }
-                    }
-                    else if (AObstacle* ClickedObstacle = Cast<AObstacle>(ClickedActor))
-                    {
-                        // Handle obstacle (e.g., show info)
-                    }
-                    // ... handle other types as needed
-                }
-                else
-                {
-                    // Handle empty tile (e.g., move selected unit)
-                    if (SelectedUnit)
-                    {
-                        MoveUnit(ClickedTile);
-                    }
-                }
-            }
-        }
-
-        bIsMyTurn = false; // End turn after processing the click
-    }
-    */
+    
 
     //Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
     FHitResult Hit = FHitResult(ForceInit);
     // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
+  
+
     if (Hit.bBlockingHit && bIsMyTurn)
     {
         if (ATile* CurrTile = Cast<ATile>(Hit.GetActor()))
@@ -178,8 +123,29 @@ void AHumanPlayer::OnClick()
                 CurrTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
                 FVector SpawnPosition = CurrTile->GetActorLocation();
                 AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-                GameMode->SetUnitPlacement(PlayerId, SpawnPosition);
                 bIsMyTurn = false;
+
+                // Disabilita l'input PRIMA di chiamare SetUnitPlacement
+                APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+                if (PlayerController)
+                {
+                    PlayerController->DisableInput(PlayerController);
+                }
+
+                GameMode->SetUnitPlacement(PlayerId, SpawnPosition);
+
+                // Riabilita l'input DOPO che SetUnitPlacement (e EndTurn) sono completati
+                if (PlayerController)
+                {
+                    // Riabilita input dopo un piccolo delay per evitare problemi, può non servire
+                    FTimerHandle InputTimerHandle;
+                    float InputDelay = 0.1f;
+                    GetWorldTimerManager().SetTimer(InputTimerHandle, [PlayerController]() {
+                        PlayerController->EnableInput(PlayerController);
+                        }, InputDelay, false);
+
+                }
+                return;
             }
         }
     }

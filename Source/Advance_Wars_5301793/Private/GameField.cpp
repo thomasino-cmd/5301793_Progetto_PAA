@@ -60,7 +60,93 @@ void AGameField::GenerateField()
             
         }
     }
+    // Log message for field generation
+    FString message = "Game Field Generated!";
+    if (UAWGameInstance* GameInstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+    {
+        GameInstance->SetTurnMessage(message);
+    }
+    UE_LOG(LogTemp, Warning, TEXT("Game Field Generated!"));
+
+    // Set Timer to call SpawnRandomObstacles after a delay
+    FTimerHandle TimerHandle;
+    GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+        {
+            SpawnRandomObstacles();
+        }, 1.0f, false);
 }
+
+
+
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+#include "AWGameInstance.h"
+
+void AGameField::SpawnRandomObstacles()
+{
+    // 1. Calculate the number of obstacles to spawn
+    int32 totalTiles = Size * Size;
+    int32 targetObstacleCount = FMath::RoundToInt(totalTiles * 0.10f); // 10%
+
+    int32 obstacleCount = 0;
+
+   
+   
+    // 2. Spawn obstacles until the target is reached
+    
+    while (obstacleCount < targetObstacleCount)
+    {
+        
+       
+                
+                int32 x = FMath::RandRange(0, Size - 1);
+                int32 y = FMath::RandRange(0, Size - 1);
+
+                ATile* tile = GetTile(x, y);
+
+                // 3. Check if the tile is valid and empty
+                if (tile && tile->GetTileStatus() == ETileStatus::EMPTY)
+                {
+                    // 4. Determine the obstacle class using weighted randomization
+                    TSubclassOf<AObstacle> obstacleClass = MountainClass; // Default to mountain
+
+                    float randomValue = FMath::FRand();
+                    if (randomValue < 0.4f) // 40% chance for Tree1
+                    {
+                        obstacleClass = Tree1Class;
+                    }
+                    else if (randomValue < 0.7f) // 30% chance for Tree2
+                    {
+                        obstacleClass = Tree2Class;
+                    }
+                    // else 30% Mountain
+
+                    // 5. Spawn the obstacle
+                    FVector spawnLocation = tile->GetActorLocation();
+                    AObstacle* obstacle = GetWorld()->SpawnActor<AObstacle>(obstacleClass, spawnLocation, FRotator::ZeroRotator);
+
+                    if (obstacle)
+                    {
+                        //Parent the obstacle to the tile
+                        obstacle->AttachToActor(tile, FAttachmentTransformRules::KeepWorldTransform);
+
+                        // 6. Mark the tile as occupied
+                        tile->SetTileStatus(-2, ETileStatus::OBSTACLE); // Or use a specific value to indicate an obstacle
+                        obstacleCount++;
+
+                        
+                    }
+                }
+                
+
+    }
+    
+}
+
+
+
+
+
 
 // Get the relative location of a tile based on its grid position
 FVector AGameField::GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const

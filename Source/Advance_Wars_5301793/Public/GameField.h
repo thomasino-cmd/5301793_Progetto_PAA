@@ -3,7 +3,9 @@
 #include "CoreMinimal.h"
 #include "Tile.h"
 #include "GameFramework/Actor.h"
+#include "Obstacle.h"
 #include "GameField.generated.h"
+
 
 // Macro declaration for a dynamic multicast delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnReset);
@@ -34,6 +36,9 @@ public:
 	// Generate the game field with tiles
 	UFUNCTION(BlueprintCallable)
 	void GenerateField();
+
+	UFUNCTION(BlueprintCallable)
+	void SpawnRandomObstacles();
 
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
 
@@ -84,6 +89,15 @@ public:
 	// Tile size in world units
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
 	float TileSize;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AObstacle> Tree1Class;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AObstacle> Tree2Class;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<AObstacle> MountainClass;
 
 
 protected:

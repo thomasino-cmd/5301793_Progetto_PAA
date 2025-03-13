@@ -32,17 +32,19 @@ public:
 
 
     // tracks the number of moves in order to signal a drawn game
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 MoveCounter;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 UnitsPlaced; 
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 TotalUnitsToPlace;
 
-
-
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 CurrentPlayer;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 TurnNumber;
 
 
@@ -59,8 +61,9 @@ public:
 
     UPROPERTY(VisibleAnywhere)
     AGameField* GameField;
-
-    int32 GetNextPlayer(int32 Player);
+    
+    UFUNCTION(BlueprintCallable, Category = "Game Logic")
+    void GetNextPlayer();
 
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Settings")

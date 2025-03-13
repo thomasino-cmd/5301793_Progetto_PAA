@@ -2,6 +2,9 @@
 #include "ComputerPlayer.h"
 #include "AWGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/InputComponent.h"
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
 
 AComputerPlayer::AComputerPlayer()
 {
@@ -43,13 +46,16 @@ void AComputerPlayer::OnTurn()
         {
             PlaceUnit();
         }
+        else if (GameMode->UnitsPlaced >= 4)
+        {
+            MakeMove();
+        }
     }
     else
-    {
-        UE_LOG(LogTemp, Error, TEXT("ComputerPlayer: Could not get GameMode!"));
-    }
-
-    MakeMove();
+        {
+            UE_LOG(LogTemp, Error, TEXT("ComputerPlayer: Could not get GameMode!"));
+        }
+    
 }
 
 
@@ -128,8 +134,10 @@ void AComputerPlayer::PlaceUnit()
                     DrawDebugLine(GetWorld(), LineStart2, LineEnd2, FColor::Red, false, 5.0f, 0, 2.0f);
                     // --- End Debug Drawing ---
                     // 4. Call SetUnitPlacement
-                    GameMode->SetUnitPlacement(PlayerId, TileLocation);
-                    return; // Exit the function after placing the unit
+                    GameMode->SetUnitPlacement(1, TileLocation);
+                    //GameMode->EndTurn();
+                    // Exit the function after placing the unit
+                    return;
                 }
             }
             UE_LOG(LogTemp, Warning, TEXT("ComputerPlayer: Failed to find an empty tile after %d attempts."), MaxAttempts);

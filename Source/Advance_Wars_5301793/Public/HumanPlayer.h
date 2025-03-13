@@ -45,6 +45,7 @@ public:
 
 protected:
 	// Flag to track player's turn
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
 	bool bIsMyTurn;
 
 	UFUNCTION()

@@ -91,24 +91,15 @@ void AAWGameMode::ChoosePlayerAndStartGame()
     //temporaneamente faccio cosi 
     CurrentPlayer = 0;
 
-
-    for (int32 IndexI = 0; IndexI < Players.Num(); IndexI++)
-    {
-        Players[IndexI]->PlayerId = IndexI;
-       
-    }
-    MoveCounter += 1;
+    
+    MoveCounter = 0 ;
     Players[CurrentPlayer]->OnTurn();
 }
 
-int32 AAWGameMode::GetNextPlayer(int32 Player)
+void AAWGameMode::GetNextPlayer()
 {
-    Player++;
-    if(!Players.IsValidIndex(Player))
-    {
-        Player = 0 ; 
-    }
-    return Player;
+    CurrentPlayer = (CurrentPlayer + 1) % 2;
+    
 }
 
 void AAWGameMode::EndTurn()
@@ -143,8 +134,9 @@ void AAWGameMode::AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
 void AAWGameMode::SwitchPlayer()
 {
     // todo : aggiornala ma era troppo complicata prima
-    MoveCounter += 1;
-    CurrentPlayer = GetNextPlayer(CurrentPlayer);
+    MoveCounter ++;
+ 
+    GetNextPlayer();
     Players[CurrentPlayer]->OnTurn();
 
 }
