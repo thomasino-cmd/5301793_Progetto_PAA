@@ -83,6 +83,43 @@ int32 AAW_Brawler::GetMovementRange() const
     return MovementRange;
 }
 
+TArray<FVector2D> AAW_Brawler::GetLegalMoves(const AGameField* Field) const
+{
+    TArray<FVector2D> LegalMoves;
+    if (!Field)
+    {
+        return LegalMoves;
+    }
+
+    ATile* CurrentTile = Cast<ATile>(GetParentActor());
+    if (!CurrentTile)
+    {
+        return LegalMoves;
+    }
+
+    FVector2D CurrentPosition = CurrentTile->GetGridPosition();
+    int32 Range = GetMovementRange();
+
+    for (int32 X = 0; X < Field->GetSize(); ++X)
+    {
+        for (int32 Y = 0; Y < Field->GetSize(); ++Y)
+        {
+            FVector2D TargetPosition(X, Y);
+            float Distance = FVector2D::Distance(CurrentPosition, TargetPosition);
+
+            if (Distance <= Range)
+            {
+                ATile* TargetTile = Field->GetTile(X, Y);
+                if (TargetTile && TargetTile->GetTileStatus() != ETileStatus::OBSTACLE && TargetTile->GetUnit() == nullptr)
+                {
+                    LegalMoves.Add(TargetPosition);
+                }
+            }
+        }
+    }
+    return LegalMoves;
+}
+
 int32 AAW_Brawler::GetAttackRange() const
 {
     return AttackRange;

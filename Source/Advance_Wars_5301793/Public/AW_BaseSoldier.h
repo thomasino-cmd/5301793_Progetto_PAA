@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "GameField.h"
 #include "AW_BaseSoldier.generated.h"
 
 // This class does not need to be modified.
@@ -39,4 +40,7 @@ public:
 
     // Function to get AttackRange
     virtual int32 GetAttackRange() const = 0;
+
+    // Function to get legal moves
+    virtual TArray<FVector2D> GetLegalMoves(const AGameField* Field) const = 0;
 };

@@ -33,6 +33,12 @@ public:
     UPROPERTY()
     class ATile* StartingTile;
 
+    UPROPERTY()
+    TArray<FVector2D> ReachableTiles; 
+
+    void HighlightReachableTiles();
+    void ClearHighlightedTiles();
+
     bool bIsMovingUnit;
     bool bHasAttacked;
 
