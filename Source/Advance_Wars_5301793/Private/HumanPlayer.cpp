@@ -35,6 +35,7 @@ AHumanPlayer::AHumanPlayer()
 void AHumanPlayer::BeginPlay()
 {
     Super::BeginPlay();
+    
 }
 
 // Called every frame
@@ -48,21 +49,6 @@ void AHumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-    /*
-    // Enhanced Input
-    if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetWorld()))
-    {
-        Subsystem->AddMappingContext(InputMappingContext, 0);
-    }
-
-    if (APlayerController* PlayerController = Cast<APlayerController>(GetController()))
-    {
-        if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-        {
-            EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AHumanPlayer::OnClick);
-        }
-    }
-    */
 }
 
 void AHumanPlayer::OnTurn()
@@ -84,22 +70,6 @@ void AHumanPlayer::OnLose()
 }
 
 
-void AHumanPlayer::MoveUnit(ATile* TargetTile)
-{
-    // Implement your unit movement logic here
-    // This might involve checking for valid movement paths, 
-    // updating unit position, and potentially playing animations.
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving Unit to Tile"));
-}
-
-void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
-{
-    // Implement your attack logic here
-    // This could involve calculating damage, applying effects, 
-    // and handling unit destruction if applicable.
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking Unit"));
-}
-
 
 
 
@@ -111,42 +81,136 @@ void AHumanPlayer::OnClick()
     FHitResult Hit = FHitResult(ForceInit);
     // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
-  
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (Hit.bBlockingHit && bIsMyTurn)
+
+    if(GameMode->bIsPlacementPhaseOver == false)
     {
-        if (ATile* CurrTile = Cast<ATile>(Hit.GetActor()))
+        if (Hit.bBlockingHit && bIsMyTurn)
         {
-            if (CurrTile->GetTileStatus() == ETileStatus::EMPTY)
+            if (ATile* CurrTile = Cast<ATile>(Hit.GetActor()))
             {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("clicked"));
-                CurrTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
-                FVector SpawnPosition = CurrTile->GetActorLocation();
-                AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-                bIsMyTurn = false;
-
-                // Disabilita l'input PRIMA di chiamare SetUnitPlacement
-                APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
-                if (PlayerController)
+                if (CurrTile->GetTileStatus() == ETileStatus::EMPTY)
                 {
-                    PlayerController->DisableInput(PlayerController);
+                    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("clicked"));
+                    CurrTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
+                    FVector SpawnPosition = CurrTile->GetActorLocation();
+
+                    bIsMyTurn = false;
+
+                    // Disabilita l'input PRIMA di chiamare SetUnitPlacement
+                    APlayerController* PlayerController = GetWorld()->GetFirstPlayerController();
+                    if (PlayerController)
+                    {
+                        PlayerController->DisableInput(PlayerController);
+                    }
+
+                    GameMode->SetUnitPlacement(PlayerId, SpawnPosition);
+
+                    // Riabilita l'input DOPO che SetUnitPlacement (e EndTurn) sono completati
+                    if (PlayerController)
+                    {
+                        // Riabilita input dopo un piccolo delay per evitare problemi, può non servire
+                        FTimerHandle InputTimerHandle;
+                        float InputDelay = 0.1f;
+                        GetWorldTimerManager().SetTimer(InputTimerHandle, [PlayerController]() {
+                            PlayerController->EnableInput(PlayerController);
+                            }, InputDelay, false);
+
+                    }
+                    return;
                 }
-
-                GameMode->SetUnitPlacement(PlayerId, SpawnPosition);
-
-                // Riabilita l'input DOPO che SetUnitPlacement (e EndTurn) sono completati
-                if (PlayerController)
-                {
-                    // Riabilita input dopo un piccolo delay per evitare problemi, può non servire
-                    FTimerHandle InputTimerHandle;
-                    float InputDelay = 0.1f;
-                    GetWorldTimerManager().SetTimer(InputTimerHandle, [PlayerController]() {
-                        PlayerController->EnableInput(PlayerController);
-                        }, InputDelay, false);
-
-                }
-                return;
             }
         }
     }
+    else if(GameMode->bIsPlacementPhaseOver == true)
+    {
+        FHitResult Hit;
+        GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
+
+        if (Hit.bBlockingHit)
+        {
+            if (ATile* ClickedTile = Cast<ATile>(Hit.GetActor()))
+            {
+                HandleTileClick(ClickedTile);
+            }
+            else if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(Hit.GetActor()))
+            {
+                HandleFriendlyUnitClick(ClickedUnit);
+            }
+            else if (AComputerPlayer* ClickedEnemyUnit = Cast<AComputerPlayer>(Hit.GetActor()))
+            {
+                HandleEnemyUnitClick(ClickedEnemyUnit);
+            }
+        }
+    }
+}
+
+
+
+
+void AHumanPlayer::HandleTileClick(ATile* ClickedTile)
+{
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (bIsMyTurn)
+    {
+        // If human clicks on a Tile that belongs to him
+      // => Set Tile selected (active)
+        if (ClickedTile->GetTileOwner() == PlayerId)
+        {
+            const FVector2D Position = ClickedTile->GetGridPosition();
+            GameMode->SetSelectedTile(Position);
+        }
+
+        // If the Tile clicked is legal
+        // => Execute the move
+        if (ClickedTile->IsLegalTile())
+        {
+            ExecuteTheMoveForHumanPlayer(ClickedTile);
+        }
+    }
+}
+
+void AHumanPlayer::HandleFriendlyUnitClick(AHumanPlayer* ClickedUnit)
+{
+    if (bIsMyTurn)
+    {
+        SelectUnit(ClickedUnit);
+    }
+}
+
+void AHumanPlayer::HandleEnemyUnitClick(AComputerPlayer* ClickedEnemyUnit)
+{
+    if (bIsMyTurn && SelectedUnit)
+    {
+        AttackUnit(ClickedEnemyUnit);
+    }
+    else
+    {
+        // Optionally, handle clicking on an enemy unit when not ready to attack (e.g., show unit info)
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Enemy Clicked: %s"), *ClickedEnemyUnit->GetName()));
+    }
+}
+
+void AHumanPlayer::SelectUnit(AActor* Unit)
+{
+    SelectedUnit = Unit;
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Unit Selected: %s"), *Unit->GetName()));
+    // Add logic to highlight the unit or show movement range
+}
+
+void AHumanPlayer::MoveUnit(ATile* TargetTile)
+{
+    // Implement your unit movement logic here
+    // This might involve checking for valid movement paths,
+    // updating unit position, and potentially playing animations.
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving Unit to Tile"));
+}
+
+void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
+{
+    // Implement your attack logic here
+    // This could involve calculating damage, applying effects,
+    // and handling unit destruction if applicable.
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking Unit"));
 }

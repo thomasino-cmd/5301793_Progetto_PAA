@@ -2,6 +2,7 @@
 
 #include "AW_Brawler.h"
 #include "Tile.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
 
 
@@ -83,26 +84,32 @@ int32 AAW_Brawler::GetMovementRange() const
     return MovementRange;
 }
 
-TArray<FVector2D> AAW_Brawler::GetLegalMoves(const AGameField* Field) const
+
+TArray<FVector2D> AAW_Brawler::GetLegalMoves() const
 {
     TArray<FVector2D> LegalMoves;
-    if (!Field)
-    {
-        return LegalMoves;
-    }
 
+    // Ottieni la posizione corrente dalla tile genitore
     ATile* CurrentTile = Cast<ATile>(GetParentActor());
     if (!CurrentTile)
     {
         return LegalMoves;
     }
-
     FVector2D CurrentPosition = CurrentTile->GetGridPosition();
-    int32 Range = GetMovementRange();
 
-    for (int32 X = 0; X < Field->GetSize(); ++X)
+    // Ottieni un riferimento al GameField
+    AGameField* Field = Cast<AGameField>(UGameplayStatics::GetActorOfClass(GetWorld(), AGameField::StaticClass()));
+    if (!Field)
     {
-        for (int32 Y = 0; Y < Field->GetSize(); ++Y)
+        return LegalMoves;
+    }
+
+    int32 Range = GetMovementRange();
+    int32 FieldSize = Field->GetSize();
+
+    for (int32 X = 0; X < FieldSize; ++X)
+    {
+        for (int32 Y = 0; Y < FieldSize; ++Y)
         {
             FVector2D TargetPosition(X, Y);
             float Distance = FVector2D::Distance(CurrentPosition, TargetPosition);

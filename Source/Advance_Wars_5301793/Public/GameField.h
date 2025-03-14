@@ -19,6 +19,13 @@ public:
 	UPROPERTY(Transient)
 	TArray<ATile*> TileArray;
 
+	// Keeps track of LegalMoves
+	UPROPERTY(Transient)
+	TArray<FVector2D> LegalMovesArray;
+
+	// Returns the legal moves for the piece at the given position
+	//TArray<FVector2D> LegalMoves(FVector2D Position) const;
+
 	static const int32 NOT_ASSIGNED = -1;
 
 	// BlueprintAssignable Usable with Multicast Delegates only. Exposes the property for assigning in Blueprints.
@@ -76,6 +83,13 @@ public:
 	// Set the distance between tiles in world units
 	UFUNCTION(BlueprintCallable)
 	void SetTileSpacing(float NewTileSpacing);
+
+	UFUNCTION(BlueprintCallable)
+	void ResetGameStatusField();
+
+	void SetLegalMoves(const TArray<FVector2D>& NewLegalMoves);
+
+	void ShowLegalMovesInTheField();
 
 	// Size of the game field (number of tiles in each dimension)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")

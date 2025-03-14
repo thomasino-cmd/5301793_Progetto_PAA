@@ -226,6 +226,22 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
             FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
 
             GameField->SetGridCellOccupied(GridPosition2D, PlayerNumber);
+
+            // Ottieni la Tile corrispondente alla GridPosition
+            ATile* Tile = GameField->GetTile(GridPosition2D.X, GridPosition2D.Y);
+
+            if (Tile)
+            {
+                // Attacca l'unità alla Tile
+                UnitToSpawn->AttachToActor(Tile, FAttachmentTransformRules::KeepWorldTransform);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Error, TEXT("No Tile found at GridPosition: %s"), *GridPosition.ToString());
+                // Gestisci l'errore: la Tile non è stata trovata
+                // Potresti voler distruggere l'unità spawnata o fare altro...
+            }
+
         }
 
        
@@ -233,9 +249,39 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         if (UnitsPlaced >= 4)
         {
             bIsPlacementPhaseOver = true;
+           
         }
 
         EndTurn();
     }
 }
 
+
+void AAWGameMode::SetSelectedTile(const FVector2D Position) const
+{
+    // Reset the field colors
+    GameField->ResetGameStatusField();
+
+    // Show selected Tile (blue color)
+    ATile* SelectedTile = GameField->GetTile(Position.X, Position.Y);
+    if (SelectedTile)
+    {
+        //GameField->GetTile(Position.X, Position.Y);
+
+        // Get the unit on the selected tile
+        AActor* Unit = SelectedTile->GetUnit();
+
+        if (Unit && Unit->Implements<UAW_BaseSoldier>())
+        {
+            IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(Unit);
+            // Return the moves for the piece at the given position passed as a parameter
+            TArray<FVector2D> LegalMoves = Soldier->GetLegalMoves();
+
+            //memorizzo le mosse legali nel gamefield
+            GameField->SetLegalMoves(LegalMoves);
+        }
+    }
+
+    // Show legal moves (yellow color)
+    GameField->ShowLegalMovesInTheField();
+}

@@ -25,19 +25,20 @@ public:
     //    void OnClick();
 
     UPROPERTY()
-    class AHumanPlayer* SelectedUnit;
+    class AAW_BaseSoldier* SelectedUnit;
 
     UPROPERTY()
-    class ATile* DestinationTile;
-
-    UPROPERTY()
-    class ATile* StartingTile;
+    class ATile* SelectedTile;
 
     UPROPERTY()
     TArray<FVector2D> ReachableTiles; 
 
     void HighlightReachableTiles();
     void ClearHighlightedTiles();
+    UPROPERTY()
+    TArray<FVector2D> ReachableTiles; 
+
+
 
     bool bIsMovingUnit;
     bool bHasAttacked;

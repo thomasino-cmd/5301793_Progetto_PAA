@@ -74,7 +74,7 @@ void ATile::SetPlayerOwner(int32 NewPlayerOwner)
 }
 
 // Get the player owner of the tile
-int32 ATile::GetPlayerOwner() const
+int32 ATile::GetTileOwner() const
 {
 	return PlayerOwner;
 }

@@ -26,6 +26,7 @@ public:
     bool bIsGameOver;
 
     bool bIsPlacementPhaseOver;
+  
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
@@ -80,6 +81,8 @@ public:
 
 
     void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
+
+    void SetSelectedTile(const FVector2D Position) const;
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Brawler> BrawlerClassHuman;

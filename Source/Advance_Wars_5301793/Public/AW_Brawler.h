@@ -68,7 +68,7 @@ public:
     virtual void TakeDamage(float Damage) override;
     virtual float GetHealth() const override;
     virtual int32 GetMovementRange() const override;
-    TArray<FVector2D> GetLegalMoves(const AGameField* Field) const override;
+    TArray<FVector2D> GetLegalMoves() const override;
     virtual int32 GetAttackRange() const override;
 
     // Function to get the reachable cells based on MovementRange

@@ -43,6 +43,18 @@ public:
 	UFUNCTION()
 	void OnClick();
 
+	UFUNCTION()
+	void HandleTileClick(ATile* ClickedTile);
+
+	UFUNCTION()
+	void HandleFriendlyUnitClick(AHumanPlayer* ClickedUnit);
+
+	UFUNCTION()
+	void HandleEnemyUnitClick(AComputerPlayer* ClickedEnemyUnit);
+
+	UFUNCTION()
+	void SelectUnit(AActor* Unit);
+
 protected:
 	// Flag to track player's turn
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")

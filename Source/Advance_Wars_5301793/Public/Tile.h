@@ -73,7 +73,7 @@ public:
 	void SetPlayerOwner(int32 NewPlayerOwner);
 
 	// Get the player owner of the tile
-	int32 GetPlayerOwner() const;
+	int32 GetTileOwner() const;
 
 protected:
 	// Called when the game starts or when spawned

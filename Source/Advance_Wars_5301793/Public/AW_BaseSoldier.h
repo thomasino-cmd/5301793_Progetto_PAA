@@ -42,5 +42,5 @@ public:
     virtual int32 GetAttackRange() const = 0;
 
     // Function to get legal moves
-    virtual TArray<FVector2D> GetLegalMoves(const AGameField* Field) const = 0;
+    virtual TArray<FVector2D> GetLegalMoves() const = 0;;
 };

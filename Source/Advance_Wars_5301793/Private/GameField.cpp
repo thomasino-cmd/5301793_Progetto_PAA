@@ -234,5 +234,57 @@ void AGameField::SetTileSpacing(float NewTileSpacing)
     TileSpacing = NewTileSpacing;
 }
 
+void AGameField::ResetGameStatusField()
+{
+    for (ATile* CurrentTile : TileArray)
+    {
+        if (CurrentTile->GetTileStatus() != ETileStatus::EMPTY)
+        {
+            CurrentTile->SetTileStatus(-1, ETileStatus::EMPTY);
+        }
+    }
 
+    //PROBABLY NOT NECESSARY  SetSelectedTile(FVector2D(-1, -1));
+}
+
+
+void AGameField::SetLegalMoves(const TArray<FVector2D>& NewLegalMoves)
+{
+    LegalMovesArray = NewLegalMoves;
+}
+
+
+void AGameField::ShowLegalMovesInTheField()
+{
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameMode is null in ShowLegalMovesInTheField!"));
+        return; // Exit if GameMode is invalid
+    }
+
+    for (const FVector2D& Position : LegalMovesArray)
+    {
+        ATile* CurrentTile = TileMap.FindRef(Position);
+        if (CurrentTile) // Check if the tile is valid
+        {
+            // Assuming PlayerOwner is used to differentiate between players
+            if (CurrentTile->GetTileOwner() != GameMode->CurrentPlayer && CurrentTile->GetTileOwner() != -1)
+            {
+                CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OBSTACLE); // Or a new status like CAN_ATTACK
+            }
+            else
+            {
+                CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OCCUPIED);
+            }
+            // You might need to adjust this part based on how you want to visualize legal moves
+            // For example, you might want to change the material of the tile or use a different status
+            // CurrentTile->SetTileMaterial();  // If you have this function, keep it
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Tile not found at position: %s"), *Position.ToString());
+        }
+    }
+}
 

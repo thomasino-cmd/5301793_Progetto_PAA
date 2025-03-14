@@ -29,10 +29,14 @@ void AAWPlayerController::SetupInputComponent()
 
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
     {
-        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);
+        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);  
     }
 }
 
+
+
+
+// CLICKONGRID cosi funziona pero vale finora solo per il posizionamento 
 
 
 void AAWPlayerController::ClickOnGrid()
@@ -43,6 +47,10 @@ void AAWPlayerController::ClickOnGrid()
         HumanPlayer->OnClick();
     }
 }
+
+
+
+
 
 
 
@@ -110,6 +118,46 @@ void AAWPlayerController::OnClick()
     }
 }
 */
+
+
+void AAWPlayerController::HighlightReachableTiles()
+{
+    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
+    if (!GameField)
+    {
+        return;
+    }
+    for (const FVector2D& GridPos : ReachableTiles)
+    {
+        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
+        if (Tile)
+        {
+            // Change the tile's material or color to highlight it
+            // Example:
+            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Green);
+        }
+    }
+}
+
+void AAWPlayerController::ClearHighlightedTiles()
+{
+    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
+    if (!GameField)
+    {
+        return;
+    }
+    for (const FVector2D& GridPos : ReachableTiles)
+    {
+        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
+        if (Tile)
+        {
+            // Reset the tile's material or color
+            // Example:
+            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Transparent);
+        }
+    }
+    ReachableTiles.Empty();
+}
 
 void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
 {
