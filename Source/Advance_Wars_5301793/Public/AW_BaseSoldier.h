@@ -42,5 +42,13 @@ public:
     virtual int32 GetAttackRange() const = 0;
 
     // Function to get legal moves
-    virtual TArray<FVector2D> GetLegalMoves() const = 0;;
+    virtual TArray<FVector2D> GetLegalMoves() const = 0;
+
+    virtual TArray<class ATile*> GetReachableTiles(int32 Range) = 0;
+
+    
+    int32 OwnerPlayerId;
+
+    
+    ATile* CurrentTile;
 };

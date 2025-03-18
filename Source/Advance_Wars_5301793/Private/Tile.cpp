@@ -14,6 +14,8 @@ ATile::ATile()
 	StaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshComponent"));
 	StaticMeshComponent->SetupAttachment(Scene); // Attach the static mesh component to the scene component
 
+	StaticMeshComponent->SetMaterial(0, NormalMaterial);
+
 	// Initialize the tile's properties
 	
 	Unit = nullptr;
@@ -110,4 +112,20 @@ FString ATile::GetTileMaterialPath() const
 	}
 
 	return MaterialPath ;
+}
+
+
+
+void ATile::Highlight(bool ShouldHighlight)
+{
+	if (ShouldHighlight)
+	{
+		// Change material or color to highlight
+		StaticMeshComponent->SetMaterial(0, HighlightedMaterial);
+	}
+	else
+	{
+		// Reset material or color
+		StaticMeshComponent->SetMaterial(0, NormalMaterial);
+	}
 }

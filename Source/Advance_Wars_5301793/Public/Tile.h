@@ -75,6 +75,12 @@ public:
 	// Get the player owner of the tile
 	int32 GetTileOwner() const;
 
+
+	UFUNCTION(BlueprintCallable, Category = "Tile")
+	void Highlight(bool ShouldHighlight);
+
+
+
 	void SetTileMaterial() const;
 
 	FString GetTileMaterialPath() const;
@@ -90,6 +96,14 @@ protected:
 	// Static mesh component for the tile's visual representation
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UStaticMeshComponent* StaticMeshComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	UMaterialInterface* NormalMaterial;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
+	UMaterialInterface* HighlightedMaterial;
+
+
 
 	// Status of the tile
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")

@@ -35,6 +35,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Soldier")
     float MovementSpeed;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
+    int32 OwnerPlayerId;
+
     // Scene component for the tile
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
     USceneComponent* Scene;
@@ -62,7 +65,12 @@ public:
     float CalculateCounterAttackDamage(AActor* Attacker);
 
     // Function to get the reachable cells based on MovementRange
-    TArray<class ATile*> GetReachableTiles(int32 Range, bool bIgnoreObstacles = false);
+    virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Soldier")
+    ATile* CurrentTile;
+
+
 
     virtual int32 GetMovementRange() const override;
     TArray<FVector2D> GetLegalMoves() const override;

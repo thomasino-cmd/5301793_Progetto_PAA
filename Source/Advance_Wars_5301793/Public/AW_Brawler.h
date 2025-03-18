@@ -38,7 +38,8 @@ public:
     float MovementSpeed;
 
 
-
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
+    int32 OwnerPlayerId;
 
 
     
@@ -72,5 +73,9 @@ public:
     virtual int32 GetAttackRange() const override;
 
     // Function to get the reachable cells based on MovementRange
-    TArray<class ATile*> GetReachableTiles(int32 Range, bool bIgnoreObstacles = false);
+    virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
+    
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Soldier")
+    ATile* CurrentTile;
 };

@@ -192,6 +192,15 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
     {
         UnitToSpawn->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
 
+
+        if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
+        {
+            Brawler->OwnerPlayerId = PlayerNumber;
+        }
+        else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
+        {
+            Sniper->OwnerPlayerId = PlayerNumber;
+        }
         UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
 
         UnitsPlaced++;
@@ -200,7 +209,9 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         if (GameField)
         {
             // Converti FVector GridPosition in FVector2D
-            FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
+            //FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
+
+            FVector2D GridPosition2D = GameField->GetXYPositionByRelativeLocation(GridPosition);
 
             GameField->SetGridCellOccupied(GridPosition2D, PlayerNumber);
 
@@ -211,6 +222,17 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
             {
                 // Attacca l'unità alla Tile
                 UnitToSpawn->AttachToActor(Tile, FAttachmentTransformRules::KeepWorldTransform);
+
+                 //If it is a Brawler
+                if (AAW_Brawler* BrawlerSoldier = Cast<AAW_Brawler>(UnitToSpawn))
+                {
+                    BrawlerSoldier->CurrentTile = Tile; // Store the tile reference
+                }
+                //If it is a Sniper
+                else if (AAW_Sniper* SniperSoldier = Cast<AAW_Sniper>(UnitToSpawn))
+                {
+                    SniperSoldier->CurrentTile = Tile; // Store the tile reference
+                }
             }
             else
             {

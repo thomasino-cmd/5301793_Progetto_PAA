@@ -39,18 +39,24 @@ public:
 	virtual void OnWin() override;
 	virtual void OnLose() override;
 
+
+
+
+	TArray<ATile*> ReachableTiles;
+
+
 	// Function to handle mouse clicks
 	UFUNCTION()
 	void OnClick();
 
 	UFUNCTION()
-	void HandleTileClick(ATile* ClickedTile);
+	void HandleTileClick(ATile* ClickedTile, const TArray<ATile*>& ReachableTiles);
 
 	UFUNCTION()
-	void HandleFriendlyUnitClick(AHumanPlayer* ClickedUnit);
+	void HandleFriendlyUnitClick(AActor* ClickedUnit);
 
 	UFUNCTION()
-	void HandleEnemyUnitClick(AComputerPlayer* ClickedEnemyUnit);
+	void HandleEnemyUnitClick(AActor* ClickedEnemyUnit);
 
 	UFUNCTION()
 	void SelectUnit(AActor* Unit);
@@ -64,10 +70,12 @@ protected:
 	void MoveUnit(ATile* TargetTile);
 
 	UFUNCTION()
-	void AttackUnit(AComputerPlayer* TargetUnit);
+	void AttackUnit(AActor* TargetUnit);
 
 	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
 	AActor* SelectedUnit;
+
+	bool bWaitingForMoveInput; 
 };

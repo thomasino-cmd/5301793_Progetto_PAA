@@ -25,6 +25,7 @@ void AGameField::OnConstruction(const FTransform& Transform)
 
     // Calculate the NextCellPositionMultiplier based on TileSize and CellPadding
     NextCellPositionMultiplier = (TileSize + TileSize * CellPadding) / TileSize;
+  
 }
 
 // Called when the game starts or when spawned
@@ -144,7 +145,12 @@ void AGameField::SpawnRandomObstacles()
 }
 
 
-
+FVector2D AGameField::GetXYPositionByRelativeLocation(const FVector& Location) const
+{
+    const double x = Location[0] / (TileSize * NextCellPositionMultiplier);
+    const double y = Location[1] / (TileSize * NextCellPositionMultiplier);
+    return FVector2D(x, y);
+}
 
 
 
@@ -201,18 +207,21 @@ float AGameField::GetTileSize() const
     return TileSize;
 }
 
+
 void AGameField::SetGridCellOccupied(const FVector2D& GridPosition, int32 PlayerNumber)
 {
-    if (TileMap.Contains(GridPosition))
+    ATile** TilePtr = TileMap.Find(GridPosition); // Use Find
+
+    if (TilePtr) // Check if the pointer is valid
     {
-        ATile* Tile = TileMap[GridPosition];
+        ATile* Tile = *TilePtr; // Dereference to get the ATile
 
         Tile->SetPlayerOwner(PlayerNumber);
         Tile->SetTileStatus(PlayerNumber, ETileStatus::OCCUPIED);
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("invalid grid position: %s"), *GridPosition.ToString());
+        UE_LOG(LogTemp, Warning, TEXT("Invalid grid position: %s"), *GridPosition.ToString());
     }
 }
 
@@ -265,7 +274,8 @@ void AGameField::ShowLegalMovesInTheField()
 
     for (const FVector2D& Position : LegalMovesArray)
     {
-        ATile* CurrentTile = TileMap.FindRef(Position);
+        ATile* CurrentTile = *TileMap.Find(Position);
+      
         if (CurrentTile) // Check if the tile is valid
         {
             ////in realtà io dovrei potermi muovere solo su tiles che sono empty quindi ancora inizializzate a -1. 
@@ -294,3 +304,26 @@ void AGameField::ShowLegalMovesInTheField()
     }
 }
 
+
+
+void AGameField::HighlightReachableTiles(const TArray<ATile*>& ReachableTiles)
+{
+    for (ATile* Tile : ReachableTiles)
+    {
+        if (Tile)
+        {
+            Tile->Highlight(true); // Assuming Tile has a Highlight(bool) function
+        }
+    }
+}
+
+void AGameField::ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles)
+{
+    for (ATile* Tile : ReachableTiles)
+    {
+        if (Tile)
+        {
+            Tile->Highlight(false); // Assuming Tile has a Highlight(bool) function
+        }
+    }
+}

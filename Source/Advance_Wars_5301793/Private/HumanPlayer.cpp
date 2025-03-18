@@ -6,7 +6,7 @@
 #include "Components/InputComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-
+#include "AW_BaseSoldier.h"
 #include "Kismet/GameplayStatics.h"
 #include "AWPlayerController.h"
 
@@ -75,7 +75,7 @@ void AHumanPlayer::OnLose()
 
 void AHumanPlayer::OnClick()
 {
-    
+
 
     //Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
     FHitResult Hit = FHitResult(ForceInit);
@@ -84,7 +84,7 @@ void AHumanPlayer::OnClick()
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
 
-    if(GameMode->bIsPlacementPhaseOver == false)
+    if (GameMode->bIsPlacementPhaseOver == false)
     {
         if (Hit.bBlockingHit && bIsMyTurn)
         {
@@ -123,69 +123,55 @@ void AHumanPlayer::OnClick()
             }
         }
     }
-    else //if(GameMode->bIsPlacementPhaseOver == true)
+    else if (GameMode->bIsPlacementPhaseOver == true)
     {
-
         GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("STARTING GAME PHASE"));
         GameIstance->SetTurnMessage(TEXT("STARTING GAME PHASE"));
 
-
-        //  COMMENTO SENNO HA BISOGNO DI UN SECONDO CLICK PERCHE' IL PRIMO LO SPRECA PER ACCORGERSI CHE LA FASE DI POSIZIONAMENTO è FINITA 
-       // FHitResult Hit;
-       // GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
-
-        if (Hit.bBlockingHit)
+        if (Hit.bBlockingHit && bIsMyTurn)
         {
-            if (ATile* ClickedTile = Cast<ATile>(Hit.GetActor()))
+            /*if (ATile* ClickedTile = Cast<ATile>(Hit.GetActor()))
             {
                 HandleTileClick(ClickedTile);
-            }
-            else if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(Hit.GetActor()))
+            }*/
+            // Check if a unit was clicked
+            if (AActor* ClickedActor = Hit.GetActor())
             {
-                HandleFriendlyUnitClick(ClickedUnit);
-            }
-            else if (AComputerPlayer* ClickedEnemyUnit = Cast<AComputerPlayer>(Hit.GetActor()))
-            {
-                HandleEnemyUnitClick(ClickedEnemyUnit);
+                IAW_BaseSoldier* ClickedSoldier = Cast<IAW_BaseSoldier>(ClickedActor);
+                if (ClickedSoldier)
+                {
+                    int32 OwnerId = ClickedSoldier->OwnerPlayerId;
+
+                    if (OwnerId == PlayerId)
+                    {
+                        GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("TOCCATO UNA TUA UNITA'"));
+                        GameIstance->SetTurnMessage(TEXT("TOCCATO UNA TUA UNITA'"));
+                        HandleFriendlyUnitClick(ClickedActor); 
+                    }
+                    else
+                    {
+                        GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("TOCCATO UNA sua UNITA'"));
+                        GameIstance->SetTurnMessage(TEXT("TOCCATO UNA sua UNITA'"));
+                        HandleEnemyUnitClick(ClickedActor);  
+                    }
+                }
             }
         }
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("not in a right phase of the game"))
     }
 }
 
 
-
-
-void AHumanPlayer::HandleTileClick(ATile* ClickedTile)
+void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
 {
-    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-    if (bIsMyTurn)
-    {
-        // If human clicks on a Tile that belongs to him
-        // => Set Tile selected (active)
-        if (ClickedTile->GetTileOwner() == PlayerId)
-        {
-            const FVector2D Position = ClickedTile->GetGridPosition();
-            GameMode->SetSelectedTile(Position);
-        }
-
-        // If the Tile clicked is legal
-        // => Execute the move
-       /* if (ClickedTile->IsLegalTile())
-        {
-            ExecuteTheMoveForHumanPlayer(ClickedTile);
-        }*/
-    }
-}
-
-void AHumanPlayer::HandleFriendlyUnitClick(AHumanPlayer* ClickedUnit)
-{
-    if (bIsMyTurn)
-    {
         SelectUnit(ClickedUnit);
-    }
+    
 }
 
-void AHumanPlayer::HandleEnemyUnitClick(AComputerPlayer* ClickedEnemyUnit)
+void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 {
     if (bIsMyTurn && SelectedUnit)
     {
@@ -198,22 +184,132 @@ void AHumanPlayer::HandleEnemyUnitClick(AComputerPlayer* ClickedEnemyUnit)
     }
 }
 
+
+
+
 void AHumanPlayer::SelectUnit(AActor* Unit)
 {
+
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (GameMode && GameMode->GameField)
+    {
+        GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
+    }
+
     SelectedUnit = Unit;
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Unit Selected: %s"), *Unit->GetName()));
-    // Add logic to highlight the unit or show movement range
+
+    // Get reachable tiles
+
+    //Try to cast to a Brawler
+    AAW_Brawler* ClickedBrawler = Cast<AAW_Brawler>(SelectedUnit);
+    if (ClickedBrawler)
+    {
+        
+            ReachableTiles = ClickedBrawler->GetReachableTiles(ClickedBrawler->GetMovementRange());
+
+            if (GameMode && GameMode->GameField)
+            {
+                GameMode->GameField->HighlightReachableTiles(ReachableTiles);
+            }
+        
+    }
+    else
+    {
+        //Try to cast to a Sniper
+        AAW_Sniper* ClickedSniper = Cast<AAW_Sniper>(SelectedUnit);
+        if (ClickedSniper)
+        {
+            
+                ReachableTiles = ClickedSniper->GetReachableTiles(ClickedSniper->GetMovementRange());
+
+                if (GameMode && GameMode->GameField)
+                {
+                    GameMode->GameField->HighlightReachableTiles(ReachableTiles);
+                    bWaitingForMoveInput = true;
+                    HandleTileClick(ClickedSniper->CurrentTile, ReachableTiles);
+                }
+            
+        }
+       
+    }
 }
+
+void AHumanPlayer::HandleTileClick(ATile* CurrentTile, const TArray<ATile*>& ReachableTiles) 
+{
+    // HandleTileClick waits for another input by the player
+    // if the click is on the same tile it is on deselect the unit and goes back to OnClick()
+    // else if is on a reachable tile moves or if on a enemy unit within the attack range shoots!
+
+    GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Orange, TEXT("Handling Tile Click"));
+
+    // Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
+    FHitResult Hit = FHitResult(ForceInit);
+
+    // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
+    GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    ATile* ClickedTile = Cast<ATile>(Hit.GetActor()); // Get the tile from the hit result
+
+    if (bWaitingForMoveInput)
+    {
+        if (SelectedUnit)
+        {
+            if (ClickedTile && ClickedTile == CurrentTile) // Check if the clicked tile is the unit's current tile
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Deselecting unit and Attacking"));
+                AttackUnit(); // Call AttackUnit() to handle attack logic
+                SelectedUnit = nullptr; // Deselect the unit
+            }
+            else if (ClickedTile && ReachableTiles.Contains(ClickedTile)) // Check if the clicked tile is reachable
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
+                MoveUnit(ClickedTile);
+
+                if (GameMode && GameMode->GameField)
+                {
+                    GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
+                }
+                SelectedUnit = nullptr; // Deselect unit after move
+            }
+            else
+            {
+                // Handle click on a tile that's not reachable (e.g., show a message)
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Tile not reachable"));
+            }
+        }
+        else
+        {
+            // Handle tile click when no unit is selected (e.g., show tile info?)
+            if (ClickedTile)
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Tile Clicked: %s"), *ClickedTile->GetName()));
+            }
+        }
+    }
+}
+
+
+
+
+
 
 void AHumanPlayer::MoveUnit(ATile* TargetTile)
 {
-    // Implement your unit movement logic here
-    // This might involve checking for valid movement paths,
-    // updating unit position, and potentially playing animations.
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving Unit to Tile"));
+    //this needs to be done yet !!!!            
+    // TODO 
+    // TODO 
+    // TODO 
+    // TODO 
+    // TODO 
+
 }
 
-void AHumanPlayer::AttackUnit(AComputerPlayer* TargetUnit)
+
+
+
+
+void AHumanPlayer::AttackUnit(AActor* TargetUnit)
 {
     // Implement your attack logic here
     // This could involve calculating damage, applying effects,

@@ -47,6 +47,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SpawnRandomObstacles();
 
+	UFUNCTION()
+	FVector2D GetXYPositionByRelativeLocation(const FVector& Location) const;
+
 	FVector GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const;
 
 	UFUNCTION(BlueprintCallable)
@@ -86,6 +89,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ResetGameStatusField();
+
+
+	void HighlightReachableTiles(const TArray<ATile*>& ReachableTiles);
+	void ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles);
+
+
 
 	void SetLegalMoves(const TArray<FVector2D>& NewLegalMoves);
 
