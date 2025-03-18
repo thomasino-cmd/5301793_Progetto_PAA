@@ -75,6 +75,10 @@ public:
 	// Get the player owner of the tile
 	int32 GetTileOwner() const;
 
+	void SetTileMaterial() const;
+
+	FString GetTileMaterialPath() const;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

@@ -2,6 +2,7 @@
 
 #include "AW_Sniper.h"
 #include "Tile.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AAW_Sniper::AAW_Sniper()
@@ -103,4 +104,49 @@ TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range, bool bIgnoreObstacles)
         // TODO: Aggiungi le celle raggiungibili a ReachableTiles
     }
     return ReachableTiles;
+}
+
+
+
+TArray<FVector2D> AAW_Sniper::GetLegalMoves() const
+{
+    TArray<FVector2D> LegalMoves;
+
+    // Ottieni la posizione corrente dalla tile genitore
+    ATile* CurrentTile = Cast<ATile>(GetParentActor());
+    if (!CurrentTile)
+    {
+        UE_LOG(LogTemp, Error, TEXT("il soldato esiste ma non è impararentato con nessuna tile"))
+            return LegalMoves;      //TODO se lo ritorna cosi com'è devi assicurarti che parta vuoto tipo un ciclo di inizializzazione a nullptr 
+    }
+    FVector2D CurrentPosition = CurrentTile->GetGridPosition();
+
+    // Ottieni un riferimento al GameField
+    AGameField* Field = Cast<AGameField>(UGameplayStatics::GetActorOfClass(GetWorld(), AGameField::StaticClass()));
+    if (!Field)
+    {
+        return LegalMoves;
+    }
+
+    int32 Range = GetMovementRange();
+    int32 FieldSize = Field->GetSize();
+
+    for (int32 X = 0; X < FieldSize; ++X)
+    {
+        for (int32 Y = 0; Y < FieldSize; ++Y)
+        {
+            FVector2D TargetPosition(X, Y);
+            float Distance = FVector2D::Distance(CurrentPosition, TargetPosition);      //IMPORTANTE TODO non sono sicuro che distanza in linea d'aria sia corretta come metrica, non deve fare una sfera . ma questo è cambiabile .
+
+            if (Distance <= Range)
+            {
+                ATile* TargetTile = Field->GetTile(X, Y);
+                if (TargetTile && TargetTile->GetTileStatus() != ETileStatus::OBSTACLE && TargetTile->GetUnit() == nullptr)
+                {
+                    LegalMoves.Add(TargetPosition);
+                }
+            }
+        }
+    }
+    return LegalMoves;
 }

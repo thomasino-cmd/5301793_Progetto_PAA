@@ -123,10 +123,16 @@ void AHumanPlayer::OnClick()
             }
         }
     }
-    else if(GameMode->bIsPlacementPhaseOver == true)
+    else //if(GameMode->bIsPlacementPhaseOver == true)
     {
-        FHitResult Hit;
-        GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
+
+        GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("STARTING GAME PHASE"));
+        GameIstance->SetTurnMessage(TEXT("STARTING GAME PHASE"));
+
+
+        //  COMMENTO SENNO HA BISOGNO DI UN SECONDO CLICK PERCHE' IL PRIMO LO SPRECA PER ACCORGERSI CHE LA FASE DI POSIZIONAMENTO è FINITA 
+       // FHitResult Hit;
+       // GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Visibility, false, Hit);
 
         if (Hit.bBlockingHit)
         {
@@ -155,7 +161,7 @@ void AHumanPlayer::HandleTileClick(ATile* ClickedTile)
     if (bIsMyTurn)
     {
         // If human clicks on a Tile that belongs to him
-      // => Set Tile selected (active)
+        // => Set Tile selected (active)
         if (ClickedTile->GetTileOwner() == PlayerId)
         {
             const FVector2D Position = ClickedTile->GetGridPosition();
@@ -164,10 +170,10 @@ void AHumanPlayer::HandleTileClick(ATile* ClickedTile)
 
         // If the Tile clicked is legal
         // => Execute the move
-        if (ClickedTile->IsLegalTile())
+       /* if (ClickedTile->IsLegalTile())
         {
             ExecuteTheMoveForHumanPlayer(ClickedTile);
-        }
+        }*/
     }
 }
 

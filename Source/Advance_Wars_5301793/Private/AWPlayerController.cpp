@@ -119,68 +119,68 @@ void AAWPlayerController::OnClick()
 }
 */
 
-
-void AAWPlayerController::HighlightReachableTiles()
-{
-    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
-    if (!GameField)
-    {
-        return;
-    }
-    for (const FVector2D& GridPos : ReachableTiles)
-    {
-        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
-        if (Tile)
-        {
-            // Change the tile's material or color to highlight it
-            // Example:
-            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Green);
-        }
-    }
-}
-
-void AAWPlayerController::ClearHighlightedTiles()
-{
-    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
-    if (!GameField)
-    {
-        return;
-    }
-    for (const FVector2D& GridPos : ReachableTiles)
-    {
-        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
-        if (Tile)
-        {
-            // Reset the tile's material or color
-            // Example:
-            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Transparent);
-        }
-    }
-    ReachableTiles.Empty();
-}
-
-void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
-{
-    SelectedUnit = Unit;
-    // Add logic to highlight the unit or show movement range
-}
-
-void AAWPlayerController::MoveUnit(ATile* Tile)
-{
-    // Add logic to move the SelectedUnit to the Tile
-    // This might involve pathfinding or animation
-    bIsMovingUnit = false;
-}
-
-void AAWPlayerController::AttackUnit(AHumanPlayer* Unit)
-{
-    // Add logic for the SelectedUnit to attack the Unit
-    // This might involve damage calculation or combat animation
-    DeselectUnit();
-}
-
-void AAWPlayerController::DeselectUnit()
-{
-   // SelectedUnit = nullptr;
-    // Add logic to clear highlighting or hide movement range
-}
+//
+//void AAWPlayerController::HighlightReachableTiles()
+//{
+//    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
+//    if (!GameField)
+//    {
+//        return;
+//    }
+//    for (const FVector2D& GridPos : ReachableTiles)
+//    {
+//        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
+//        if (Tile)
+//        {
+//            // Change the tile's material or color to highlight it
+//            // Example:
+//            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Green);
+//        }
+//    }
+//}
+//
+//void AAWPlayerController::ClearHighlightedTiles()
+//{
+//    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
+//    if (!GameField)
+//    {
+//        return;
+//    }
+//    for (const FVector2D& GridPos : ReachableTiles)
+//    {
+//        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
+//        if (Tile)
+//        {
+//            // Reset the tile's material or color
+//            // Example:
+//            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Transparent);
+//        }
+//    }
+//    ReachableTiles.Empty();
+//}
+//
+//void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
+//{
+//    SelectedUnit = Unit;
+//    // Add logic to highlight the unit or show movement range
+//}
+//
+//void AAWPlayerController::MoveUnit(ATile* Tile)
+//{
+//    // Add logic to move the SelectedUnit to the Tile
+//    // This might involve pathfinding or animation
+//    bIsMovingUnit = false;
+//}
+//
+//void AAWPlayerController::AttackUnit(AHumanPlayer* Unit)
+//{
+//    // Add logic for the SelectedUnit to attack the Unit
+//    // This might involve damage calculation or combat animation
+//    DeselectUnit();
+//}
+//
+//void AAWPlayerController::DeselectUnit()
+//{
+//   // SelectedUnit = nullptr;
+//    // Add logic to clear highlighting or hide movement range
+//}

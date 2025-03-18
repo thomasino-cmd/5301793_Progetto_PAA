@@ -154,30 +154,7 @@ void AAWGameMode::EndGame()
     // Sostituisci questa implementazione con la tua logica di fine gioco effettiva
 }
 
-/*
-void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
-{
-    if (bIsPlacementPhaseOver || PlayerNumber != CurrentPlayer)
-    {
-        return;
-    }
 
-    AAW_Brawler* Brawler = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassHuman, GridPosition, FRotator::ZeroRotator);
-    Brawler->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
-    
-   
-    UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
-
-    
-    // Incrementa il contatore delle unità piazzate
-    UnitsPlaced += 1;
-
-    
-
-    // Termina il turno
-    EndTurn();
-}
-*/
 
 void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
 {
@@ -269,7 +246,7 @@ void AAWGameMode::SetSelectedTile(const FVector2D Position) const
         //GameField->GetTile(Position.X, Position.Y);
 
         // Get the unit on the selected tile
-        AActor* Unit = SelectedTile->GetUnit();
+        AActor* Unit = SelectedTile->GetUnit();     // TODO : assicurati che l'unita venga attachata alla tile correttamente 
 
         if (Unit && Unit->Implements<UAW_BaseSoldier>())
         {

@@ -56,12 +56,17 @@ public:
     virtual void Attack(AActor* Target) override;
     virtual void TakeDamage(float Damage) override;
     virtual float GetHealth() const override;
-    virtual int32 GetMovementRange() const override;
-    virtual int32 GetAttackRange() const override;
+    
 
     // Function to calculate counter-attack damage
     float CalculateCounterAttackDamage(AActor* Attacker);
 
     // Function to get the reachable cells based on MovementRange
     TArray<class ATile*> GetReachableTiles(int32 Range, bool bIgnoreObstacles = false);
+
+    virtual int32 GetMovementRange() const override;
+    TArray<FVector2D> GetLegalMoves() const override;
+    virtual int32 GetAttackRange() const override;
+
+  
 };

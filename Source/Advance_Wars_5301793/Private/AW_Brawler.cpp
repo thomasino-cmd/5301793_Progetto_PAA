@@ -93,7 +93,8 @@ TArray<FVector2D> AAW_Brawler::GetLegalMoves() const
     ATile* CurrentTile = Cast<ATile>(GetParentActor());
     if (!CurrentTile)
     {
-        return LegalMoves;
+        UE_LOG(LogTemp, Error, TEXT("il soldato esiste ma non è impararentato con nessuna tile"))
+        return LegalMoves;      //TODO se lo ritorna cosi com'è devi assicurarti che parta vuoto tipo un ciclo di inizializzazione a nullptr 
     }
     FVector2D CurrentPosition = CurrentTile->GetGridPosition();
 
@@ -112,7 +113,7 @@ TArray<FVector2D> AAW_Brawler::GetLegalMoves() const
         for (int32 Y = 0; Y < FieldSize; ++Y)
         {
             FVector2D TargetPosition(X, Y);
-            float Distance = FVector2D::Distance(CurrentPosition, TargetPosition);
+            float Distance = FVector2D::Distance(CurrentPosition, TargetPosition);      //IMPORTANTE TODO non sono sicuro che distanza in linea d'aria sia corretta come metrica, non deve fare una sfera . ma questo è cambiabile .
 
             if (Distance <= Range)
             {

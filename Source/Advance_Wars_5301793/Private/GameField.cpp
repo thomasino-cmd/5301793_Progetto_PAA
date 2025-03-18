@@ -268,18 +268,24 @@ void AGameField::ShowLegalMovesInTheField()
         ATile* CurrentTile = TileMap.FindRef(Position);
         if (CurrentTile) // Check if the tile is valid
         {
-            // Assuming PlayerOwner is used to differentiate between players
-            if (CurrentTile->GetTileOwner() != GameMode->CurrentPlayer && CurrentTile->GetTileOwner() != -1)
+            ////in realtà io dovrei potermi muovere solo su tiles che sono empty quindi ancora inizializzate a -1. 
+            //if (CurrentTile->GetTileOwner() != GameMode->CurrentPlayer &&  CurrentTile->GetTileOwner() != -1)
+            //{
+            //    //CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OBSTACLE); // Or a new status like CAN_ATTACK
+            //    UE_LOG(LogTemp, Warning, TEXT("Must have clicked on an obstacle"))
+            //}
+            //else
+            //{
+            //    CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OCCUPIED);
+            //}
+
+            if (CurrentTile->GetTileStatus() != ETileStatus::OCCUPIED && CurrentTile->GetTileStatus() != ETileStatus::OBSTACLE) 
             {
-                CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OBSTACLE); // Or a new status like CAN_ATTACK
-            }
-            else
-            {
-                CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OCCUPIED);
-            }
-            // You might need to adjust this part based on how you want to visualize legal moves
-            // For example, you might want to change the material of the tile or use a different status
-            // CurrentTile->SetTileMaterial();  // If you have this function, keep it
+                CurrentTile->SetTileMaterial();
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
+            }  
+
+
         }
         else
         {

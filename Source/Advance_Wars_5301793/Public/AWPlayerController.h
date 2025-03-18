@@ -24,31 +24,17 @@ public:
    // UFUNCTION()
     //    void OnClick();
 
-    UPROPERTY()
-    class AAW_BaseSoldier* SelectedUnit;
-
-    UPROPERTY()
-    class ATile* SelectedTile;
-
-    UPROPERTY()
-    TArray<FVector2D> ReachableTiles; 
-
-    void HighlightReachableTiles();
-    void ClearHighlightedTiles();
-    UPROPERTY()
-    TArray<FVector2D> ReachableTiles; 
-
-
+    
 
     bool bIsMovingUnit;
     bool bHasAttacked;
 
     void ClickOnGrid();
 
-    void SelectUnit(AHumanPlayer* Unit);
-    void MoveUnit(ATile* Tile);
-    void AttackUnit(AHumanPlayer* Unit);
-    void DeselectUnit();
+    //void SelectUnit(AHumanPlayer* Unit);
+    //void MoveUnit(ATile* Tile);
+    //void AttackUnit(AHumanPlayer* Unit);
+    //void DeselectUnit();
 
 protected:
     virtual void BeginPlay() override;

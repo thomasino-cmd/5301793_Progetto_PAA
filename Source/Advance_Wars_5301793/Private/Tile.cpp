@@ -19,6 +19,7 @@ ATile::ATile()
 	Unit = nullptr;
 	GridPosition = FVector2D(0, 0);
 	PlayerOwner = -1;
+	Status = ETileStatus::EMPTY;
 }
 
 // Called when the game starts or when spawned
@@ -77,4 +78,36 @@ void ATile::SetPlayerOwner(int32 NewPlayerOwner)
 int32 ATile::GetTileOwner() const
 {
 	return PlayerOwner;
+}
+
+void ATile::SetTileMaterial() const
+{
+	const FString MaterialPath = GetTileMaterialPath();
+
+	UMaterialInterface* Material = LoadObject<UMaterialInterface>(
+		nullptr,
+		*MaterialPath
+	);
+
+	StaticMeshComponent->SetMaterial(0, Material);
+}
+
+FString ATile::GetTileMaterialPath() const
+{
+	const FString MaterialPath = "/Game/Materials/MI_";
+
+	if (Status == ETileStatus::EMPTY)
+	{
+		const FVector2D Position = GetGridPosition();
+		const int32 X = static_cast<int>(Position.X);
+		const int32 Y = static_cast<int>(Position.Y);
+
+		const FString Color = ((X + Y) % 2 == 0)
+			? "DARK"
+			: "LIGHT";
+
+		return MaterialPath + Color;
+	}
+
+	return MaterialPath ;
 }
