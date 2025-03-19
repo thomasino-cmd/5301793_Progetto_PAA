@@ -21,9 +21,7 @@ public:
     UPROPERTY(EditAnywhere, Category = Input)
     UInputAction* ClickAction;
 
-   // UFUNCTION()
-    //    void OnClick();
-
+ 
     
 
     bool bIsMovingUnit;

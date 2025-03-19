@@ -5,7 +5,11 @@
 #include "PlayerInterface.h"
 #include "AWGameInstance.h"
 #include "Camera/CameraComponent.h"
+#include "Delegates/Delegate.h" 
 #include "HumanPlayer.generated.h"
+
+
+DECLARE_DELEGATE(FClickDelegate);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AHumanPlayer : public APawn, public IPlayerInterface
@@ -33,6 +37,10 @@ public:
 	//GameIstance reference
 	UAWGameInstance* GameIstance;
 
+	FClickDelegate OnClickAction;
+
+
+
 
 	// Implement interface functions
 	virtual void OnTurn() override;
@@ -40,18 +48,29 @@ public:
 	virtual void OnLose() override;
 
 
+public:
+	void SetCurrentTile(ATile* Tile);
+	void SetReachableTiles(TArray<ATile*> Tiles);
+
+	TArray<ATile*> GetReachableTiles() const;
 
 
-	//TArray<ATile*> ReachableTiles;
 
 
 	// Function to handle mouse clicks
 	UFUNCTION()
 	void OnClick();
 
-	UFUNCTION()
-	void HandleTileClick(ATile* ClickedTile, TArray<ATile*>& ReachableTiles);
 
+
+	UFUNCTION()
+	void SetWaitingForMoveInput(bool bWaiting, ATile* Tile, const TArray<ATile*>& Tiles);
+
+	UFUNCTION()
+	void HandleTileClick();
+
+
+	
 	UFUNCTION()
 	void HandleFriendlyUnitClick(AActor* ClickedUnit);
 
@@ -61,6 +80,13 @@ public:
 	UFUNCTION()
 	void SelectUnit(AActor* Unit);
 
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	bool bWaitingForMoveInput;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
+	AActor* SelectedUnit;
+
 protected:
 	// Flag to track player's turn
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
@@ -69,6 +95,7 @@ protected:
 	UFUNCTION()
 	void MoveUnit(ATile* CurrentTile, ATile* TargetTile);
 
+	UFUNCTION()
 	void MoveUnit_Tick();
 
 	UFUNCTION()
@@ -76,10 +103,9 @@ protected:
 
 	
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
-	AActor* SelectedUnit;
 
-	bool bWaitingForMoveInput; 
+
+
 
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -93,5 +119,9 @@ protected:
 	FTimerHandle MovementTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float MovementSpeed = 50.0f; 
+	float MovementSpeed ; 
+
+private:
+	ATile* CurrentActorTile;
+	TArray<ATile*> ReachableTiles;
 };

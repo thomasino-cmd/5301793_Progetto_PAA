@@ -4,6 +4,8 @@
 #include "ComputerPlayer.h"
 #include "Obstacle.h"
 #include "Tile.h"
+#include "AW_Sniper.h"
+#include "AW_Brawler.h"
 
 
 AAWPlayerController::AAWPlayerController()
@@ -44,143 +46,41 @@ void AAWPlayerController::ClickOnGrid()
     const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
     if (IsValid(HumanPlayer))
     {
-        HumanPlayer->OnClick();
-    }
-}
-
-
-
-
-
-
-
-
-
-/// sto sovrascrivendo una copia inutile di una funzione che è già propria di human player
-/*
-void AAWPlayerController::OnClick()
-{
-    // 1. Get mouse position and convert to world coordinates.
-    FVector2D MousePosition;
-    GetMousePosition(MousePosition.X, MousePosition.Y);
-
-    // 2. Perform line trace to detect clicked tile.
-    FHitResult HitResult;
-    GetHitResultUnderCursor(ECC_Visibility, false, HitResult);
-
-    if (HitResult.bBlockingHit)
-    {
-        ATile* ClickedTile = Cast<ATile>(HitResult.GetActor());
-        if (ClickedTile)
+        // Check if the delegate is bound before executing
+        if (HumanPlayer->OnClickAction.IsBound())
         {
-            AActor* ClickedActor = ClickedTile->GetUnit();
-
-            if (ClickedActor)
-            {
-                if (AHumanPlayer* ClickedUnit = Cast<AHumanPlayer>(ClickedActor))
-                {
-                    // Handle human player unit
-                    if (!SelectedUnit)
-                    {
-                        SelectUnit(ClickedUnit);
-                        StartingTile = ClickedTile;
-                    }
-                    // 4. Handle unit movement.
-                    else if (bIsMovingUnit && ClickedTile != StartingTile)
-                    {
-                        MoveUnit(ClickedTile);
-                    }
-                    // 5. Handle unit attack.
-                    else if (SelectedUnit && ClickedTile != StartingTile)
-                    {
-                        AttackUnit(ClickedUnit);
-                    }
-                }
-                else if (AComputerPlayer* ClickedComputerUnit = Cast<AComputerPlayer>(ClickedActor))
-                {
-                    // Handle AI player unit (e.g., show info)
-                }
-                else if (AObstacle* ClickedObstacle = Cast<AObstacle>(ClickedActor))
-                {
-                    // Handle obstacle (e.g., show info)
-                }
-                // ... handle other types as needed
-            }
-            else
-            {
-                // Handle empty tile (e.g., move selected unit)
-                if (SelectedUnit && bIsMovingUnit)
-                {
-                    MoveUnit(ClickedTile);
-                }
-            }
+            HumanPlayer->OnClickAction.Execute();
+        }
+        else
+        {
+            // Log an error message for debugging
+            UE_LOG(LogTemp, Error, TEXT("OnClickAction delegate is not bound!"));
         }
     }
 }
-*/
 
 //
-//void AAWPlayerController::HighlightReachableTiles()
+//void AAWPlayerController::ClickOnGrid()
 //{
-//    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
-//    if (!GameField)
+//    const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
+//    if (IsValid(HumanPlayer))
 //    {
-//        return;
-//    }
-//    for (const FVector2D& GridPos : ReachableTiles)
-//    {
-//        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
-//        if (Tile)
+//        if (HumanPlayer->bWaitingForMoveInput)
 //        {
-//            // Change the tile's material or color to highlight it
-//            // Example:
-//            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Green);
+//            HumanPlayer->HandleTileClick(CurrentTile, ReachableTiles); 
+//               
+//        }
+//        else
+//        {
+//            HumanPlayer->OnClick(); // Chiama OnClick per la gestione normale dei clic
 //        }
 //    }
 //}
-//
-//void AAWPlayerController::ClearHighlightedTiles()
-//{
-//    AGameField* GameField = Cast<AGameField>(GetWorld()->GetActorOfClass(AGameField::StaticClass()));
-//    if (!GameField)
-//    {
-//        return;
-//    }
-//    for (const FVector2D& GridPos : ReachableTiles)
-//    {
-//        ATile* Tile = GameField->GetTile(GridPos.X, GridPos.Y);
-//        if (Tile)
-//        {
-//            // Reset the tile's material or color
-//            // Example:
-//            Tile->StaticMeshComponent->SetOverlayColor(FLinearColor::Transparent);
-//        }
-//    }
-//    ReachableTiles.Empty();
-//}
-//
-//void AAWPlayerController::SelectUnit(AHumanPlayer* Unit)
-//{
-//    SelectedUnit = Unit;
-//    // Add logic to highlight the unit or show movement range
-//}
-//
-//void AAWPlayerController::MoveUnit(ATile* Tile)
-//{
-//    // Add logic to move the SelectedUnit to the Tile
-//    // This might involve pathfinding or animation
-//    bIsMovingUnit = false;
-//}
-//
-//void AAWPlayerController::AttackUnit(AHumanPlayer* Unit)
-//{
-//    // Add logic for the SelectedUnit to attack the Unit
-//    // This might involve damage calculation or combat animation
-//    DeselectUnit();
-//}
-//
-//void AAWPlayerController::DeselectUnit()
-//{
-//   // SelectedUnit = nullptr;
-//    // Add logic to clear highlighting or hide movement range
-//}
+
+
+
+
+
+
+
+

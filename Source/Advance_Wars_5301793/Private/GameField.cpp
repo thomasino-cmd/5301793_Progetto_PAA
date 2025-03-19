@@ -415,7 +415,7 @@ TArray<ATile*> AGameField::GetNeighbors(ATile* Tile)
 void AGameField::AddNeighborIfValid(TArray<ATile*>& Neighbors, int32 X, int32 Y)
 {
     ATile* Neighbor = GetTile(X, Y);
-    if (Neighbor && Neighbor->GetTileStatus() != ETileStatus::OBSTACLE)
+    if (Neighbor && Neighbor->GetTileStatus() != ETileStatus::OBSTACLE && Neighbor->GetTileStatus() != ETileStatus::OCCUPIED)
     {
         Neighbors.Add(Neighbor);
     }

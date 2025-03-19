@@ -208,8 +208,7 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         // Segna la tile come occupata
         if (GameField)
         {
-            // Converti FVector GridPosition in FVector2D
-            //FVector2D GridPosition2D(GridPosition.X, GridPosition.Y);
+           
 
             FVector2D GridPosition2D = GameField->GetXYPositionByRelativeLocation(GridPosition);
 
@@ -221,6 +220,7 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
             if (Tile)
             {
                 // Attacca l'unità alla Tile
+                
                 UnitToSpawn->AttachToActor(Tile, FAttachmentTransformRules::KeepWorldTransform);
 
                  //If it is a Brawler
