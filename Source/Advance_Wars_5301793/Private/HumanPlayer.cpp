@@ -175,7 +175,7 @@ void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 {
     if (bIsMyTurn && SelectedUnit)
     {
-        AttackUnit(ClickedEnemyUnit);
+        AttackUnit();
     }
     else
     {
@@ -189,6 +189,8 @@ void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 
 void AHumanPlayer::SelectUnit(AActor* Unit)
 {
+
+    TArray<ATile*> ReachableTiles;
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
     if (GameMode && GameMode->GameField)
@@ -235,7 +237,7 @@ void AHumanPlayer::SelectUnit(AActor* Unit)
     }
 }
 
-void AHumanPlayer::HandleTileClick(ATile* CurrentTile, const TArray<ATile*>& ReachableTiles) 
+void AHumanPlayer::HandleTileClick(ATile* CurrentTile, TArray<ATile*>& ReachableTiles) 
 {
     // HandleTileClick waits for another input by the player
     // if the click is on the same tile it is on deselect the unit and goes back to OnClick()
@@ -264,7 +266,8 @@ void AHumanPlayer::HandleTileClick(ATile* CurrentTile, const TArray<ATile*>& Rea
             else if (ClickedTile && ReachableTiles.Contains(ClickedTile)) // Check if the clicked tile is reachable
             {
                 GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
-                MoveUnit(ClickedTile);
+               
+                MoveUnit(CurrentTile, ClickedTile);
 
                 if (GameMode && GameMode->GameField)
                 {
@@ -294,25 +297,86 @@ void AHumanPlayer::HandleTileClick(ATile* CurrentTile, const TArray<ATile*>& Rea
 
 
 
-void AHumanPlayer::MoveUnit(ATile* TargetTile)
+void AHumanPlayer::MoveUnit(ATile* CurrentTile, ATile* TargetTile)
 {
-    //this needs to be done yet !!!!            
-    // TODO 
-    // TODO 
-    // TODO 
-    // TODO 
-    // TODO 
+    if (!SelectedUnit)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No unit selected!"));
+        return;
+    }
 
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode || !GameMode->GameField)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GameMode or GameField is invalid!"));
+        return;
+    }
+
+    ATile* StartTile = CurrentTile;
+
+    // 1. Find the path using AGameField::FindPath
+    TArray<ATile*> Path = GameMode->GameField->FindPath(StartTile, TargetTile);
+
+    if (Path.Num() == 0)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No path found!"));
+        return;
+    }
+
+    // 2. Initiate and handle the movement along the path
+    if (Path.Num() > 0 && SelectedUnit)
+    {
+        CurrentPath = Path;
+        CurrentPathIndex = 0;
+
+       // GetWorldTimerManager().SetTimer(MovementTimerHandle, this, &AHumanPlayer::MoveUnit, MovementSpeed, true);
+       
+        GetWorldTimerManager().SetTimer(MovementTimerHandle, this, &AHumanPlayer::MoveUnit_Tick, MovementSpeed, true);
+    }
+    else
+    {
+        GetWorldTimerManager().ClearTimer(MovementTimerHandle);
+        CurrentPath.Empty();
+        CurrentPathIndex = 0;
+    }
+}
+
+
+
+
+void AHumanPlayer::MoveUnit_Tick()
+{
+    if (CurrentPathIndex >= CurrentPath.Num() || !SelectedUnit)
+    {
+        GetWorldTimerManager().ClearTimer(MovementTimerHandle);
+        CurrentPath.Empty();
+        CurrentPathIndex = 0;
+        return; // Reached the end or unit was deselected
+    }
+
+    ATile* NextTile = CurrentPath[CurrentPathIndex];
+    FVector TargetLocation = NextTile->GetActorLocation();
+
+    // Smoothly move the unit towards the target tile's location
+    FVector CurrentLocation = SelectedUnit->GetActorLocation();
+    FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, GetWorld()->GetDeltaSeconds(), MovementSpeed * GetWorld()->GetDeltaSeconds());
+    SelectedUnit->SetActorLocation(NewLocation);
+
+    // Check if the unit has reached the tile
+    if (FVector::DistSquared(SelectedUnit->GetActorLocation(), TargetLocation) < 1.0f) // Using a small tolerance
+    {
+        
+
+        CurrentPathIndex++; // Move to the next tile in the path
+    }
+}
+
+void AHumanPlayer::AttackUnit()
+{
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ALL'ATTACCOOOOO!!!"));
 }
 
 
 
 
 
-void AHumanPlayer::AttackUnit(AActor* TargetUnit)
-{
-    // Implement your attack logic here
-    // This could involve calculating damage, applying effects,
-    // and handling unit destruction if applicable.
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Attacking Unit"));
-}

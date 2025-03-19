@@ -327,3 +327,130 @@ void AGameField::ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles)
         }
     }
 }
+
+
+
+
+// LOGIC FOR PATHFINDING AND MOVEMENT HERE 
+
+TArray<ATile*> AGameField::FindPath(ATile* StartTile, ATile* GoalTile)
+{
+    TArray<ATile*> Path; // The path to return
+    if (!StartTile || !GoalTile)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("FindPath: Start or Goal tile is null"));
+        return Path; // Return an empty path
+    }
+
+    TMap<ATile*, ATile*> CameFrom;
+    TMap<ATile*, float> GCost;
+    TMap<ATile*, float> FCost;
+    TSet<ATile*> OpenSet;
+    TSet<ATile*> ClosedSet;
+
+    // Initialize
+    OpenSet.Add(StartTile);
+    GCost.Add(StartTile, 0.0f);
+    FCost.Add(StartTile, CalculateHCost(StartTile, GoalTile));
+
+    while (OpenSet.Num() > 0)
+    {
+        ATile* CurrentTile = GetLowestFCostTile(OpenSet, FCost);
+        if (CurrentTile == GoalTile)
+        {
+            // Reconstruct path
+            Path = ReconstructPath(CameFrom, CurrentTile);
+            return Path;
+        }
+
+        OpenSet.Remove(CurrentTile);
+        ClosedSet.Add(CurrentTile);
+
+        TArray<ATile*> Neighbors = GetNeighbors(CurrentTile);
+        for (ATile* Neighbor : Neighbors)
+        {
+            if (ClosedSet.Contains(Neighbor))
+            {
+                continue;
+            }
+
+            float TentativeGCost = GCost[CurrentTile] + 1.0f; // Cost to move to neighbor is 1
+
+            if (!OpenSet.Contains(Neighbor))
+            {
+                OpenSet.Add(Neighbor);
+            }
+            else if (TentativeGCost >= GCost[Neighbor])
+            {
+                continue;
+            }
+
+            CameFrom.Add(Neighbor, CurrentTile);
+            GCost.Add(Neighbor, TentativeGCost);
+            FCost.Add(Neighbor, TentativeGCost + CalculateHCost(Neighbor, GoalTile));
+        }
+    }
+
+    // No path found
+    UE_LOG(LogTemp, Warning, TEXT("FindPath: No path found"));
+    return Path; // Return an empty path
+}
+
+TArray<ATile*> AGameField::GetNeighbors(ATile* Tile)
+{
+    TArray<ATile*> Neighbors;
+    FVector2D TilePosition = Tile->GetGridPosition();
+    int32 X = static_cast<int32>(TilePosition.X);
+    int32 Y = static_cast<int32>(TilePosition.Y);
+
+    // Check each direction (no diagonals)
+    AddNeighborIfValid(Neighbors, X + 1, Y); // Right
+    AddNeighborIfValid(Neighbors, X - 1, Y); // Left
+    AddNeighborIfValid(Neighbors, X, Y + 1); // Up
+    AddNeighborIfValid(Neighbors, X, Y - 1); // Down
+
+    return Neighbors;
+}
+
+void AGameField::AddNeighborIfValid(TArray<ATile*>& Neighbors, int32 X, int32 Y)
+{
+    ATile* Neighbor = GetTile(X, Y);
+    if (Neighbor && Neighbor->GetTileStatus() != ETileStatus::OBSTACLE)
+    {
+        Neighbors.Add(Neighbor);
+    }
+}
+
+ATile* AGameField::GetLowestFCostTile(const TSet<ATile*>& OpenSet, const TMap<ATile*, float>& FCost)
+{
+    ATile* LowestTile = nullptr;
+    float LowestCost = MAX_FLT; // Initialize to max float
+
+    for (ATile* Tile : OpenSet)
+    {
+        if (FCost[Tile] < LowestCost)
+        {
+            LowestCost = FCost[Tile];
+            LowestTile = Tile;
+        }
+    }
+    return LowestTile;
+}
+
+float AGameField::CalculateHCost(ATile* Start, ATile* Goal)
+{
+    FVector2D StartPos = Start->GetGridPosition();
+    FVector2D GoalPos = Goal->GetGridPosition();
+    return FMath::Abs(StartPos.X - GoalPos.X) + FMath::Abs(StartPos.Y - GoalPos.Y); // Manhattan distance
+}
+
+TArray<ATile*> AGameField::ReconstructPath(const TMap<ATile*, ATile*>& CameFrom, ATile* Current)
+{
+    TArray<ATile*> Path;
+    while (Current)
+    {
+        Path.Insert(Current, 0); // Insert at the beginning to reverse the path
+        Current = CameFrom.Contains(Current) ? CameFrom[Current] : nullptr;
+    }
+    return Path;
+}

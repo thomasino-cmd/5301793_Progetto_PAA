@@ -94,6 +94,18 @@ public:
 	void HighlightReachableTiles(const TArray<ATile*>& ReachableTiles);
 	void ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles);
 
+	TArray<ATile*> FindPath(ATile* StartTile, ATile* GoalTile);
+
+	TArray<ATile*> GetNeighbors(ATile* Tile);
+
+	void AddNeighborIfValid(TArray<ATile*>& Neighbors, int32 X, int32 Y);
+
+	ATile* GetLowestFCostTile(const TSet<ATile*>& OpenSet, const TMap<ATile*, float>& FCost);
+
+	float CalculateHCost(ATile* Start, ATile* Goal);
+
+	TArray<ATile*> ReconstructPath(const TMap<ATile*, ATile*>& CameFrom, ATile* Current);
+
 
 
 	void SetLegalMoves(const TArray<FVector2D>& NewLegalMoves);

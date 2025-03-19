@@ -42,7 +42,7 @@ public:
 
 
 
-	TArray<ATile*> ReachableTiles;
+	//TArray<ATile*> ReachableTiles;
 
 
 	// Function to handle mouse clicks
@@ -50,7 +50,7 @@ public:
 	void OnClick();
 
 	UFUNCTION()
-	void HandleTileClick(ATile* ClickedTile, const TArray<ATile*>& ReachableTiles);
+	void HandleTileClick(ATile* ClickedTile, TArray<ATile*>& ReachableTiles);
 
 	UFUNCTION()
 	void HandleFriendlyUnitClick(AActor* ClickedUnit);
@@ -67,10 +67,12 @@ protected:
 	bool bIsMyTurn;
 
 	UFUNCTION()
-	void MoveUnit(ATile* TargetTile);
+	void MoveUnit(ATile* CurrentTile, ATile* TargetTile);
+
+	void MoveUnit_Tick();
 
 	UFUNCTION()
-	void AttackUnit(AActor* TargetUnit);
+	void AttackUnit();
 
 	
 
@@ -78,4 +80,18 @@ protected:
 	AActor* SelectedUnit;
 
 	bool bWaitingForMoveInput; 
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	TArray<ATile*> CurrentPath;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	int32 CurrentPathIndex;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	FTimerHandle MovementTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
+	float MovementSpeed = 50.0f; 
 };
