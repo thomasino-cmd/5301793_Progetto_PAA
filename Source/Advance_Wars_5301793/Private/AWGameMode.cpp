@@ -226,12 +226,12 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
                  //If it is a Brawler
                 if (AAW_Brawler* BrawlerSoldier = Cast<AAW_Brawler>(UnitToSpawn))
                 {
-                    BrawlerSoldier->CurrentTile = Tile; // Store the tile reference
+                    BrawlerSoldier->TileIsOnNow = Tile; // Store the tile reference
                 }
                 //If it is a Sniper
                 else if (AAW_Sniper* SniperSoldier = Cast<AAW_Sniper>(UnitToSpawn))
                 {
-                    SniperSoldier->CurrentTile = Tile; // Store the tile reference
+                    SniperSoldier->TileIsOnNow = Tile; // Store the tile reference
                 }
             }
             else

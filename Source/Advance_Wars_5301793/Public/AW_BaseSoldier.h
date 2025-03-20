@@ -50,5 +50,9 @@ public:
     int32 OwnerPlayerId;
 
     
-    ATile* CurrentTile;
+    ATile* TileIsOnNow;
+
+    virtual ATile* GetTileIsOnNow() const = 0;  // Funzione virtuale pura per ottenere la tile
+    virtual void SetTileIsOnNow(ATile* NewTile) = 0; // Funzione virtuale pura per impostare la tile
+
 };

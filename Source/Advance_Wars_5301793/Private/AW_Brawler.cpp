@@ -140,6 +140,89 @@ struct FTileNode
     int32 Distance;
 };
 
+
+
+//GETREACHEABLETILES funziona ma mi va a modificare il riferimento alla tile su cui è ora quindi incasina moveunit 
+
+//TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
+//{
+//    TArray<ATile*> ReachableTiles;
+//    AGameField* GameField = Cast<AGameField>(UGameplayStatics::GetActorOfClass(GetWorld(), AGameField::StaticClass()));
+//    if (!GameField)
+//    {
+//        return ReachableTiles; // Or handle the error appropriately
+//    }
+//
+//    ATile* StartTile = TileIsOnNow;  // Use the stored reference
+//    if (!StartTile)
+//    {
+//        return ReachableTiles;
+//    }
+//
+//    // 1. Initialization
+//    TQueue<FTileNode> TileQueue;
+//    TMap<ATile*, ATile*> CameFrom; // To reconstruct the path (if needed later)
+//    TMap<ATile*, int32> Distance;
+//
+//    FTileNode StartNode;
+//    StartNode.Tile = StartTile;
+//    StartNode.Distance = 0;
+//
+//    TileQueue.Enqueue(StartNode);
+//    Distance.Add(StartTile, 0);
+//    ReachableTiles.Add(StartTile);
+//
+//    // 2. BFS Algorithm
+//    while (!TileQueue.IsEmpty())
+//    {
+//        FTileNode CurrentNode;
+//        TileQueue.Dequeue(CurrentNode);
+//        TileIsOnNow = CurrentNode.Tile;
+//        int32 CurrentDistance = CurrentNode.Distance;
+//
+//        // 3. Explore Neighbors
+//        TArray<ATile*> Neighbors;
+//        FVector2D CurrentPosition = TileIsOnNow->GetGridPosition();
+//
+//        // Define possible neighbor offsets
+//        TArray<FVector2D> Directions = {
+//            FVector2D(1, 0), FVector2D(-1, 0), FVector2D(0, 1), FVector2D(0, -1)
+//        };
+//
+//        for (const FVector2D& Dir : Directions)
+//        {
+//            FVector2D NeighborPosition = CurrentPosition + Dir;
+//            ATile* NeighborTile = GameField->GetTile(NeighborPosition.X, NeighborPosition.Y);
+//            if (NeighborTile)
+//            {
+//                Neighbors.Add(NeighborTile);
+//            }
+//        }
+//
+//        for (ATile* NeighborTile : Neighbors)
+//        {
+//            // 4. Check Validity and Distance
+//            if (NeighborTile->GetTileStatus() != ETileStatus::OBSTACLE )
+//            {
+//                if (!Distance.Contains(NeighborTile) && CurrentDistance + 1 <= Range)
+//                {
+//                    // 5. Enqueue and Update
+//                    FTileNode NextNode;
+//                    NextNode.Tile = NeighborTile;
+//                    NextNode.Distance = CurrentDistance + 1;
+//
+//                    TileQueue.Enqueue(NextNode);
+//                    Distance.Add(NeighborTile, CurrentDistance + 1);
+//                    CameFrom.Add(NeighborTile, TileIsOnNow); // For path reconstruction
+//                    ReachableTiles.Add(NeighborTile);
+//                }
+//            }
+//        }
+//    }
+//    return ReachableTiles;
+//}
+
+
 TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
 {
     TArray<ATile*> ReachableTiles;
@@ -149,7 +232,7 @@ TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
         return ReachableTiles; // Or handle the error appropriately
     }
 
-    ATile* StartTile = CurrentTile;  // Use the stored reference
+    ATile* StartTile = TileIsOnNow;  // Use the stored reference
     if (!StartTile)
     {
         return ReachableTiles;
@@ -173,12 +256,12 @@ TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
     {
         FTileNode CurrentNode;
         TileQueue.Dequeue(CurrentNode);
-        CurrentTile = CurrentNode.Tile;
+        ATile* CurrentTile = CurrentNode.Tile;  // Usare una variabile locale
         int32 CurrentDistance = CurrentNode.Distance;
 
         // 3. Explore Neighbors
         TArray<ATile*> Neighbors;
-        FVector2D CurrentPosition = CurrentTile->GetGridPosition();
+        FVector2D CurrentPosition = CurrentTile->GetGridPosition(); // Usare CurrentTile
 
         // Define possible neighbor offsets
         TArray<FVector2D> Directions = {
@@ -198,7 +281,7 @@ TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
         for (ATile* NeighborTile : Neighbors)
         {
             // 4. Check Validity and Distance
-            if (NeighborTile->GetTileStatus() != ETileStatus::OBSTACLE )
+            if (NeighborTile->GetTileStatus() != ETileStatus::OBSTACLE)
             {
                 if (!Distance.Contains(NeighborTile) && CurrentDistance + 1 <= Range)
                 {
@@ -209,11 +292,21 @@ TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
 
                     TileQueue.Enqueue(NextNode);
                     Distance.Add(NeighborTile, CurrentDistance + 1);
-                    CameFrom.Add(NeighborTile, CurrentTile); // For path reconstruction
+                    CameFrom.Add(NeighborTile, CurrentTile); // Per il path reconstruction
                     ReachableTiles.Add(NeighborTile);
                 }
             }
         }
     }
     return ReachableTiles;
+}
+
+ATile* AAW_Brawler::GetTileIsOnNow() const
+{
+    return TileIsOnNow;
+}
+
+void AAW_Brawler::SetTileIsOnNow(ATile* NewTile)
+{
+    TileIsOnNow = NewTile;
 }

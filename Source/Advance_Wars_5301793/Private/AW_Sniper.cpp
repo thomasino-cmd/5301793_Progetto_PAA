@@ -90,7 +90,7 @@ TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
     {
         return ReachableTiles; // Or handle the error appropriately
     }
-    ATile* StartTile = CurrentTile;  // Use the stored reference
+    ATile* StartTile = TileIsOnNow;  // Use the stored reference
     if (!StartTile)
     {
         return ReachableTiles;
@@ -113,12 +113,12 @@ TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
     {
         FTileNode CurrentNode;
         TileQueue.Dequeue(CurrentNode);
-        CurrentTile = CurrentNode.Tile;
+        TileIsOnNow = CurrentNode.Tile;
         int32 CurrentDistance = CurrentNode.Distance;
 
         // 3. Explore Neighbors
         TArray<ATile*> Neighbors;
-        FVector2D CurrentPosition = CurrentTile->GetGridPosition();
+        FVector2D CurrentPosition = TileIsOnNow->GetGridPosition();
 
         // Define possible neighbor offsets
         TArray<FVector2D> Directions = {
@@ -149,13 +149,23 @@ TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
 
                     TileQueue.Enqueue(NextNode);
                     Distance.Add(NeighborTile, CurrentDistance + 1);
-                    CameFrom.Add(NeighborTile, CurrentTile); // For path reconstruction
+                    CameFrom.Add(NeighborTile, TileIsOnNow); // For path reconstruction
                     ReachableTiles.Add(NeighborTile);
                 }
             }
         }
     }
     return ReachableTiles;
+}
+
+ATile* AAW_Sniper::GetTileIsOnNow() const
+{
+    return TileIsOnNow;
+}
+
+void AAW_Sniper::SetTileIsOnNow(ATile* NewTile)
+{
+    TileIsOnNow = NewTile;
 }
 
 int32 AAW_Sniper::GetMovementRange() const

@@ -42,6 +42,12 @@ public:
     int32 OwnerPlayerId;
 
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Position")
+    ATile* TileIsOnNow;
+
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+    TArray<class ATile*> TilesCanReach;
     
     // Scene component for the tile
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
@@ -68,14 +74,17 @@ public:
     virtual void Attack(AActor* Target) override;
     virtual void TakeDamage(float Damage) override;
     virtual float GetHealth() const override;
+
     virtual int32 GetMovementRange() const override;
+
     TArray<FVector2D> GetLegalMoves() const override;
     virtual int32 GetAttackRange() const override;
 
     // Function to get the reachable cells based on MovementRange
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
+
+    virtual ATile* GetTileIsOnNow() const override;
+    virtual void SetTileIsOnNow(ATile* NewTile) override;
     
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Soldier")
-    ATile* CurrentTile;
 };

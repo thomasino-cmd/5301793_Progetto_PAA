@@ -11,6 +11,9 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "TimerManager.h"
 
+#include "CoreMinimal.h"  // Assicura che `int32` sia riconosciuto
+#include "TimerManager.h" // Per i timer
+#include "functional"
 #include "GameFramework/Actor.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -34,8 +37,9 @@ AHumanPlayer::AHumanPlayer()
     GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
     // default init values
     PlayerId = 0;
-    MovementSpeed = 100.0f;
-    CurrentActorTile = nullptr;
+    bIsMoving = false;
+
+
 
 }
 
@@ -47,14 +51,117 @@ void AHumanPlayer::BeginPlay()
     // Bind OnClick as the default action
     OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
     bWaitingForMoveInput = false;
+    SelectedUnitForMovement = nullptr;
+
+   // CurrentMovementIndex = 0;
+    
     
 }
 
-// Called every frame
+
+
+
 void AHumanPlayer::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+
+    if (bIsMoving)
+    {
+        if (CurrentPathIndex < MovementPath.Num())
+        {
+            ATile* NextTile = MovementPath[CurrentPathIndex];
+            FVector TargetLocation = NextTile->GetActorLocation() + FVector(0.0f, 0.0f, 15.0f);
+
+            // Calcola la direzione e la distanza.
+            FVector Direction = (TargetLocation - SelectedUnitForMovement->GetActorLocation()).GetSafeNormal();
+            float DistanceToTarget = FVector::Distance(SelectedUnitForMovement->GetActorLocation(), TargetLocation);
+
+            // Calcola quanto muoversi in questo frame.
+            float FrameMovement = MoveSpeed * DeltaTime;
+
+            // --- Correzione Movimento Diagonale ---
+            float DeltaX = FMath::Abs(TargetLocation.X - SelectedUnitForMovement->GetActorLocation().X);
+            float DeltaY = FMath::Abs(TargetLocation.Y - SelectedUnitForMovement->GetActorLocation().Y);
+
+            if (DeltaX > DeltaY)
+            {
+                Direction.Y = 0.0f;
+            }
+            else
+            {
+                Direction.X = 0.0f;
+            }
+            Direction = Direction.GetSafeNormal();
+
+
+            // Se siamo abbastanza vicini, spostati direttamente e passa alla prossima tile.
+            if (FrameMovement >= DistanceToTarget)
+            {
+                SelectedUnitForMovement->SetActorLocation(TargetLocation);
+                MovingCurrentTile->SetTileStatus(PlayerId, ETileStatus::EMPTY);
+                NextTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
+                UE_LOG(LogTemp, Log, TEXT("Moved unit to tile: %s"), *NextTile->GetName());
+
+                // AGGIORNAMENTO TILE DEL SOLDATO (tramite interfaccia)
+                IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(SelectedUnitForMovement); //Cast all'interfaccia
+                if (Soldier)
+                {
+                    Soldier->SetTileIsOnNow(NextTile);
+                }
+                else
+                {
+                    UE_LOG(LogTemp, Error, TEXT("Failed to cast SelectedUnitForMovement to IAW_BaseSoldier!"));
+                }
+
+
+                MovingCurrentTile = NextTile;
+                CurrentPathIndex++;
+                UE_LOG(LogTemp, Log, TEXT("Moving to next tile in path.  Index: %d"), CurrentPathIndex);
+
+
+
+            }
+            else // Altrimenti, muoviti di un passo.
+            {
+                SelectedUnitForMovement->SetActorLocation(SelectedUnitForMovement->GetActorLocation() + Direction * FrameMovement);
+            }
+        }
+        else //Movimento terminato
+        {
+
+            if (MovementPath.Num() > 0)
+            {
+                IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(SelectedUnitForMovement); //Cast all'interfaccia
+                if (Soldier && Soldier->GetTileIsOnNow() != MovementPath.Last())
+                {
+                    if (Soldier->GetTileIsOnNow())
+                    {
+                        Soldier->GetTileIsOnNow()->SetTileStatus(PlayerId, ETileStatus::EMPTY);
+                    }
+                    MovementPath.Last()->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
+                    Soldier->SetTileIsOnNow(MovementPath.Last());
+                    UE_LOG(LogTemp, Log, TEXT("Movement completed. Final tile occupied."));
+                }
+            }
+
+
+
+            UE_LOG(LogTemp, Log, TEXT("Movement completed."));
+            bIsMoving = false;
+            SelectedUnitForMovement->SetActorRotation(FRotator::ZeroRotator);
+
+            MovingCurrentTile = nullptr;
+            // MovingTargetTile = nullptr; // Non necessario
+            MovementPath.Empty();
+            SelectedUnitForMovement = nullptr;
+
+        }
+    }
 }
+
+
+
+
 
 // Called to bind functionality to input
 void AHumanPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -173,24 +280,14 @@ void AHumanPlayer::OnClick()
     }
 }
 
-void AHumanPlayer::SetWaitingForMoveInput(bool bWaiting, ATile* SoldierTileForNow, const TArray<ATile*>& Tiles)
+
+
+
+void AHumanPlayer::AttackUnit()
 {
-    bWaitingForMoveInput = bWaiting;
-    if (bWaiting)
-    {
-        // Bind the delegate to HandleTileClick
-        OnClickAction.BindUObject(this, &AHumanPlayer::HandleTileClick);
-        SetCurrentTile(SoldierTileForNow);
-        SetReachableTiles(Tiles);       //these are the actual reachable tiles, take care.
-    }
-    else
-    {
-        // Bind the delegate to OnClick
-        OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
-        SetCurrentTile(nullptr);   // Reset CurrentTile
-        SetReachableTiles(TArray<ATile*>()); // Reset ReachableTiles
-    }
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ALL'ATTACCOOOOO!!!"));
 }
+
 
 
 void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
@@ -201,7 +298,8 @@ void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
 
 void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 {
-    if (bIsMyTurn && SelectedUnit)
+    //in realtà qui dovrò fare come per handletileclick però TODO LATER
+    if (bIsMyTurn && SelectedUnitForMovement)
     {
         AttackUnit();
     }
@@ -213,178 +311,74 @@ void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 }
 
 
-//
-//
-//void AHumanPlayer::SelectUnit(AActor* Unit)
-//{
-//
-//    TArray<ATile*> ReachableTiles;
-//
-//    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-//    if (GameMode && GameMode->GameField)
-//    {
-//        GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
-//    }
-//
-//    SelectedUnit = Unit;
-//    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Unit Selected: %s"), *Unit->GetName()));
-//
-//    // Get reachable tiles
-//
-//    //Try to cast to a Brawler
-//    AAW_Brawler* ClickedBrawler = Cast<AAW_Brawler>(SelectedUnit);
-//    if (ClickedBrawler)
-//    {
-//        
-//            ReachableTiles = ClickedBrawler->GetReachableTiles(ClickedBrawler->GetMovementRange());
-//
-//            if (GameMode && GameMode->GameField)
-//            {
-//                GameMode->GameField->HighlightReachableTiles(ReachableTiles);
-//
-//                //SetWaitingForMoveInput(true, ClickedBrawler->CurrentTile,  ReachableTiles);
-//                SetWaitingForMoveInput(true);
-//
-//                HandleTileClick(ClickedBrawler->CurrentTile, ReachableTiles);
-//            }
-//        
-//    }
-//    else
-//    {
-//        //Try to cast to a Sniper
-//        AAW_Sniper* ClickedSniper = Cast<AAW_Sniper>(SelectedUnit);
-//        if (ClickedSniper)
-//        {
-//            
-//                ReachableTiles = ClickedSniper->GetReachableTiles(ClickedSniper->GetMovementRange());
-//
-//                if (GameMode && GameMode->GameField)
-//                {
-//                    GameMode->GameField->HighlightReachableTiles(ReachableTiles);
-//                    
-//                    //SetWaitingForMoveInput(true, ClickedSniper->CurrentTile, ReachableTiles);
-//                    SetWaitingForMoveInput(true);
-//
-//                    HandleTileClick(ClickedSniper->CurrentTile, ReachableTiles);
-//                }
-//            
-//        }
-//       
-//    }
-//}
-//
-//void AHumanPlayer::HandleTileClick(ATile* CurrentTile, TArray<ATile*>& ReachableTiles) 
-//{
-//    // HandleTileClick waits for another input by the player
-//    // if the click is on the same tile it is on deselect the unit and goes back to OnClick()
-//    // else if is on a reachable tile moves or if on a enemy unit within the attack range shoots!
-//
-//    GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Orange, TEXT("Handling Tile Click"));
-//
-//    // Structure containing information about one hit of a trace, such as point of impact and surface normal at that point
-//    FHitResult Hit = FHitResult(ForceInit);
-//
-//    // GetHitResultUnderCursor function sends a ray from the mouse position and gives the corresponding hit results
-//    GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
-//    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-//    ATile* ClickedTile = Cast<ATile>(Hit.GetActor()); // Get the tile from the hit result
-//
-//    if (bWaitingForMoveInput)
-//    {
-//        if (SelectedUnit)
-//        {
-//            if (ClickedTile && ClickedTile == CurrentTile) // Check if the clicked tile is the unit's current tile
-//            {
-//                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Deselecting unit and Attacking"));
-//                AttackUnit(); // Call AttackUnit() to handle attack logic
-//                SelectedUnit = nullptr; // Deselect the unit
-//            }
-//            else if (ClickedTile && ReachableTiles.Contains(ClickedTile)) // Check if the clicked tile is reachable
-//            {
-//                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
-//               
-//                MoveUnit(CurrentTile, ClickedTile);
-//
-//                if (GameMode && GameMode->GameField)
-//                {
-//                    GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
-//                }
-//                SelectedUnit = nullptr; // Deselect unit after move
-//            }
-//            else
-//            {
-//                // Handle click on a tile that's not reachable (e.g., show a message)
-//                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Tile not reachable"));
-//            }
-//        }
-//        else
-//        {
-//            // Handle tile click when no unit is selected (e.g., show tile info?)
-//            if (ClickedTile)
-//            {
-//                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Tile Clicked: %s"), *ClickedTile->GetName()));
-//            }
-//        }
-//    }
-//}
-//
-
-
-
-// NEW SELECT UNIT 
 void AHumanPlayer::SelectUnit(AActor* Unit)
 {
-    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-    if (GameMode && GameMode->GameField)
-    {
-        GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
-    }
+    if (!Unit) return;
 
-    SelectedUnit = Unit;
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode || !GameMode->GameField) return;
+
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("Unit Selected: %s"), *Unit->GetName()));
 
-    // Get reachable tiles
-    TArray<ATile*> ReachableTilesLocalArray; // Local scope variable
-
-    //Try to cast to a Brawler
-    AAW_Brawler* ClickedBrawler = Cast<AAW_Brawler>(SelectedUnit);
+    // Controlliamo se l'unità selezionata è un Brawler
+    AAW_Brawler* ClickedBrawler = Cast<AAW_Brawler>(Unit);
     if (ClickedBrawler)
     {
-        ReachableTilesLocalArray = ClickedBrawler->GetReachableTiles(ClickedBrawler->GetMovementRange());
+        // Otteniamo le tile raggiungibili
+        ClickedBrawler->TilesCanReach = ClickedBrawler->GetReachableTiles(ClickedBrawler->GetMovementRange());
 
-        if (GameMode && GameMode->GameField)
-        {
-            GameMode->GameField->HighlightReachableTiles(ReachableTilesLocalArray);
+        // Evidenziamo le tile raggiungibili
+        GameMode->GameField->HighlightReachableTiles(ClickedBrawler->TilesCanReach);
 
-            //SetWaitingForMoveInput(true, ClickedBrawler->CurrentTile,  ReachableTiles);
-            SetWaitingForMoveInput(true, ClickedBrawler->CurrentTile, ReachableTilesLocalArray);
-        }
+        // Impostiamo l'input in attesa di movimento
+        //SetWaitingForMoveInput(true, ClickedBrawler->TileIsOnNow, ClickedBrawler->TilesCanReach);
+        SetWaitingForMoveInput(true, ClickedBrawler);
+        
     }
-    else
+
+    // Controlliamo se l'unità selezionata è uno Sniper
+    AAW_Sniper* ClickedSniper = Cast<AAW_Sniper>(Unit);
+    if (ClickedSniper)
     {
-        //Try to cast to a Sniper
-        AAW_Sniper* ClickedSniper = Cast<AAW_Sniper>(SelectedUnit);
-        if (ClickedSniper)
-        {
-            ReachableTilesLocalArray = ClickedSniper->GetReachableTiles(ClickedSniper->GetMovementRange());
+        // Otteniamo le tile raggiungibili
+        ClickedSniper->TilesCanReach = ClickedSniper->GetReachableTiles(ClickedSniper->GetMovementRange());
 
-            if (GameMode && GameMode->GameField)
-            {
-                GameMode->GameField->HighlightReachableTiles(ReachableTilesLocalArray);
+        // Evidenziamo le tile raggiungibili
+        GameMode->GameField->HighlightReachableTiles(ClickedSniper->TilesCanReach);
 
-                //SetWaitingForMoveInput(true, ClickedSniper->CurrentTile, ReachableTiles);
-                SetWaitingForMoveInput(true, ClickedSniper->CurrentTile, ReachableTilesLocalArray);
-            }
-        }
+        // Impostiamo l'input in attesa di movimento
+        //SetWaitingForMoveInput(true, ClickedSniper->TileIsOnNow, ClickedSniper->TilesCanReach);
+        SetWaitingForMoveInput(true, ClickedSniper);
+        
+    
     }
 }
 
 
 
-//NEW HANDLE TILE CLICK WITH NO ARGUMENTS
+
+
+void AHumanPlayer::SetWaitingForMoveInput(bool bWaiting, AActor* Unit)
+{
+    bWaitingForMoveInput = bWaiting;
+
+    if (bWaiting)
+    {
+        SelectedUnitForMovement = Unit;  // Memorizza l'unità da muovere
+        OnClickAction.BindUObject(this, &AHumanPlayer::HandleTileClick);
+    }
+    else
+    {
+        //SelectedUnitForMovement = nullptr;  // Resetta quando non stiamo aspettando input
+        OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+    }
+}
+
+
+
 void AHumanPlayer::HandleTileClick()
 {
-    ATile* ClickedTile = nullptr;
+    if (!SelectedUnitForMovement) return;
 
     FHitResult Hit = FHitResult(ForceInit);
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
@@ -392,64 +386,50 @@ void AHumanPlayer::HandleTileClick()
 
     if (Hit.bBlockingHit && GameMode && GameMode->GameField)
     {
-        // Get the relative location of the hit point
         FVector HitLocation = Hit.Location;
         FVector RelativeLocation = GameMode->GameField->GetActorTransform().InverseTransformPosition(HitLocation);
-
-        // Convert the relative location to grid position
         FVector2D GridPosition2D = GameMode->GameField->GetXYPositionByRelativeLocation(RelativeLocation);
 
-        // Get the tile at the grid position
-        ClickedTile = GameMode->GameField->GetTile(GridPosition2D.X, GridPosition2D.Y);
-    }
+        ATile* ClickedTile = GameMode->GameField->GetTile(GridPosition2D.X, GridPosition2D.Y);
+        if (!ClickedTile) return;
 
-    if (bWaitingForMoveInput)
-    {
-        if (SelectedUnit)
+        AAW_Brawler* SelectedBrawler = Cast<AAW_Brawler>(SelectedUnitForMovement);
+        AAW_Sniper* SelectedSniper = Cast<AAW_Sniper>(SelectedUnitForMovement);
+
+        TArray<ATile*> ReachableTiles;
+        ATile* CurrentTile = nullptr;
+
+        if (SelectedBrawler)
         {
-            if (ClickedTile && ClickedTile == CurrentActorTile)
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Deselecting unit and Attacking"));
-                AttackUnit();
-                SelectedUnit = nullptr;
-                //CAZZATA NON MI MUOVO SetCurrentTile(nullptr);
-                // ALTRA CAZZATA le tiles raggiungibili rimangono le stesse SetReachableTiles(TArray<ATile*>());
-                SetWaitingForMoveInput(false, nullptr, TArray<ATile*>());
-            }
-            else if (ClickedTile && ReachableTiles.Contains(ClickedTile))
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
-                
-                //SelectedUnit->SetActorLocationAndRotation(ClickedTile->GetActorLocation() + FVector(0, 0, 2), FRotator::ZeroRotator);
-                
-                
-                MoveUnit(CurrentActorTile, ClickedTile);
-
-
-                // devo togliere l'illuminazione alle tile raggiungibili , cambiarela nuova current tile verrà fatto al prossimo click per muoversi però annullarla male non fa 
-                if (GameMode && GameMode->GameField)
-                {
-                    GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
-                }
-                //SelectedUnit = nullptr;
-                
-                SetCurrentTile(nullptr);
-                SetReachableTiles(TArray<ATile*>());
-                //devo forse chiamare il delegato per tornare su onclick 
-                SetWaitingForMoveInput(false, nullptr, TArray<ATile*>());
-            }
-            else
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Tile not reachable"));
-            }
+            ReachableTiles = SelectedBrawler->TilesCanReach;
+            CurrentTile = SelectedBrawler->TileIsOnNow;
         }
-        else
+        else if (SelectedSniper)
         {
-            if (ClickedTile)
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, FString::Printf(TEXT("Tile Clicked: %s"), *ClickedTile->GetName()));
-            }
+            ReachableTiles = SelectedSniper->TilesCanReach;
+            CurrentTile = SelectedSniper->TileIsOnNow;
         }
+
+        if (!CurrentTile) return;
+
+        if (ClickedTile == CurrentTile)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Deselecting unit and Attacking"));
+            AttackUnit();
+        }
+        else if (ReachableTiles.Contains(ClickedTile))
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
+            MoveUnit(CurrentTile, ClickedTile);
+
+        }
+        else if (ReachableTiles.Contains(ClickedTile))
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Tile not reachable"));
+        }
+
+        GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
+        SetWaitingForMoveInput(false, nullptr);
     }
 }
 
@@ -457,249 +437,103 @@ void AHumanPlayer::HandleTileClick()
 
 
 
-
-
-
-
-
-
-
-
 //
-//void AHumanPlayer::MoveUnit(ATile* CurrentTiles, ATile* TargetTile)
+//
+//
+//
+//void AHumanPlayer::MoveUnit(ATile* CurrentTile, ATile* TargetTile)
 //{
-//    if (!SelectedUnit)
-//    {
-//        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No unit selected!"));
-//        return;
-//    }
-//
 //    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-//    if (!GameMode || !GameMode->GameField)
+//
+//    if (!CurrentTile || !TargetTile || !SelectedUnitForMovement)
 //    {
-//        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("GameMode or GameField is invalid!"));
+//        UE_LOG(LogTemp, Error, TEXT("MoveUnit: Parametri non validi"));
 //        return;
 //    }
 //
-//    ATile* StartTile = CurrentTiles;
-//
-//    // 1. Find the path using AGameField::FindPath
-//    TArray<ATile*> Path = GameMode->GameField->FindPath(StartTile, TargetTile);
-//
-//    if (Path.Num() == 0)
+//    TArray<ATile*> Path = GameMode->GameField->FindPath(CurrentTile, TargetTile);
+//    if (Path.Num() <= 1)
 //    {
-//        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No path found!"));
+//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Nessun movimento necessario"));
 //        return;
 //    }
 //
-//    // 2. Initiate and handle the movement along the path
-//    if (Path.Num() > 0 && SelectedUnit)
-//    {
-//        CurrentPath = Path;
-//        CurrentPathIndex = 0;
+//    float MoveDuration = 0.5f;
 //
-//       
-//        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Setting timer..."));
-//        // Imposta l'intervallo di tempo (ad esempio, 0.02 secondi)
-//        GetWorldTimerManager().SetTimer(MovementTimerHandle, this, &AHumanPlayer::MoveUnit_Tick, 0.02f, true);
-//        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("Timer set."));
+//    CurrentTile->SetTileStatus(PlayerId, ETileStatus::EMPTY);
+//    UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Tile di partenza liberata"));
+//
+//    int32 PathLength = Path.Num();
+//    UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Percorso calcolato con %d step"), PathLength);
+//
+//    // Now we store the path and begin movement
+//    CurrentMovementIndex = 1;  // Start with step 1
+//    MovementPath = Path;
+//    MoveUnitToNextStep(MoveDuration);  // Start moving
+//
+//}
+//
+//void AHumanPlayer::MoveUnitToNextStep(float MoveDuration)
+//{
+//    if (!SelectedUnitForMovement || CurrentMovementIndex >= MovementPath.Num())
+//    {
+//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Fine percorso o unità nulla. Indice: %d"), CurrentMovementIndex);
+//        return;
+//    }
+//
+//    // Get the next tile and its location
+//    ATile* NextTile = MovementPath[CurrentMovementIndex];
+//    FVector TargetLocation = NextTile->GetActorLocation();
+//
+//    UE_LOG(LogTemp, Warning, TEXT("MoveStep: Spostamento verso tile %d (X: %f, Y: %f, Z: %f)"), CurrentMovementIndex, TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
+//
+//    SelectedUnitForMovement->SetActorLocationAndRotation(TargetLocation + FVector(0, 0, 2), FRotator::ZeroRotator);
+//    UE_LOG(LogTemp, Warning, TEXT("MoveStep: Posizione aggiornata a %s"), *TargetLocation.ToString());
+//
+//    // Move to the next step
+//    CurrentMovementIndex++;
+//
+//    if (CurrentMovementIndex < MovementPath.Num())
+//    {
+//        // Set the timer for the next move
+//        FTimerHandle TimerHandle;
+//        this->GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateUObject(this, &AHumanPlayer::MoveUnitToNextStep, MoveDuration), MoveDuration, false);
 //    }
 //    else
 //    {
-//        GetWorldTimerManager().ClearTimer(MovementTimerHandle);
-//        CurrentPath.Empty();
-//        CurrentPathIndex = 0;
+//        // If the unit has reached the destination, update the final tile status
+//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Arrivato alla destinazione"));
+//        MovementPath.Last()->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
 //    }
 //}
+//
 
 
 
-
-//void AHumanPlayer::MoveUnit_Tick()
-//{
-//    if (CurrentPathIndex >= CurrentPath.Num() || !SelectedUnit)
-//    {
-//        GetWorldTimerManager().ClearTimer(MovementTimerHandle);
-//        CurrentPath.Empty();
-//        CurrentPathIndex = 0;
-//        return; // Reached the end or unit was deselected
-//    }
-//
-//    ATile* NextTile = CurrentPath[CurrentPathIndex];
-//    FVector TargetLocation = NextTile->GetActorLocation();
-//
-//    // Smoothly move the unit towards the target tile's location
-//    //FVector CurrentLocation = SelectedUnit->GetActorLocation();
-//    //FVector NewLocation = FMath::VInterpConstantTo(CurrentLocation, TargetLocation, GetWorld()->GetDeltaSeconds(), MovementSpeed);
-//    //SelectedUnit->SetActorLocation(NewLocation);
-//
-//
-//    SelectedUnit->SetActorLocationAndRotation(TargetLocation + FVector(0, 0, 2), FRotator::ZeroRotator);
-//
-//    // Check if the unit has reached the tile
-//    if (FVector::DistSquared(SelectedUnit->GetActorLocation(), TargetLocation) < 2.25f) // Esempio: 1.5f * 1.5f
-//    {
-//        
-//
-//        CurrentPathIndex++; // Move to the next tile in the path
-//    }
-//}
+//questa mi servirà dopo     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
 
-void AHumanPlayer::MoveUnit(ATile* CurrTile, ATile* TargetTile)
+void AHumanPlayer::MoveUnit(ATile* CurrentTile, ATile* TargetTile)
 {
-    CurrTile = CurrentActorTile;
+    if (!SelectedUnitForMovement || !CurrentTile || !TargetTile || CurrentTile == TargetTile)
+    {
+        return;
+    }
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (!SelectedUnit || !CurrTile || !TargetTile || !GameMode || !GameMode->GameField)
+    MovementPath = GameMode->GameField->FindPath(CurrentTile, TargetTile);
+
+    if (MovementPath.Num() <= 1)
     {
         return;
     }
 
-    TArray<ATile*> Path = GameMode->GameField->FindPath(CurrTile, TargetTile);
-    if (Path.Num() <= 0)
-    {
-        return;
-    }
+    //Inizializza le variabili per il movimento
+    MovingCurrentTile = CurrentTile;
+    MovingTargetTile = TargetTile; //salviamo il target per usarlo alla fine
+    MoveSpeed = 200.0f;
+    bIsMoving = true; // Inizia il movimento
+    CurrentPathIndex = 1; // Inizia dalla prima tile del percorso (dopo quella di partenza)
 
-    CurrTile->SetTileStatus(PlayerId, ETileStatus::EMPTY);
-
-    FTimerHandle TimerHandle;
-    float MoveSpeed = 255.0f;
-    int32 PathIndex = 0;
-    bool bMovementFinished = false;
-
-    FTimerDelegate MoveDelegate;
-    MoveDelegate.BindLambda([this, Path, MoveSpeed, CurrTile, TargetTile, &PathIndex, &TimerHandle, &bMovementFinished]()
-        {
-            if (PathIndex >= 0 && PathIndex < Path.Num())
-            {
-                FVector TargetLocation = Path[PathIndex]->GetActorLocation();
-                FVector TargetLocationWithOffset = TargetLocation + FVector(0, 0, 2);
-                FVector CurrentLocation = SelectedUnit->GetActorLocation();
-
-                FVector Direction = (TargetLocationWithOffset - CurrentLocation).GetSafeNormal();
-
-                // Determine the dominant direction
-                float DeltaX = FMath::Abs(TargetLocationWithOffset.X - CurrentLocation.X);
-                float DeltaY = FMath::Abs(TargetLocationWithOffset.Y - CurrentLocation.Y);
-
-                if (DeltaX > DeltaY)
-                {
-                    // Move horizontally
-                    Direction.Y = 0.0f;
-                }
-                else
-                {
-                    // Move vertically
-                    Direction.X = 0.0f;
-                }
-
-                // Clamp the direction
-                if (!Direction.IsNearlyZero())
-                {
-                    Direction = Direction.GetClampedToMaxSize(1.0f);
-                }
-
-                FVector NewLocation = CurrentLocation + Direction * MoveSpeed * GetWorld()->GetDeltaSeconds();
-
-                SelectedUnit->SetActorLocationAndRotation(NewLocation, FRotator::ZeroRotator);
-
-                float DistSq = FVector::DistSquared(SelectedUnit->GetActorLocation(), TargetLocationWithOffset);
-                if (DistSq <= 0.01f)
-                {
-                    PathIndex++;
-                }
-            }
-            else
-            {
-                if (GetWorldTimerManager().IsTimerActive(TimerHandle) && !bMovementFinished)
-                {
-                    bMovementFinished = true;
-                    TargetTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
-                    GetWorldTimerManager().ClearTimer(TimerHandle);
-
-                    // Update CurrentActorTile after the movement
-                    if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(SelectedUnit))
-                    {
-                        Brawler->CurrentTile = TargetTile;
-                    }
-                    else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(SelectedUnit))
-                    {
-                        Sniper->CurrentTile = TargetTile;
-                    }
-                    CurrentActorTile = TargetTile;
-                }
-            }
-        });
-
-    GetWorldTimerManager().SetTimer(TimerHandle, MoveDelegate, 0.01f, true);
-}
-
-void AHumanPlayer::MoveUnit_Tick()
-{
-    if (!SelectedUnit)
-    {
-        CurrentPath.Empty();
-        CurrentPathIndex = 0;
-        return;
-    }
-
-    if (CurrentPathIndex < CurrentPath.Num())
-    {
-        ATile* NextTile = CurrentPath[CurrentPathIndex];
-        FVector TargetLocation = NextTile->GetActorLocation();
-
-        // Move the unit to the next tile
-        SelectedUnit->SetActorLocationAndRotation(TargetLocation + FVector(0, 0, 2), FRotator::ZeroRotator);
-
-        CurrentPathIndex++;
-
-        // Delay before moving to the next tile (using UKismetSystemLibrary::Delay)
-        if (CurrentPathIndex < CurrentPath.Num())
-        {
-            FTimerHandle TimerHandle;
-            GetWorld()->GetTimerManager().SetTimer(TimerHandle, [this]() {
-                MoveUnit_Tick(); // Call MoveUnit_Tick again after the delay
-                }, 1.0f, false); // Delay for 1 second
-        }
-        else
-        {
-            // Movement finished
-            CurrentPath.Empty();
-            CurrentPathIndex = 0;
-        }
-    }
-    else
-    {
-        // Movement finished
-        CurrentPath.Empty();
-        CurrentPathIndex = 0;
-    }
-}
-
-void AHumanPlayer::AttackUnit()
-{
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ALL'ATTACCOOOOO!!!"));
-}
-
-
-
-
-// setters e getter per accedere alle variabili membro 
-
-void AHumanPlayer::SetCurrentTile(ATile* Tile)
-{
-    CurrentActorTile = Tile;
-}
-
-void AHumanPlayer::SetReachableTiles(TArray<ATile*> Tiles)
-{
-    ReachableTiles = Tiles;
-}
-
-
-TArray<ATile*> AHumanPlayer::GetReachableTiles() const
-{
-    return ReachableTiles;
+    AttackUnit();
 }

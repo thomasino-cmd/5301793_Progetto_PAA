@@ -41,6 +41,11 @@ public:
 
 
 
+	//mi serve per passare a handletileclick l'unità che si sta muovendo 
+	AActor* SelectedUnitForMovement ;
+
+
+
 
 	// Implement interface functions
 	virtual void OnTurn() override;
@@ -48,11 +53,20 @@ public:
 	virtual void OnLose() override;
 
 
-public:
-	void SetCurrentTile(ATile* Tile);
-	void SetReachableTiles(TArray<ATile*> Tiles);
 
-	TArray<ATile*> GetReachableTiles() const;
+
+
+	//int32 CurrentMovementIndex;
+	//TArray<ATile*> MovementPath;
+
+	bool bIsMoving;
+	//FVector TargetLocation;
+	ATile* MovingCurrentTile;
+	ATile* MovingTargetTile;
+	float MoveSpeed;
+	TArray<ATile*> MovementPath;
+
+
 
 
 
@@ -63,9 +77,13 @@ public:
 
 
 
-	UFUNCTION()
-	void SetWaitingForMoveInput(bool bWaiting, ATile* Tile, const TArray<ATile*>& Tiles);
+	//UFUNCTION()
+	//void SetWaitingForMoveInput(bool bWaiting, ATile* Tile, const TArray<ATile*>& Tiles);
 
+
+	UFUNCTION()
+	void SetWaitingForMoveInput(bool bWaiting, AActor* Unit);
+	
 	UFUNCTION()
 	void HandleTileClick();
 
@@ -84,8 +102,10 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool bWaitingForMoveInput;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Units")
-	AActor* SelectedUnit;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	FTimerHandle MovementTimerHandle;
 
 protected:
 	// Flag to track player's turn
@@ -95,8 +115,12 @@ protected:
 	UFUNCTION()
 	void MoveUnit(ATile* CurrentTile, ATile* TargetTile);
 
-	UFUNCTION()
-	void MoveUnit_Tick();
+
+
+	//UFUNCTION()
+	//void MoveUnitToNextStep(float MoveDuration);
+
+
 
 	UFUNCTION()
 	void AttackUnit();
@@ -115,13 +139,6 @@ protected:
 	int32 CurrentPathIndex;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	FTimerHandle MovementTimerHandle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float MovementSpeed ; 
 
-private:
-	ATile* CurrentActorTile;
-	TArray<ATile*> ReachableTiles;
 };

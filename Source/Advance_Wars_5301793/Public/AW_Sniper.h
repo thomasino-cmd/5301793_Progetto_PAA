@@ -67,10 +67,15 @@ public:
     // Function to get the reachable cells based on MovementRange
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Soldier")
-    ATile* CurrentTile;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Position")
+    ATile* TileIsOnNow;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+    TArray<class ATile*> TilesCanReach;
+
+    virtual ATile* GetTileIsOnNow() const override;
+    virtual void SetTileIsOnNow(ATile* NewTile) override;
 
     virtual int32 GetMovementRange() const override;
     TArray<FVector2D> GetLegalMoves() const override;
