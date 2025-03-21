@@ -181,10 +181,12 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         if (UnitsPlaced == 1) // Brawler AI
         {
             UnitToSpawn = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
+      
         }
         else if (UnitsPlaced == 3) // Sniper AI
         {
             UnitToSpawn = GetWorld()->SpawnActor<AAW_Sniper>(SniperClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
+           
         }
     }
 
@@ -193,13 +195,31 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
         UnitToSpawn->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
 
 
-        if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
+        if (PlayerNumber == 0) // Giocatore Umano
         {
-            Brawler->OwnerPlayerId = PlayerNumber;
+            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
+            {
+                Brawler->OwnerPlayerId = PlayerNumber;
+                Player1Brawlers.Add(Brawler); // Add to Player 1 Brawlers
+            }
+            else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
+            {
+                Sniper->OwnerPlayerId = PlayerNumber;
+                Player1Snipers.Add(Sniper); // Add to Player 1 Snipers
+            }
         }
-        else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
+        else if (PlayerNumber == 1) // Giocatore AI
         {
-            Sniper->OwnerPlayerId = PlayerNumber;
+            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
+            {
+                Brawler->OwnerPlayerId = PlayerNumber;
+                Player2Brawlers.Add(Brawler); // Add to Player 2 Brawlers
+            }
+            else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
+            {
+                Sniper->OwnerPlayerId = PlayerNumber;
+                Player2Snipers.Add(Sniper); // Add to Player 2 Snipers
+            }
         }
         UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
 
@@ -256,31 +276,22 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
 }
 
 
-void AAWGameMode::SetSelectedTile(const FVector2D Position) const
+
+
+TArray<AActor*> AAWGameMode::GetCurrentPlayerUnits(int32 PlayerId)
 {
-    // Reset the field colors
-    GameField->ResetGameStatusField();
+    TArray<AActor*> PlayerUnits;
 
-    // Show selected Tile (blue color)
-    ATile* SelectedTile = GameField->GetTile(Position.X, Position.Y);
-    if (SelectedTile)
+    if (PlayerId == 0) // Human Player
     {
-        //GameField->GetTile(Position.X, Position.Y);
-
-        // Get the unit on the selected tile
-        AActor* Unit = SelectedTile->GetUnit();     // TODO : assicurati che l'unita venga attachata alla tile correttamente 
-
-        if (Unit && Unit->Implements<UAW_BaseSoldier>())
-        {
-            IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(Unit);
-            // Return the moves for the piece at the given position passed as a parameter
-            TArray<FVector2D> LegalMoves = Soldier->GetLegalMoves();
-
-            //memorizzo le mosse legali nel gamefield
-            GameField->SetLegalMoves(LegalMoves);
-        }
+        PlayerUnits.Append(Player1Brawlers);
+        PlayerUnits.Append(Player1Snipers);
+    }
+    else if (PlayerId == 1) // AI Player
+    {
+        PlayerUnits.Append(Player2Brawlers);
+        PlayerUnits.Append(Player2Snipers);
     }
 
-    // Show legal moves (yellow color)
-    GameField->ShowLegalMovesInTheField();
+    return PlayerUnits;
 }

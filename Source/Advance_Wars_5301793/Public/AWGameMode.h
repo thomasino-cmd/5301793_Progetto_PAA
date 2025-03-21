@@ -22,6 +22,13 @@ class ADVANCE_WARS_5301793_API AAWGameMode : public AGameModeBase
 
 public:
 
+    // Arrays to store player units
+    TArray<AAW_Brawler*> Player1Brawlers;
+    TArray<AAW_Sniper*> Player1Snipers;
+    TArray<AAW_Brawler*> Player2Brawlers;
+    TArray<AAW_Sniper*> Player2Snipers;
+
+
     // tracks if the game is over
     bool bIsGameOver;
 
@@ -82,7 +89,11 @@ public:
 
     void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
 
-    void SetSelectedTile(const FVector2D Position) const;
+
+    UFUNCTION(BlueprintCallable)
+    TArray<AActor*> GetCurrentPlayerUnits(int32 PlayerId);
+
+
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Brawler> BrawlerClassHuman;

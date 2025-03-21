@@ -23,11 +23,11 @@ class ADVANCE_WARS_5301793_API IAW_BaseSoldier
     // Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
 
-    // Function for movement
-    virtual void Move(FVector Direction) {};
+
+
 
     // Function for attack
-    virtual void Attack(AActor* Target) {};
+    virtual void Attack() {};
 
     // Function for taking damage
     virtual void TakeDamage(float Damage) {};
@@ -41,8 +41,7 @@ public:
     // Function to get AttackRange
     virtual int32 GetAttackRange() const = 0;
 
-    // Function to get legal moves
-    virtual TArray<FVector2D> GetLegalMoves() const = 0;
+
 
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) = 0;
 

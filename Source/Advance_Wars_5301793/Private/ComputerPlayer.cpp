@@ -74,16 +74,7 @@ void AComputerPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
-void AComputerPlayer::MakeMove()
-{
-    // Logica dell'IA (usa GameField, GameInstance e GameMode per prendere decisioni)
-    // ...
 
-    AAWGameMode* GameMode = (AAWGameMode*)(GetWorld()->GetAuthGameMode());
-
-    // Alla fine del turno, chiama la funzione EndTurn() di GameMode
-    GameMode->EndTurn();
-}
 
 void AComputerPlayer::PlaceUnit()
 {
@@ -145,3 +136,146 @@ void AComputerPlayer::PlaceUnit()
         }, 1, false);
 }
 
+
+
+
+
+
+
+
+
+void AComputerPlayer::MakeMove()
+{
+    AAWGameMode* GameMode = (AAWGameMode*)(GetWorld()->GetAuthGameMode());
+    if (!GameMode || !GameMode->GameField)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameMode or GameField is null in AComputerPlayer::MakeMove"));
+        return;
+    }
+
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Delayed) Turn"));
+    GameIstance->SetTurnMessage(TEXT("AI Turn"));
+
+    TArray<AActor*> AIUnits = GameMode->GetCurrentPlayerUnits(PlayerId);
+
+    if (AIUnits.Num() == 0)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("AI has no units to move. Ending turn."));
+        GameMode->EndTurn();
+        return;
+    }
+
+    bBrawlerMoved = false;
+    bSniperMoved = false;
+    float AIDelay = 2.0f; // Delay in seconds between unit movements
+
+    MoveAIUnits(AIUnits, 0, AIDelay); // Start the movement sequence
+}
+
+
+
+
+
+
+
+void AComputerPlayer::MoveAIUnits(TArray<AActor*> AIUnits, int32 UnitIndex, float Delay)
+{
+    if (UnitIndex >= AIUnits.Num())
+    {
+        // All units have been moved
+        GetWorld()->GetTimerManager().SetTimerForNextTick([this]() {
+            AAWGameMode* GameMode = (AAWGameMode*)(GetWorld()->GetAuthGameMode());
+            if (GameMode)
+            {
+                GameMode->EndTurn(); // Signal end of AI movement
+            }
+            });
+        return;
+    }
+
+    AActor* Unit = AIUnits[UnitIndex];
+
+    AAW_Brawler* Brawler = Cast<AAW_Brawler>(Unit);
+    AAW_Sniper* Sniper = Cast<AAW_Sniper>(Unit);
+
+    if (Brawler && !bBrawlerMoved)
+    {
+        TArray<ATile*> ReachableTiles = Brawler->GetReachableTiles(Brawler->GetMovementRange());
+        if (ReachableTiles.Num() > 0)
+        {
+            int32 RandomTileIndex = FMath::RandRange(0, ReachableTiles.Num() - 1);
+            ATile* TargetTile = ReachableTiles[RandomTileIndex];
+            Brawler->MoveUnit(TargetTile);
+            bBrawlerMoved = true;
+
+            // Wait for Brawler to finish moving using timer
+            GetWorld()->GetTimerManager().SetTimer(
+                MovementTimerHandle,
+                [this, AIUnits, UnitIndex, Delay, Brawler]() {
+                    if (!Brawler->bIsMoving)
+                    {
+                        // Movement finished, move to the next unit
+                        MoveAIUnits(AIUnits, UnitIndex + 1, Delay);
+                    }
+                    else
+                    {
+                        //// Movement still in progress, recheck
+                        //GetWorld()->GetTimerManager().SetTimer(MovementTimerHandle, FTimerDelegate::CreateLambda([this, AIUnits, UnitIndex, Delay, Brawler]() {
+                        //    MoveAIUnits(AIUnits, UnitIndex, Delay);
+                        //    }), 0.1f, false);
+                        MoveAIUnits(AIUnits, UnitIndex, Delay);
+
+                    }
+                },
+                1.0f,
+                false
+            );
+        }
+        else
+        {
+            MoveAIUnits(AIUnits, UnitIndex + 1, Delay);
+        }
+
+    }
+    else if (Sniper && !bSniperMoved)
+    {
+        TArray<ATile*> ReachableTiles = Sniper->GetReachableTiles(Sniper->GetMovementRange());
+        if (ReachableTiles.Num() > 0)
+        {
+            int32 RandomTileIndex = FMath::RandRange(0, ReachableTiles.Num() - 1);
+            ATile* TargetTile = ReachableTiles[RandomTileIndex];
+            Sniper->MoveUnit(TargetTile);
+            bSniperMoved = true;
+
+            // Wait for Sniper to finish moving using timer
+            GetWorld()->GetTimerManager().SetTimer(
+                MovementTimerHandle,
+                [this, AIUnits, UnitIndex, Delay, Sniper]() {
+                    if (!Sniper->bIsMoving)
+                    {
+                        // Movement finished, move to the next unit
+                        MoveAIUnits(AIUnits, UnitIndex + 1, Delay);
+                    }
+                    else
+                    {
+                        /*GetWorld()->GetTimerManager().SetTimer(MovementTimerHandle, FTimerDelegate::CreateLambda([this, AIUnits, UnitIndex, Delay, Sniper]() {
+                            MoveAIUnits(AIUnits, UnitIndex, Delay);
+                            }), 0.1f, false);*/
+
+                        MoveAIUnits(AIUnits, UnitIndex, Delay);
+                    }
+                },
+                1.0f,
+                false
+            );
+        }
+        else
+        {
+            MoveAIUnits(AIUnits, UnitIndex + 1, Delay);
+        }
+    }
+    else
+    {
+        MoveAIUnits(AIUnits, UnitIndex + 1, Delay);
+    }
+}

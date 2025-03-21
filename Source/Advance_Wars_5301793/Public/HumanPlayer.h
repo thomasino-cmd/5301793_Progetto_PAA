@@ -6,6 +6,8 @@
 #include "AWGameInstance.h"
 #include "Camera/CameraComponent.h"
 #include "Delegates/Delegate.h" 
+#include "AW_Brawler.h"
+#include "AW_Sniper.h"
 #include "HumanPlayer.generated.h"
 
 
@@ -46,6 +48,21 @@ public:
 
 
 
+	//venerdi 21 tentativo//////////////////////////
+
+	//AAW_Brawler* BrawlerUnit;
+	//AAW_Sniper* SniperUnit;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+	bool bBrawlerMovedThisTurn;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+	bool bSniperMovedThisTurn;
+
+
+	//////////////////////////////////////////
+
+
 
 	// Implement interface functions
 	virtual void OnTurn() override;
@@ -55,16 +72,6 @@ public:
 
 
 
-
-	//int32 CurrentMovementIndex;
-	//TArray<ATile*> MovementPath;
-
-	bool bIsMoving;
-	//FVector TargetLocation;
-	ATile* MovingCurrentTile;
-	ATile* MovingTargetTile;
-	float MoveSpeed;
-	TArray<ATile*> MovementPath;
 
 
 
@@ -87,6 +94,8 @@ public:
 	UFUNCTION()
 	void HandleTileClick();
 
+	void CheckAndEndTurn();
+
 
 	
 	UFUNCTION()
@@ -104,26 +113,24 @@ public:
 
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	FTimerHandle MovementTimerHandle;
 
 protected:
 	// Flag to track player's turn
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
 	bool bIsMyTurn;
 
-	UFUNCTION()
-	void MoveUnit(ATile* CurrentTile, ATile* TargetTile);
+	//UFUNCTION()
+	//void MoveUnit(ATile* CurrentTile, ATile* TargetTile);
+
+
+
+	////UFUNCTION()
+	////void MoveUnitToNextStep(float MoveDuration);
 
 
 
 	//UFUNCTION()
-	//void MoveUnitToNextStep(float MoveDuration);
-
-
-
-	UFUNCTION()
-	void AttackUnit();
+	//void AttackUnit();
 
 	
 
@@ -132,13 +139,11 @@ protected:
 
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	TArray<ATile*> CurrentPath;
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	//TArray<ATile*> CurrentPath;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
-	int32 CurrentPathIndex;
-
-
+	//UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+	//int32 CurrentPathIndex;
 
 
 };

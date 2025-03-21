@@ -37,7 +37,8 @@ AHumanPlayer::AHumanPlayer()
     GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
     // default init values
     PlayerId = 0;
-    bIsMoving = false;
+    bIsMyTurn = false; 
+   
 
 
 
@@ -53,6 +54,10 @@ void AHumanPlayer::BeginPlay()
     bWaitingForMoveInput = false;
     SelectedUnitForMovement = nullptr;
 
+
+    bBrawlerMovedThisTurn = false;
+    bSniperMovedThisTurn = false;
+
    // CurrentMovementIndex = 0;
     
     
@@ -65,98 +70,7 @@ void AHumanPlayer::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (bIsMoving)
-    {
-        if (CurrentPathIndex < MovementPath.Num())
-        {
-            ATile* NextTile = MovementPath[CurrentPathIndex];
-            FVector TargetLocation = NextTile->GetActorLocation() + FVector(0.0f, 0.0f, 15.0f);
-
-            // Calcola la direzione e la distanza.
-            FVector Direction = (TargetLocation - SelectedUnitForMovement->GetActorLocation()).GetSafeNormal();
-            float DistanceToTarget = FVector::Distance(SelectedUnitForMovement->GetActorLocation(), TargetLocation);
-
-            // Calcola quanto muoversi in questo frame.
-            float FrameMovement = MoveSpeed * DeltaTime;
-
-            // --- Correzione Movimento Diagonale ---
-            float DeltaX = FMath::Abs(TargetLocation.X - SelectedUnitForMovement->GetActorLocation().X);
-            float DeltaY = FMath::Abs(TargetLocation.Y - SelectedUnitForMovement->GetActorLocation().Y);
-
-            if (DeltaX > DeltaY)
-            {
-                Direction.Y = 0.0f;
-            }
-            else
-            {
-                Direction.X = 0.0f;
-            }
-            Direction = Direction.GetSafeNormal();
-
-
-            // Se siamo abbastanza vicini, spostati direttamente e passa alla prossima tile.
-            if (FrameMovement >= DistanceToTarget)
-            {
-                SelectedUnitForMovement->SetActorLocation(TargetLocation);
-                MovingCurrentTile->SetTileStatus(PlayerId, ETileStatus::EMPTY);
-                NextTile->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
-                UE_LOG(LogTemp, Log, TEXT("Moved unit to tile: %s"), *NextTile->GetName());
-
-                // AGGIORNAMENTO TILE DEL SOLDATO (tramite interfaccia)
-                IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(SelectedUnitForMovement); //Cast all'interfaccia
-                if (Soldier)
-                {
-                    Soldier->SetTileIsOnNow(NextTile);
-                }
-                else
-                {
-                    UE_LOG(LogTemp, Error, TEXT("Failed to cast SelectedUnitForMovement to IAW_BaseSoldier!"));
-                }
-
-
-                MovingCurrentTile = NextTile;
-                CurrentPathIndex++;
-                UE_LOG(LogTemp, Log, TEXT("Moving to next tile in path.  Index: %d"), CurrentPathIndex);
-
-
-
-            }
-            else // Altrimenti, muoviti di un passo.
-            {
-                SelectedUnitForMovement->SetActorLocation(SelectedUnitForMovement->GetActorLocation() + Direction * FrameMovement);
-            }
-        }
-        else //Movimento terminato
-        {
-
-            if (MovementPath.Num() > 0)
-            {
-                IAW_BaseSoldier* Soldier = Cast<IAW_BaseSoldier>(SelectedUnitForMovement); //Cast all'interfaccia
-                if (Soldier && Soldier->GetTileIsOnNow() != MovementPath.Last())
-                {
-                    if (Soldier->GetTileIsOnNow())
-                    {
-                        Soldier->GetTileIsOnNow()->SetTileStatus(PlayerId, ETileStatus::EMPTY);
-                    }
-                    MovementPath.Last()->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
-                    Soldier->SetTileIsOnNow(MovementPath.Last());
-                    UE_LOG(LogTemp, Log, TEXT("Movement completed. Final tile occupied."));
-                }
-            }
-
-
-
-            UE_LOG(LogTemp, Log, TEXT("Movement completed."));
-            bIsMoving = false;
-            SelectedUnitForMovement->SetActorRotation(FRotator::ZeroRotator);
-
-            MovingCurrentTile = nullptr;
-            // MovingTargetTile = nullptr; // Non necessario
-            MovementPath.Empty();
-            SelectedUnitForMovement = nullptr;
-
-        }
-    }
+   
 }
 
 
@@ -175,6 +89,12 @@ void AHumanPlayer::OnTurn()
     bIsMyTurn = true;
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Your Turn"));
     GameIstance->SetTurnMessage(TEXT("Human Turn"));
+
+
+
+    bBrawlerMovedThisTurn = false;  // Reset flags at the start of the turn
+    bSniperMovedThisTurn = false;
+
     
 }
 
@@ -249,6 +169,9 @@ void AHumanPlayer::OnClick()
 
         if (Hit.bBlockingHit && bIsMyTurn)
         {
+
+
+
            
             // Check if a unit was clicked
             if (AActor* ClickedActor = Hit.GetActor())
@@ -264,8 +187,9 @@ void AHumanPlayer::OnClick()
                         GameIstance->SetTurnMessage(TEXT("TOCCATO UNA TUA UNITA'"));
                         HandleFriendlyUnitClick(ClickedActor); 
                     }
-                    else
+                    else   //else niente deve cliccare per forza prima su una sua anche per attacare senza muoversi 
                     {
+
                         GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("TOCCATO UNA sua UNITA'"));
                         GameIstance->SetTurnMessage(TEXT("TOCCATO UNA sua UNITA'"));
                         HandleEnemyUnitClick(ClickedActor);  
@@ -283,25 +207,39 @@ void AHumanPlayer::OnClick()
 
 
 
-void AHumanPlayer::AttackUnit()
-{
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("ALL'ATTACCOOOOO!!!"));
-}
-
-
 
 void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
 {
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode)
+    {
+        UE_LOG(LogTemp, Error, TEXT("GameMode is null in HandleFriendlyUnitClick"));
+        return; // Exit if GameMode is invalid
+    }
+
+    // Get the human player's units from GameMode
+    TArray<AActor*> HumanUnits = GameMode->GetCurrentPlayerUnits(PlayerId);
+
+    // Check if the clicked unit is in the human player's units array
+    if (HumanUnits.Contains(ClickedUnit))
+    {
         SelectUnit(ClickedUnit);
-    
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Clicked unit is not a friendly unit"));
+        // Optionally, you could add some other feedback here, like a sound or visual cue
+    }
 }
+
+
 
 void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
 {
     //in realtà qui dovrò fare come per handletileclick però TODO LATER
     if (bIsMyTurn && SelectedUnitForMovement)
     {
-        AttackUnit();
+        
     }
     else
     {
@@ -309,6 +247,7 @@ void AHumanPlayer::HandleEnemyUnitClick(AActor* ClickedEnemyUnit)
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Enemy Clicked: %s"), *ClickedEnemyUnit->GetName()));
     }
 }
+
 
 
 void AHumanPlayer::SelectUnit(AActor* Unit)
@@ -324,6 +263,11 @@ void AHumanPlayer::SelectUnit(AActor* Unit)
     AAW_Brawler* ClickedBrawler = Cast<AAW_Brawler>(Unit);
     if (ClickedBrawler)
     {
+        if (bBrawlerMovedThisTurn)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("CANT MOVE TWICE IN THE SAME TURN : %s"), *Unit->GetName()));
+            return;
+        }
         // Otteniamo le tile raggiungibili
         ClickedBrawler->TilesCanReach = ClickedBrawler->GetReachableTiles(ClickedBrawler->GetMovementRange());
 
@@ -332,14 +276,18 @@ void AHumanPlayer::SelectUnit(AActor* Unit)
 
         // Impostiamo l'input in attesa di movimento
         //SetWaitingForMoveInput(true, ClickedBrawler->TileIsOnNow, ClickedBrawler->TilesCanReach);
-        SetWaitingForMoveInput(true, ClickedBrawler);
-        
+        SetWaitingForMoveInput(true, Unit); // Use Unit directly
     }
 
     // Controlliamo se l'unità selezionata è uno Sniper
     AAW_Sniper* ClickedSniper = Cast<AAW_Sniper>(Unit);
     if (ClickedSniper)
     {
+        if (bSniperMovedThisTurn)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("CANT MOVE TWICE IN THE SAME TURN : %s"), *Unit->GetName()));
+            return;
+        }
         // Otteniamo le tile raggiungibili
         ClickedSniper->TilesCanReach = ClickedSniper->GetReachableTiles(ClickedSniper->GetMovementRange());
 
@@ -348,13 +296,10 @@ void AHumanPlayer::SelectUnit(AActor* Unit)
 
         // Impostiamo l'input in attesa di movimento
         //SetWaitingForMoveInput(true, ClickedSniper->TileIsOnNow, ClickedSniper->TilesCanReach);
-        SetWaitingForMoveInput(true, ClickedSniper);
-        
-    
+
+        SetWaitingForMoveInput(true, Unit);  // Use Unit directly
     }
 }
-
-
 
 
 
@@ -376,164 +321,108 @@ void AHumanPlayer::SetWaitingForMoveInput(bool bWaiting, AActor* Unit)
 
 
 
+
 void AHumanPlayer::HandleTileClick()
 {
     if (!SelectedUnitForMovement) return;
 
-    FHitResult Hit = FHitResult(ForceInit);
-    GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
+    FHitResult HitMove = FHitResult(ForceInit);
+    GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, HitMove);
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
-    if (Hit.bBlockingHit && GameMode && GameMode->GameField)
+    if (HitMove.bBlockingHit && GameMode && GameMode->GameField)
     {
-        FVector HitLocation = Hit.Location;
-        FVector RelativeLocation = GameMode->GameField->GetActorTransform().InverseTransformPosition(HitLocation);
-        FVector2D GridPosition2D = GameMode->GameField->GetXYPositionByRelativeLocation(RelativeLocation);
-
-        ATile* ClickedTile = GameMode->GameField->GetTile(GridPosition2D.X, GridPosition2D.Y);
+        ATile* ClickedTile = Cast<ATile>(HitMove.GetActor());
         if (!ClickedTile) return;
 
         AAW_Brawler* SelectedBrawler = Cast<AAW_Brawler>(SelectedUnitForMovement);
         AAW_Sniper* SelectedSniper = Cast<AAW_Sniper>(SelectedUnitForMovement);
 
-        TArray<ATile*> ReachableTiles;
-        ATile* CurrentTile = nullptr;
-
         if (SelectedBrawler)
         {
-            ReachableTiles = SelectedBrawler->TilesCanReach;
-            CurrentTile = SelectedBrawler->TileIsOnNow;
+            if (!bBrawlerMovedThisTurn && SelectedBrawler->TilesCanReach.Contains(ClickedTile))
+            {
+                SelectedBrawler->MoveUnit(ClickedTile);
+                GameMode->GameField->ClearHighlightedTiles(SelectedBrawler->TilesCanReach);
+                SetWaitingForMoveInput(false, nullptr);
+
+                // Attendi che il Brawler abbia finito di muoversi
+                FTimerHandle TimerHandle;
+                GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedBrawler, GameMode]() {
+                    if (!SelectedBrawler->bIsMoving)
+                    {
+                        bBrawlerMovedThisTurn = true;
+                        CheckAndEndTurn(); // Funzione per controllare e terminare il turno
+                    }
+                    else
+                    {
+                        // Continua a controllare se il Brawler ha finito di muoversi
+                       /* FTimerHandle RetryHandle;
+                        GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedBrawler, GameMode]() {*/
+                            CheckAndEndTurn();
+
+                        /*    }), 0.1f, false);*/
+                    }
+                    }, 0.1f, true);
+            }
+            else
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler cannot move again or tile not reachable"));
+            }
         }
         else if (SelectedSniper)
         {
-            ReachableTiles = SelectedSniper->TilesCanReach;
-            CurrentTile = SelectedSniper->TileIsOnNow;
+            if (!bSniperMovedThisTurn && SelectedSniper->TilesCanReach.Contains(ClickedTile))
+            {
+                SelectedSniper->MoveUnit(ClickedTile);
+                GameMode->GameField->ClearHighlightedTiles(SelectedSniper->TilesCanReach);
+                SetWaitingForMoveInput(false, nullptr);
+
+                // Attendi che lo Sniper abbia finito di muoversi
+                FTimerHandle TimerHandle;
+                GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedSniper, GameMode]() {
+                    if (!SelectedSniper->bIsMoving)
+                    {
+                        bSniperMovedThisTurn = true;
+                        CheckAndEndTurn(); // Funzione per controllare e terminare il turno
+                    }
+                    else
+                    {
+                        // Continua a controllare se lo Sniper ha finito di muoversi
+                      /*  FTimerHandle RetryHandle;
+                        GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedSniper, GameMode]() {*/
+                            CheckAndEndTurn();
+
+                         /*   }), 0.1f, false);*/
+                    }
+                    }, 0.1f, true);
+            }
+            else
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Sniper cannot move again or tile not reachable"));
+            }
         }
-
-        if (!CurrentTile) return;
-
-        if (ClickedTile == CurrentTile)
+        else
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Deselecting unit and Attacking"));
-            AttackUnit();
+            UE_LOG(LogTemp, Error, TEXT("Selected unit is not a Brawler or Sniper!"));
         }
-        else if (ReachableTiles.Contains(ClickedTile))
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Moving unit"));
-            MoveUnit(CurrentTile, ClickedTile);
-
-        }
-        else if (ReachableTiles.Contains(ClickedTile))
-        {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Tile not reachable"));
-        }
-
-        GameMode->GameField->ClearHighlightedTiles(ReachableTiles);
-        SetWaitingForMoveInput(false, nullptr);
+    }
+    else
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid tile click"));
     }
 }
 
-
-
-
-
-//
-//
-//
-//
-//void AHumanPlayer::MoveUnit(ATile* CurrentTile, ATile* TargetTile)
-//{
-//    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-//
-//    if (!CurrentTile || !TargetTile || !SelectedUnitForMovement)
-//    {
-//        UE_LOG(LogTemp, Error, TEXT("MoveUnit: Parametri non validi"));
-//        return;
-//    }
-//
-//    TArray<ATile*> Path = GameMode->GameField->FindPath(CurrentTile, TargetTile);
-//    if (Path.Num() <= 1)
-//    {
-//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Nessun movimento necessario"));
-//        return;
-//    }
-//
-//    float MoveDuration = 0.5f;
-//
-//    CurrentTile->SetTileStatus(PlayerId, ETileStatus::EMPTY);
-//    UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Tile di partenza liberata"));
-//
-//    int32 PathLength = Path.Num();
-//    UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Percorso calcolato con %d step"), PathLength);
-//
-//    // Now we store the path and begin movement
-//    CurrentMovementIndex = 1;  // Start with step 1
-//    MovementPath = Path;
-//    MoveUnitToNextStep(MoveDuration);  // Start moving
-//
-//}
-//
-//void AHumanPlayer::MoveUnitToNextStep(float MoveDuration)
-//{
-//    if (!SelectedUnitForMovement || CurrentMovementIndex >= MovementPath.Num())
-//    {
-//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Fine percorso o unità nulla. Indice: %d"), CurrentMovementIndex);
-//        return;
-//    }
-//
-//    // Get the next tile and its location
-//    ATile* NextTile = MovementPath[CurrentMovementIndex];
-//    FVector TargetLocation = NextTile->GetActorLocation();
-//
-//    UE_LOG(LogTemp, Warning, TEXT("MoveStep: Spostamento verso tile %d (X: %f, Y: %f, Z: %f)"), CurrentMovementIndex, TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
-//
-//    SelectedUnitForMovement->SetActorLocationAndRotation(TargetLocation + FVector(0, 0, 2), FRotator::ZeroRotator);
-//    UE_LOG(LogTemp, Warning, TEXT("MoveStep: Posizione aggiornata a %s"), *TargetLocation.ToString());
-//
-//    // Move to the next step
-//    CurrentMovementIndex++;
-//
-//    if (CurrentMovementIndex < MovementPath.Num())
-//    {
-//        // Set the timer for the next move
-//        FTimerHandle TimerHandle;
-//        this->GetWorldTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateUObject(this, &AHumanPlayer::MoveUnitToNextStep, MoveDuration), MoveDuration, false);
-//    }
-//    else
-//    {
-//        // If the unit has reached the destination, update the final tile status
-//        UE_LOG(LogTemp, Warning, TEXT("MoveUnit: Arrivato alla destinazione"));
-//        MovementPath.Last()->SetTileStatus(PlayerId, ETileStatus::OCCUPIED);
-//    }
-//}
-//
-
-
-
-//questa mi servirà dopo     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-
-
-void AHumanPlayer::MoveUnit(ATile* CurrentTile, ATile* TargetTile)
+void AHumanPlayer::CheckAndEndTurn()
 {
-    if (!SelectedUnitForMovement || !CurrentTile || !TargetTile || CurrentTile == TargetTile)
-    {
-        return;
-    }
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
-    MovementPath = GameMode->GameField->FindPath(CurrentTile, TargetTile);
-
-    if (MovementPath.Num() <= 1)
+    if (bBrawlerMovedThisTurn && bSniperMovedThisTurn)
     {
-        return;
+        if (GameMode)
+        {
+            bIsMyTurn = false;
+            GameMode->EndTurn();
+        }
     }
-
-    //Inizializza le variabili per il movimento
-    MovingCurrentTile = CurrentTile;
-    MovingTargetTile = TargetTile; //salviamo il target per usarlo alla fine
-    MoveSpeed = 200.0f;
-    bIsMoving = true; // Inizia il movimento
-    CurrentPathIndex = 1; // Inizia dalla prima tile del percorso (dopo quella di partenza)
-
-    AttackUnit();
 }

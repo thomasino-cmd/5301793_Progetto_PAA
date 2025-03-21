@@ -11,6 +11,9 @@
 #include "ComputerPlayer.generated.h"
 
 class AAWGameMode; // Forward declaration
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMovementFinished);
+
 UCLASS()
 class ADVANCE_WARS_5301793_API AComputerPlayer : public APawn, public IPlayerInterface
 {
@@ -45,8 +48,18 @@ public:
     void MakeMove();
 
     UFUNCTION()
+    void MoveAIUnits(TArray<AActor*> AIUnits, int32 UnitIndex, float Delay);
+
+    UFUNCTION()
     void PlaceUnit();
 
     // Funzioni di supporto per l'IA (es. valutazione della situazione, scelta del bersaglio)
     // ...
+
+    bool bBrawlerMoved = false;
+    bool bSniperMoved = false;
+
+private: 
+    FTimerHandle MovementTimerHandle;
+ 
 };

@@ -32,8 +32,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Soldier")
     int32 AttackRange;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Soldier")
-    float MovementSpeed;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
     int32 OwnerPlayerId;
@@ -54,9 +52,8 @@ public:
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
-    // Implement interface functions
-    virtual void Move(FVector Direction) override;
-    virtual void Attack(AActor* Target) override;
+
+    virtual void Attack() override;
     virtual void TakeDamage(float Damage) override;
     virtual float GetHealth() const override;
     
@@ -78,8 +75,35 @@ public:
     virtual void SetTileIsOnNow(ATile* NewTile) override;
 
     virtual int32 GetMovementRange() const override;
-    TArray<FVector2D> GetLegalMoves() const override;
+
     virtual int32 GetAttackRange() const override;
 
+
+
+
+
+
+
+
+
+    UFUNCTION(BlueprintCallable)
+     void MoveUnit(ATile* TargetTile) ;
+
+
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+    TArray<ATile*> MovementPath;
+
+    bool bIsMoving;
+
+    ATile* MovingCurrentTile;
+    ATile* MovingTargetTile;
+    float MoveSpeed;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+    TArray<ATile*> CurrentPath;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
+    int32 CurrentPathIndex;
   
 };
