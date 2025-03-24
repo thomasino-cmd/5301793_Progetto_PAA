@@ -5,7 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AW_BaseSoldier.h" // Include the interface header
+
+#include "Delegates/Delegate.h"
+
 #include "AW_Sniper.generated.h"
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveCompleted);
+
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AAW_Sniper : public AActor, public IAW_BaseSoldier
@@ -15,6 +21,13 @@ class ADVANCE_WARS_5301793_API AAW_Sniper : public AActor, public IAW_BaseSoldie
 public:
     // Sets default values for this actor's properties
     AAW_Sniper();
+
+
+    // Event to be called when the unit finishes moving.
+    FOnMoveCompleted OnMoveCompleted1;
+
+
+
 
     // Range of damage for the ranged attack
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sniper")
@@ -94,7 +107,12 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     TArray<ATile*> MovementPath;
 
+
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     bool bIsMoving;
+
+
 
     ATile* MovingCurrentTile;
     ATile* MovingTargetTile;

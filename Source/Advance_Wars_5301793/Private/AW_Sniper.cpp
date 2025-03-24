@@ -47,7 +47,6 @@ void AAW_Sniper::BeginPlay()
 
 
 
-//funzione di tick che deve anche muovermeli 
 void AAW_Sniper::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -66,40 +65,24 @@ void AAW_Sniper::Tick(float DeltaTime)
             // Calcola quanto muoversi in questo frame.
             float FrameMovement = MoveSpeed * DeltaTime;
 
-            // --- Correzione Movimento Diagonale ---
-            float DeltaX = FMath::Abs(TargetLocation.X - this->GetActorLocation().X);
-            float DeltaY = FMath::Abs(TargetLocation.Y - this->GetActorLocation().Y);
+            ;
 
-            if (DeltaX > DeltaY)
-            {
-                Direction.Y = 0.0f;
-            }
-            else
-            {
-                Direction.X = 0.0f;
-            }
-            Direction = Direction.GetSafeNormal();
-
+            UE_LOG(LogTemp, Log, TEXT("Current Location: %s, Target Location: %s, Direction: %s, Distance: %f, FrameMovement: %f"),
+                *this->GetActorLocation().ToString(), *TargetLocation.ToString(), *Direction.ToString(), DistanceToTarget, FrameMovement);
 
             // Se siamo abbastanza vicini, spostati direttamente e passa alla prossima tile.
-            if (FrameMovement >= DistanceToTarget)
+            if (FrameMovement >= DistanceToTarget) // Using tolerance
             {
                 this->SetActorLocation(TargetLocation);
                 MovingCurrentTile->SetTileStatus(-1, ETileStatus::EMPTY);
                 NextTile->SetTileStatus(OwnerPlayerId, ETileStatus::OCCUPIED);
                 UE_LOG(LogTemp, Log, TEXT("Moved unit to tile: %s"), *NextTile->GetName());
 
-
                 this->SetTileIsOnNow(NextTile);
-
-
 
                 MovingCurrentTile = NextTile;
                 CurrentPathIndex++;
                 UE_LOG(LogTemp, Log, TEXT("Moving to next tile in path.  Index: %d"), CurrentPathIndex);
-
-
-
             }
             else // Altrimenti, muoviti di un passo.
             {
@@ -108,10 +91,8 @@ void AAW_Sniper::Tick(float DeltaTime)
         }
         else //Movimento terminato
         {
-
             if (MovementPath.Num() > 0)
             {
-
                 if (this->GetTileIsOnNow() != MovementPath.Last())
                 {
                     if (this->GetTileIsOnNow())
@@ -124,27 +105,19 @@ void AAW_Sniper::Tick(float DeltaTime)
                 }
             }
 
-
-
             UE_LOG(LogTemp, Log, TEXT("Movement completed."));
-            bIsMoving = false;
+
+
             this->SetActorRotation(FRotator::ZeroRotator);
 
             MovingCurrentTile = nullptr;
-            MovingTargetTile = nullptr; // Non necessario
+            MovingTargetTile = nullptr;
             MovementPath.Empty();
-
-
+            bIsMoving = false;
+            OnMoveCompleted1.Broadcast(); // Trigger the event        
         }
     }
 }
-
-
-
-
-
-
-
 
 
 

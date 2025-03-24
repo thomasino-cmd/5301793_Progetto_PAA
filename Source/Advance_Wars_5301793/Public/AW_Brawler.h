@@ -6,8 +6,11 @@
 #include "GameFramework/Actor.h"
 #include "AW_BaseSoldier.h" // Include the interface header
 
+#include "Delegates/Delegate.h"
+
 #include "AW_Brawler.generated.h"
 
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveCompleted);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AAW_Brawler : public AActor, public IAW_BaseSoldier
@@ -35,7 +38,7 @@ public:
     int32 AttackRange;
 
 
-
+    FOnMoveCompleted OnMoveCompleted0;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
     int32 OwnerPlayerId;
@@ -94,6 +97,8 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     TArray<ATile*> MovementPath;
 
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     bool bIsMoving;
 
     ATile* MovingCurrentTile;

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
 #include "GameField.h"
+
 #include "AW_BaseSoldier.generated.h"
 
 // This class does not need to be modified.
@@ -16,6 +17,10 @@ class UAW_BaseSoldier : public UInterface
 
 /**
  * */
+
+
+
+
 class ADVANCE_WARS_5301793_API IAW_BaseSoldier
 {
     GENERATED_BODY()

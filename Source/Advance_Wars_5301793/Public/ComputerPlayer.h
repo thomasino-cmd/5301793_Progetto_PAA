@@ -8,6 +8,9 @@
 #include "AWGameInstance.h"
 //#include "AWGameMode.h"
 #include "GameField.h"
+
+#include "Delegates/Delegate.h"
+
 #include "ComputerPlayer.generated.h"
 
 
@@ -15,6 +18,7 @@
 enum class EComputerMoveState
 {
     Idle,
+    Moving,
     MovingBrawler,
     MovingSniper,
     Finished
@@ -25,7 +29,7 @@ class AAW_Sniper;
 
 class AAWGameMode; // Forward declaration
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMovementFinished);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMovementFinished);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AComputerPlayer : public APawn, public IPlayerInterface
@@ -46,7 +50,22 @@ protected:
     
 
 public:
+    UFUNCTION()
     void MoveSniper();
+
+
+    UFUNCTION()
+    void OnBrawlerMoveCompleted();
+
+    UFUNCTION()
+    void OnSniperMoveCompleted();
+
+    void CheckIfBothMoved();
+
+
+
+
+
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
@@ -61,6 +80,7 @@ public:
     UFUNCTION()
     void MakeMove();
 
+    UFUNCTION()
     void MoveBrawler();
 
     //UFUNCTION()
@@ -72,23 +92,29 @@ public:
     // Funzioni di supporto per l'IA (es. valutazione della situazione, scelta del bersaglio)
     // ...
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     bool bBrawlerMoved = false;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     bool bSniperMoved = false;
 
 
     EComputerMoveState CurrentState = EComputerMoveState::Idle;
     TArray<AActor*> AIUnits;        // Array delle unità correnti dell'AI
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     AAW_Brawler* SelectedBrawler;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
     AAW_Sniper* SelectedSniper;
 
-
-    bool bBrawlerFirst = true;       // Flag per decidere quale unità muovere per prima
-
-private: 
-    FTimerHandle MovementTimerHandle;
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    int32 RandomIndex;
  
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
+    int32 RandomTileIndex;
+
+    bool bMoveInProgress;
+
 };

@@ -330,7 +330,6 @@ void AGameField::ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles)
 
 
 
-
 // LOGIC FOR PATHFINDING AND MOVEMENT HERE 
 
 TArray<ATile*> AGameField::FindPath(ATile* StartTile, ATile* GoalTile)
@@ -454,3 +453,4 @@ TArray<ATile*> AGameField::ReconstructPath(const TMap<ATile*, ATile*>& CameFrom,
     }
     return Path;
 }
+
