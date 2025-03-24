@@ -116,7 +116,7 @@ void AAW_Brawler::Tick(float DeltaTime)
             MovingTargetTile = nullptr; 
             MovementPath.Empty();
             bIsMoving = false;
-            OnMoveCompleted0.Broadcast(); // Trigger the event        
+            //OnMoveCompleted0.Broadcast(); // Trigger the event        
         }
     }
 }

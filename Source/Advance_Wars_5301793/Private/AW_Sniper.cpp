@@ -114,7 +114,7 @@ void AAW_Sniper::Tick(float DeltaTime)
             MovingTargetTile = nullptr;
             MovementPath.Empty();
             bIsMoving = false;
-            OnMoveCompleted1.Broadcast(); // Trigger the event        
+            //OnMoveCompleted1.Broadcast(); // Trigger the event        
         }
     }
 }

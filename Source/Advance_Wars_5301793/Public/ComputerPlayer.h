@@ -8,9 +8,6 @@
 #include "AWGameInstance.h"
 //#include "AWGameMode.h"
 #include "GameField.h"
-
-#include "Delegates/Delegate.h"
-
 #include "ComputerPlayer.generated.h"
 
 
@@ -29,7 +26,6 @@ class AAW_Sniper;
 
 class AAWGameMode; // Forward declaration
 
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMovementFinished);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AComputerPlayer : public APawn, public IPlayerInterface
@@ -53,17 +49,20 @@ public:
     UFUNCTION()
     void MoveSniper();
 
-
     UFUNCTION()
-    void OnBrawlerMoveCompleted();
-
-    UFUNCTION()
-    void OnSniperMoveCompleted();
-
-    void CheckIfBothMoved();
+    void ContinueWithNextUnit();
 
 
+    //UFUNCTION()
+    //void OnBrawlerMoveCompleted();
 
+    //UFUNCTION()
+    //void OnSniperMoveCompleted();
+
+    //void CheckIfBothMoved();
+
+
+    bool bAttackInProgress;
 
 
     // Called every frame

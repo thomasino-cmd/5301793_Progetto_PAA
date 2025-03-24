@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AW_BaseSoldier.h" // Include the interface header
-
+#include "AW_Delegates.h"
 #include "Delegates/Delegate.h"
 
 #include "AW_Brawler.generated.h"
@@ -13,7 +13,7 @@
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveCompleted);
 
 UCLASS()
-class ADVANCE_WARS_5301793_API AAW_Brawler : public AActor, public IAW_BaseSoldier
+class ADVANCE_WARS_5301793_API AAW_Brawler : public AActor, public IAW_BaseSoldier 
 {
     GENERATED_BODY()
 
@@ -38,7 +38,7 @@ public:
     int32 AttackRange;
 
 
-    FOnMoveCompleted OnMoveCompleted0;
+    //FOnMoveCompleted OnMoveCompleted0;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
     int32 OwnerPlayerId;

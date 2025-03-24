@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "AW_BaseSoldier.h" // Include the interface header
-
+#include "AW_Delegates.h"
 #include "Delegates/Delegate.h"
 
 #include "AW_Sniper.generated.h"
@@ -14,7 +14,7 @@
 
 
 UCLASS()
-class ADVANCE_WARS_5301793_API AAW_Sniper : public AActor, public IAW_BaseSoldier
+class ADVANCE_WARS_5301793_API AAW_Sniper : public AActor, public IAW_BaseSoldier 
 {
     GENERATED_BODY()
 
@@ -24,7 +24,7 @@ public:
 
 
     // Event to be called when the unit finishes moving.
-    FOnMoveCompleted OnMoveCompleted1;
+    //FOnMoveCompleted OnMoveCompleted1;
 
 
 
