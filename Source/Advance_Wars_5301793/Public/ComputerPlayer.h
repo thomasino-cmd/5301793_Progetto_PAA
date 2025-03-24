@@ -10,6 +10,19 @@
 #include "GameField.h"
 #include "ComputerPlayer.generated.h"
 
+
+
+enum class EComputerMoveState
+{
+    Idle,
+    MovingBrawler,
+    MovingSniper,
+    Finished
+};
+class AAW_Brawler;
+class AAW_Sniper;
+
+
 class AAWGameMode; // Forward declaration
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMovementFinished);
@@ -33,6 +46,7 @@ protected:
     
 
 public:
+    void MoveSniper();
     // Called every frame
     virtual void Tick(float DeltaTime) override;
 
@@ -47,8 +61,10 @@ public:
     UFUNCTION()
     void MakeMove();
 
-    UFUNCTION()
-    void MoveAIUnits(TArray<AActor*> AIUnits, int32 UnitIndex, float Delay);
+    void MoveBrawler();
+
+    //UFUNCTION()
+    //void MoveAIUnits(TArray<AActor*> AIUnits, int32 UnitIndex, float Delay);
 
     UFUNCTION()
     void PlaceUnit();
@@ -58,6 +74,19 @@ public:
 
     bool bBrawlerMoved = false;
     bool bSniperMoved = false;
+
+
+    EComputerMoveState CurrentState = EComputerMoveState::Idle;
+    TArray<AActor*> AIUnits;        // Array delle unità correnti dell'AI
+
+    UPROPERTY()
+    AAW_Brawler* SelectedBrawler;
+
+    UPROPERTY()
+    AAW_Sniper* SelectedSniper;
+
+
+    bool bBrawlerFirst = true;       // Flag per decidere quale unità muovere per prima
 
 private: 
     FTimerHandle MovementTimerHandle;
