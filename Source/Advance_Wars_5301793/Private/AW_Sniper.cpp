@@ -241,6 +241,68 @@ TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
     return ReachableTiles;  
 }
 
+TArray<ATile*> AAW_Sniper::GetAttackableTiles()
+{
+    TArray<ATile*> AttackableTiles;
+    AGameField* GameField = Cast<AGameField>(UGameplayStatics::GetActorOfClass(GetWorld(), AGameField::StaticClass()));
+    if (!GameField)
+    {
+        return AttackableTiles;
+    }
+
+    ATile* StartTile = TileIsOnNow;
+    if (!StartTile)
+    {
+        return AttackableTiles;
+    }
+
+    int32 Range = GetAttackRange();
+
+    // 1. Initialization
+    TQueue<FTileNode> TileQueue;
+    TMap<ATile*, int32> Distance;
+
+    FTileNode StartNode;
+    StartNode.Tile = StartTile;
+    StartNode.Distance = 0;
+
+    TileQueue.Enqueue(StartNode);
+    Distance.Add(StartTile, 0);
+
+    // 2. BFS Algorithm
+    while (!TileQueue.IsEmpty())
+    {
+        FTileNode CurrentNode;
+        TileQueue.Dequeue(CurrentNode);
+        ATile* CurrentTile = CurrentNode.Tile;
+        int32 CurrentDistance = CurrentNode.Distance;
+
+        // 3. Explore Neighbors
+        TArray<FVector2D> Directions = {
+            FVector2D(1, 0), FVector2D(-1, 0), FVector2D(0, 1), FVector2D(0, -1)
+        };
+
+        for (const FVector2D& Dir : Directions)
+        {
+            FVector2D NeighborPosition = CurrentTile->GetGridPosition() + Dir;
+            ATile* NeighborTile = GameField->GetTile(NeighborPosition.X, NeighborPosition.Y);
+
+            if (NeighborTile && !Distance.Contains(NeighborTile) && CurrentDistance + 1 <= Range)
+            {
+                FTileNode NextNode;
+                NextNode.Tile = NeighborTile;
+                NextNode.Distance = CurrentDistance + 1;
+
+                TileQueue.Enqueue(NextNode);
+                Distance.Add(NeighborTile, CurrentDistance + 1);
+                AttackableTiles.Add(NeighborTile);
+            }
+        }
+    }
+
+    return AttackableTiles;
+}
+
 ATile* AAW_Sniper::GetTileIsOnNow() const
 {
     return TileIsOnNow;
@@ -249,6 +311,7 @@ ATile* AAW_Sniper::GetTileIsOnNow() const
 void AAW_Sniper::SetTileIsOnNow(ATile* NewTile)
 {
     TileIsOnNow = NewTile;
+    this->AttachToActor(NewTile, FAttachmentTransformRules::KeepWorldTransform);
 }
 
 int32 AAW_Sniper::GetMovementRange() const
@@ -277,6 +340,8 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
+    //this->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    
     MovementPath = GameMode->GameField->FindPath(TileIsOnNow, TargetTile);
 
     if (MovementPath.Num() <= 0)

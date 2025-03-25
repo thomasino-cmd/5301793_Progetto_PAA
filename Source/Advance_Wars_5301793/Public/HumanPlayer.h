@@ -47,11 +47,9 @@ public:
 	AActor* SelectedUnitForMovement ;
 
 
+	FTimerHandle TimerBrawler;
+	FTimerHandle TimerSniper;
 
-	//venerdi 21 tentativo//////////////////////////
-
-	//AAW_Brawler* BrawlerUnit;
-	//AAW_Sniper* SniperUnit;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
 	bool bBrawlerMovedThisTurn;

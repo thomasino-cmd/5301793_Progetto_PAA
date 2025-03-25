@@ -46,7 +46,7 @@ public:
     // Function to get AttackRange
     virtual int32 GetAttackRange() const = 0;
 
-
+    virtual TArray<class ATile*> GetAttackableTiles() =0 ;
 
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) = 0;
 

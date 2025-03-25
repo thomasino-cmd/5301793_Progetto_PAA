@@ -343,15 +343,17 @@ void AHumanPlayer::HandleTileClick()
             if (!bBrawlerMovedThisTurn && SelectedBrawler->TilesCanReach.Contains(ClickedTile))
             {
                 SelectedBrawler->MoveUnit(ClickedTile);
+
                 GameMode->GameField->ClearHighlightedTiles(SelectedBrawler->TilesCanReach);
                 SetWaitingForMoveInput(false, nullptr);
 
                 // Attendi che il Brawler abbia finito di muoversi
-                FTimerHandle TimerHandle;
-                GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedBrawler, GameMode]() {
+        
+                GetWorldTimerManager().SetTimer(TimerBrawler, [this, SelectedBrawler, GameMode]() {
                     if (!SelectedBrawler->bIsMoving)
                     {
                         bBrawlerMovedThisTurn = true;
+                        GetWorldTimerManager().ClearTimer(TimerBrawler);
                         CheckAndEndTurn(); // Funzione per controllare e terminare il turno
                     }
                     else
@@ -359,7 +361,7 @@ void AHumanPlayer::HandleTileClick()
                         // Continua a controllare se il Brawler ha finito di muoversi
                        /* FTimerHandle RetryHandle;
                         GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedBrawler, GameMode]() {*/
-                            CheckAndEndTurn();
+                          // CheckAndEndTurn();
 
                         /*    }), 0.1f, false);*/
                     }
@@ -379,11 +381,12 @@ void AHumanPlayer::HandleTileClick()
                 SetWaitingForMoveInput(false, nullptr);
 
                 // Attendi che lo Sniper abbia finito di muoversi
-                FTimerHandle TimerHandle;
-                GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedSniper, GameMode]() {
+                
+                GetWorldTimerManager().SetTimer(TimerSniper, [this, SelectedSniper, GameMode]() {
                     if (!SelectedSniper->bIsMoving)
                     {
                         bSniperMovedThisTurn = true;
+                        GetWorldTimerManager().ClearTimer(TimerSniper);
                         CheckAndEndTurn(); // Funzione per controllare e terminare il turno
                     }
                     else
@@ -391,7 +394,7 @@ void AHumanPlayer::HandleTileClick()
                         // Continua a controllare se lo Sniper ha finito di muoversi
                       /*  FTimerHandle RetryHandle;
                         GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedSniper, GameMode]() {*/
-                            CheckAndEndTurn();
+                           // CheckAndEndTurn();
 
                          /*   }), 0.1f, false);*/
                     }
@@ -412,6 +415,15 @@ void AHumanPlayer::HandleTileClick()
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Invalid tile click"));
     }
 }
+
+
+
+
+
+
+
+
+
 
 void AHumanPlayer::CheckAndEndTurn()
 {

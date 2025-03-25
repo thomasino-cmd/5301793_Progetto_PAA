@@ -61,8 +61,6 @@ public:
 
     //void CheckIfBothMoved();
 
-    UFUNCTION()
-    void CheckIfBothMoved();
 
     bool bAttackInProgress;
 
@@ -117,5 +115,10 @@ public:
     int32 RandomTileIndex;
 
     bool bMoveInProgress;
+    bool bTurnEnded;
+
+    FTimerHandle BrawlerTimerHandle;
+    FTimerHandle SniperTimerHandle;
+
 
 };
