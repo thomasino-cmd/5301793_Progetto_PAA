@@ -46,6 +46,8 @@ public:
 	//mi serve per passare a handletileclick l'unità che si sta muovendo 
 	AActor* SelectedUnitForMovement ;
 
+	//dato che bindUobject per handleenemyunitclick non accetta argomenti 
+	AActor* SelectedUnitForAttack; 
 
 	FTimerHandle TimerBrawler;
 	FTimerHandle TimerSniper;
@@ -92,6 +94,8 @@ public:
 	UFUNCTION()
 	void HandleTileClick();
 
+	void AttackPhase(IAW_BaseSoldier* SelectedUnit);
+
 	void CheckAndEndTurn();
 
 
@@ -100,7 +104,7 @@ public:
 	void HandleFriendlyUnitClick(AActor* ClickedUnit);
 
 	UFUNCTION()
-	void HandleEnemyUnitClick(AActor* ClickedEnemyUnit);
+	void HandleEnemyUnitClick();
 
 	UFUNCTION()
 	void SelectUnit(AActor* Unit);

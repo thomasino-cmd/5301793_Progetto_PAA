@@ -4,6 +4,9 @@
 #include "DrawDebugHelpers.h"  // For drawing debug lines
 #include "Kismet/GameplayStatics.h"
 #include "AWGameMode.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "Materials/Material.h"
+#include "Components/StaticMeshComponent.h"
 
 // Sets default values
 AGameField::AGameField()
@@ -327,6 +330,72 @@ void AGameField::ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles)
         }
     }
 }
+
+
+
+void AGameField::HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int32 PlayerId)
+{
+    if (AttackableTiles.Num() == 0) return; // Usciamo se non ci sono tile da evidenziare
+
+    for (ATile* Tile : AttackableTiles)
+    {
+        if (Tile)
+        {
+            int32 TilePlayerId = Tile->GetTileOwner(); // Assumiamo che ATile abbia un metodo GetPlayerId()
+
+            if (TilePlayerId != PlayerId && TilePlayerId != -1) // Verifica se la tile è occupata da un altro giocatore
+            {
+                UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent(); // Assumiamo che ATile abbia un componente StaticMesh
+
+                if (TileMesh)
+                {
+                    UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0); // Ottieni il materiale base della tile
+                    UMaterialInstanceDynamic* DynamicMaterial = UMaterialInstanceDynamic::Create(BaseMaterial, nullptr);
+
+                    if (DynamicMaterial)
+                    {
+                        // Imposta il colore a rosso fosforescente (o altro colore desiderato)
+                        DynamicMaterial->SetVectorParameterValue(FName("Color"), FLinearColor::Red);
+                        DynamicMaterial->SetScalarParameterValue(FName("EmissiveStrength"), 5.0f); // Aggiungi emissione per l'effetto fosforescente
+
+                        TileMesh->SetMaterial(0, DynamicMaterial); // Applica il materiale dinamico alla tile
+                    }
+                }
+            }
+            else {
+                // UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent();
+                //if(TileMesh){
+                //   UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0);
+                //  TileMesh->SetMaterial(0,BaseMaterial); //resetto il materiale all'originale.
+                //}
+            }
+        }
+    }
+}
+
+
+
+
+void AGameField::ClearHighlightedAttackTiles(const TArray<ATile*>& AttackableTiles)
+{
+    for (ATile* Tile : AttackableTiles)
+    {
+        if (Tile)
+        {
+            UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent();
+            if (TileMesh)
+            {
+                //Ottieni il materiale base originale.
+                UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0);
+                //Ripristina il materiale originale.
+                TileMesh->SetMaterial(0, BaseMaterial);
+            }
+        }
+    }
+}
+
+
+
 
 
 

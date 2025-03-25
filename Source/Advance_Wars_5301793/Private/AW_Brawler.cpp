@@ -352,3 +352,23 @@ void AAW_Brawler::MoveUnit(ATile* TargetTile)
 
     
 }
+
+
+
+void AAW_Brawler::Shoot(IAW_BaseSoldier* Target)
+{
+    if (!Target) return;
+
+    // Genera un danno casuale nel range 1-6
+    int Damage = FMath::RandRange(1, 6);
+
+    // Log (opzionale, per debug)
+//    UE_LOG(LogTemp, Log, TEXT("%s attacca %s con danno %d"), *GetName(), *Target->GetName(), Damage);
+
+    // Applica il danno al bersaglio: il metodo TakeDamage deve gestire la sottrazione dei punti vita
+    Target->TakeDamage(Damage);
+
+    // Se i punti vita del bersaglio scendono a 0 (o al di sotto), il bersaglio dovrà essere eliminato dalla griglia.
+    // Tale logica la gestisce il metodo TakeDamage all'interno della classe concreta che implementa IAW_BaseSoldier.
+}
+

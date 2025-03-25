@@ -358,3 +358,59 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
 
    
 }
+
+
+
+
+void AAW_Sniper::Shoot(IAW_BaseSoldier* Target)
+{
+    if (!Target) return;
+
+    // Genera un danno casuale nel range 4-8
+    int Damage = FMath::RandRange(4, 8);
+
+    // Log per debug
+//    UE_LOG(LogTemp, Log, TEXT("%s spara a %s con danno %d"), *GetName(), *Target->GetName(), Damage);
+
+    // Applica il danno al bersaglio
+    Target->TakeDamage(Damage);
+
+    // Gestione del contraccolpo:
+    // Se il bersaglio è uno Sniper oppure se è un Brawler a distanza 1, lo Sniper subisce un contraccolpo.
+    bool bCounterattack = false;
+
+    // Ottieni le tile correnti dell'attaccante e del bersaglio
+    ATile* AttackerTile = this->GetTileIsOnNow();
+    ATile* TargetTile = Target->GetTileIsOnNow();
+
+    // Calcola la distanza (ipotizziamo una distanza Manhattan per semplicità)
+    float Distance = 9999.f;
+    if (AttackerTile && TargetTile)
+    {
+        FVector2D AttackerPos = AttackerTile->GetGridPosition();
+        FVector2D TargetPos = TargetTile->GetGridPosition();
+        Distance = FMath::Abs(AttackerPos.X - TargetPos.X) + FMath::Abs(AttackerPos.Y - TargetPos.Y);
+    }
+
+    // Se il bersaglio è uno Sniper, il contraccolpo è sempre applicato
+    if (Cast<AAW_Sniper>(Target))
+    {
+        bCounterattack = true;
+    }
+    // Se il bersaglio è un Brawler, il contraccolpo si applica solo se è a distanza 1
+    else if (AAW_Brawler* TargetBrawler = Cast<AAW_Brawler>(Target))
+    {
+        if (Distance <= 1.f)
+        {
+            bCounterattack = true;
+        }
+    }
+
+    // Se si applica il contraccolpo, genera un danno random nel range 1-3 e applicalo allo Sniper stesso
+    if (bCounterattack)
+    {
+        int CounterDamage = FMath::RandRange(1, 3);
+        UE_LOG(LogTemp, Log, TEXT("%s subisce contraccolpo con danno %d"), *GetName(), CounterDamage);
+        this->TakeDamage(CounterDamage);
+    }
+}

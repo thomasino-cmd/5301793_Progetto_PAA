@@ -106,6 +106,11 @@ public:
 
 
 
+     UFUNCTION(BlueprintCallable)
+     void Shoot(IAW_BaseSoldier* Target);
+
+
+
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     TArray<ATile*> MovementPath;
 

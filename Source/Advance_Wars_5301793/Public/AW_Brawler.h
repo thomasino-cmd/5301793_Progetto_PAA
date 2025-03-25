@@ -95,6 +95,12 @@ public:
     void MoveUnit(ATile* TargetTile) ;
 
 
+
+
+    UFUNCTION(BlueprintCallable)
+    void Shoot(IAW_BaseSoldier* Target);
+
+
     
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     TArray<ATile*> MovementPath;
@@ -111,6 +117,8 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     int32 CurrentPathIndex;
+
+
     
 
 };

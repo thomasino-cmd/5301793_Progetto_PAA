@@ -94,6 +94,12 @@ public:
 	void HighlightReachableTiles(const TArray<ATile*>& ReachableTiles);
 	void ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles);
 
+
+	void HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int32 PlayerId);
+
+	void ClearHighlightedAttackTiles(const TArray<ATile*>& AttackableTiles);
+
+
 	TArray<ATile*> FindPath(ATile* StartTile, ATile* GoalTile);
 
 	TArray<ATile*> GetNeighbors(ATile* Tile);

@@ -55,7 +55,23 @@ void ATile::SetUnit(AActor* NewUnit)
 // Get the unit on the tile
 AActor* ATile::GetUnit() const
 {
-	return Unit;
+	    TArray<AActor*> AttachedActors;
+    // Recupera tutti gli attori attaccati (figli) a questo tile
+    GetAttachedActors(AttachedActors);
+
+    // Se c'è almeno un attore, lo consideriamo come unità occupante
+    if (AttachedActors.Num() > 0)
+    {
+		// mayeb if i cult have many :
+        // for (AActor* Actor : AttachedActors)
+        // {
+        //     if (Actor->IsA(AAW_BaseSoldier::StaticClass()))
+        //         return Actor;
+        // }
+        // Per semplicità, ritorniamo il primo 
+        return AttachedActors[0];
+    }
+    return nullptr;
 }
 
 // Set the grid position of the tile
@@ -129,3 +145,9 @@ void ATile::Highlight(bool ShouldHighlight)
 		StaticMeshComponent->SetMaterial(0, NormalMaterial);
 	}
 }
+
+UStaticMeshComponent* ATile::GetStaticMeshComponent() const
+{
+	return StaticMeshComponent;
+}
+
