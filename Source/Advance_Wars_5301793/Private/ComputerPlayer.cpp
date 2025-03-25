@@ -435,6 +435,10 @@ AComputerPlayer::AComputerPlayer()
     SelectedSniper = nullptr;
     bBrawlerMoved = false;
     bSniperMoved = false;
+
+
+    GameIstance = Cast<UAWGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+        //AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 }
 
 
@@ -614,7 +618,7 @@ void AComputerPlayer::PlaceUnit()
             }
             UE_LOG(LogTemp, Warning, TEXT("ComputerPlayer: Failed to find an empty tile after %d attempts."), MaxAttempts);
             // Handle the case where no empty tile was found (e.g., log an error, delay and retry, etc.)
-        }, 1, false);
+    }, 1.0f, false);
 }
 
 
@@ -635,6 +639,8 @@ void AComputerPlayer::BeginPlay()
 
 void AComputerPlayer::MoveBrawler()
 {
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+
     if (!SelectedBrawler)
     {
         UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer::MoveBrawler - SelectedBrawler è nullptr"));
@@ -657,12 +663,30 @@ void AComputerPlayer::MoveBrawler()
     {
         UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer::MoveBrawler - Nessuna tile raggiungibile per il Brawler"));
     }
+    // Attendi che il Brawler abbia finito di muoversi
+    FTimerHandle TimerHandle;
+    GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedBrawler, GameMode]() 
+    {
+        if (!SelectedBrawler->bIsMoving)
+        {
+            bBrawlerMoved = true;
+            ContinueWithNextUnit(); // Funzione per controllare e terminare il turno
+        }
+        else
+        {
+            // Continua a controllare se il Brawler ha finito di muoversi
+           /* FTimerHandle RetryHandle;
+            GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedBrawler, GameMode]() {*/
+            ContinueWithNextUnit();
 
+            /*    }), 0.1f, false);*/
+        }
+    }, 0.1f, true);
     // Segnala che il Brawler ha completato il movimento
-    bBrawlerMoved = true;
+    //bBrawlerMoved = true;
 
     // Controlla se è necessario muovere lo Sniper o terminare il turno
-    ContinueWithNextUnit();
+    //ContinueWithNextUnit();
 }
 
 void AComputerPlayer::MoveSniper()
@@ -689,8 +713,24 @@ void AComputerPlayer::MoveSniper()
         UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer::MoveSniper - Nessuna tile raggiungibile per lo Sniper"));
     }
 
-    bSniperMoved = true;
-    ContinueWithNextUnit();
+    FTimerHandle TimerHandle;
+    GetWorldTimerManager().SetTimer(TimerHandle, [this, SelectedBrawler, GameMode]()
+        {
+            if (!SelectedBrawler->bIsMoving)
+            {
+                bBrawlerMoved = true;
+                ContinueWithNextUnit(); // Funzione per controllare e terminare il turno
+            }
+            else
+            {
+                // Continua a controllare se il Brawler ha finito di muoversi
+               /* FTimerHandle RetryHandle;
+                GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedBrawler, GameMode]() {*/
+                ContinueWithNextUnit();
+
+                /*    }), 0.1f, false);*/
+            }
+        }, 0.1f, true);
 }
 
 void AComputerPlayer::ContinueWithNextUnit()
@@ -737,4 +777,19 @@ void AComputerPlayer::ContinueWithNextUnit()
             }
         }
     }
+}
+
+
+void AComputerPlayer::CheckIfBothMoved()
+{
+    if (bBrawlerMoved && bSniperMoved)
+    {
+		AAWGameMode* GameMode = Cast<AAWGameMode>(UGameplayStatics::GetGameMode(GetWorld()));
+        if (GameMode)
+        {
+			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI: Turno completato"));
+			GameMode->EndTurn();
+		}
+	}
+    else if 
 }

@@ -61,6 +61,8 @@ public:
 
     //void CheckIfBothMoved();
 
+    UFUNCTION()
+    void CheckIfBothMoved();
 
     bool bAttackInProgress;
 
