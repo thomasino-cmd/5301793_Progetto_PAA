@@ -56,8 +56,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	UStaticMeshComponent* GetStaticMeshComponent() const;
 
-	UFUNCTION()
-	IAW_BaseSoldier* GetSoldier() const;
+	//UFUNCTION()
+	//IAW_BaseSoldier* GetSoldier() const;
 
 
 

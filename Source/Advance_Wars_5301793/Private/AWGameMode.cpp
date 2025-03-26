@@ -284,13 +284,37 @@ TArray<AActor*> AAWGameMode::GetCurrentPlayerUnits(int32 PlayerId)
 
     if (PlayerId == 0) // Human Player
     {
-        PlayerUnits.Append(Player1Brawlers);
-        PlayerUnits.Append(Player1Snipers);
+        for (AAW_Brawler* Brawler : Player1Brawlers)
+        {
+            if (IsValid(Brawler))
+            {
+                PlayerUnits.Add(Brawler);
+            }
+        }
+        for (AAW_Sniper* Sniper : Player1Snipers)
+        {
+            if (IsValid(Sniper))
+            {
+                PlayerUnits.Add(Sniper);
+            }
+        }
     }
     else if (PlayerId == 1) // AI Player
     {
-        PlayerUnits.Append(Player2Brawlers);
-        PlayerUnits.Append(Player2Snipers);
+        for (AAW_Brawler* Brawler : Player2Brawlers)
+        {
+            if (IsValid(Brawler))
+            {
+                PlayerUnits.Add(Brawler);
+            }
+        }
+        for (AAW_Sniper* Sniper : Player2Snipers)
+        {
+            if (IsValid(Sniper))
+            {
+                PlayerUnits.Add(Sniper);
+            }
+        }
     }
 
     return PlayerUnits;

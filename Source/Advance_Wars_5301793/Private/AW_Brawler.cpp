@@ -139,15 +139,42 @@ void AAW_Brawler::Attack()
    
 }
 
+
+
+
+
 void AAW_Brawler::TakeDamage(float Damage)
 {
     Health -= Damage;
+    FString DamageString = FString::Printf(TEXT("%f"), Damage);
+    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
+
     if (Health <= 0)
     {
-        // Handle death (e.g., destroy actor)
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
+
+        // Ottieni il GameMode
+        AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+        if (GameMode)
+        {
+            // Rimuovi l'unità dall'array appropriato
+            if (OwnerPlayerId == 0)
+            {
+                GameMode->Player1Brawlers.Remove(this);
+            }
+            else if (OwnerPlayerId == 1)
+            {
+                GameMode->Player2Brawlers.Remove(this);
+            }
+        }
+        ATile* Tile = this->GetTileIsOnNow();
+        Tile->SetTileStatus(-1, ETileStatus::EMPTY);
         Destroy();
     }
 }
+
+
+
 
 float AAW_Brawler::GetHealth() const
 {
@@ -303,22 +330,20 @@ TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
 
         for (ATile* NeighborTile : Neighbors)
         {
-            // 4. Check Validity and Distance
-            if (NeighborTile->GetTileStatus() != ETileStatus::OBSTACLE)
+            // 4. Check Validity, Distance, and Empty Status
+            if (NeighborTile->GetTileStatus() == ETileStatus::EMPTY && !Distance.Contains(NeighborTile) && CurrentDistance + 1 <= Range)
             {
-                if (!Distance.Contains(NeighborTile) && CurrentDistance + 1 <= Range)
-                {
-                    // 5. Enqueue and Update
-                    FTileNode NextNode;
-                    NextNode.Tile = NeighborTile;
-                    NextNode.Distance = CurrentDistance + 1;
+                // 5. Enqueue and Update
+                FTileNode NextNode;
+                NextNode.Tile = NeighborTile;
+                NextNode.Distance = CurrentDistance + 1;
 
-                    TileQueue.Enqueue(NextNode);
-                    Distance.Add(NeighborTile, CurrentDistance + 1);
-                    CameFrom.Add(NeighborTile, CurrentTile); // Per il path reconstruction
-                    ReachableTiles.Add(NeighborTile);
-                }
+                TileQueue.Enqueue(NextNode);
+                Distance.Add(NeighborTile, CurrentDistance + 1);
+                CameFrom.Add(NeighborTile, CurrentTile); // Per il path reconstruction
+                ReachableTiles.Add(NeighborTile);
             }
+
         }
     }
     return ReachableTiles;

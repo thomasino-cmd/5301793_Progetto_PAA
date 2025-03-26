@@ -113,6 +113,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
 	bool bWaitingForMoveInput;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack")
+	bool bWaitingForAttackInput;
 
 	bool bBrawlerAttackedThisTurn;
 	bool bSniperAttackedThisTurn;

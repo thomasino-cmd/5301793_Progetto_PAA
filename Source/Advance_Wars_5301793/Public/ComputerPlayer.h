@@ -53,6 +53,10 @@ public:
     void ContinueWithNextUnit();
 
 
+    UFUNCTION()
+    void PerformAttack(AActor* AttackingUnit);
+
+
     //UFUNCTION()
     //void OnBrawlerMoveCompleted();
 
@@ -116,6 +120,11 @@ public:
 
     bool bMoveInProgress;
     bool bTurnEnded;
+
+
+
+    bool bBrawlerAttackedThisTurn;
+    bool bSniperAttackedThisTurn;
 
     FTimerHandle BrawlerTimerHandle;
     FTimerHandle SniperTimerHandle;

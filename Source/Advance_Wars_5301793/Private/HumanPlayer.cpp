@@ -51,7 +51,11 @@ void AHumanPlayer::BeginPlay()
 
     // Bind OnClick as the default action
     OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+
     bWaitingForMoveInput = false;
+    bWaitingForAttackInput = false;
+
+    SelectedUnitForAttack = nullptr;
     SelectedUnitForMovement = nullptr;
 
 
@@ -91,13 +95,17 @@ void AHumanPlayer::OnTurn()
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Blue, TEXT("Your Turn"));
     GameIstance->SetTurnMessage(TEXT("Human Turn"));
 
-
+    SelectedUnitForAttack = nullptr;
+    SelectedUnitForMovement = nullptr;
 
     bBrawlerMovedThisTurn = false;  // Reset flags at the start of the turn
     bSniperMovedThisTurn = false;
 
     bSniperAttackedThisTurn = false;
     bBrawlerAttackedThisTurn = false;
+
+    bWaitingForMoveInput = false;
+    bWaitingForAttackInput = false;
 }
 
 void AHumanPlayer::OnWin()
@@ -194,7 +202,7 @@ void AHumanPlayer::OnClick()
 
                         GEngine->AddOnScreenDebugMessage(-1, 9.f, FColor::Blue, TEXT("TOCCATO UNA sua UNITA'"));
                         GameIstance->SetTurnMessage(TEXT("TOCCATO UNA sua UNITA'"));
-                       // HandleEnemyUnitClick(ClickedActor);  
+                       
                     }
                 }
             }
@@ -210,13 +218,16 @@ void AHumanPlayer::OnClick()
 
 
 
-void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
+
+
+
+void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)     //this is executed only if i previously clicked on a unit among mines
 {
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
     if (!GameMode)
     {
         UE_LOG(LogTemp, Error, TEXT("GameMode is null in HandleFriendlyUnitClick"));
-        return; // Exit if GameMode is invalid
+        return;
     }
 
     // Get the human player's units from GameMode
@@ -225,35 +236,112 @@ void AHumanPlayer::HandleFriendlyUnitClick(AActor* ClickedUnit)
     // Check if the clicked unit is in the human player's units array
     if (HumanUnits.Contains(ClickedUnit))
     {
-        SelectUnit(ClickedUnit);
+        // Verifica se ci sono Brawler e Sniper
+        bool HasBrawler = false;
+        bool HasSniper = false;
+
+        for (AActor* Unit : HumanUnits)
+        {
+            if (Cast<AAW_Brawler>(Unit))
+            {
+                HasBrawler = true;
+            }
+            else if (Cast<AAW_Sniper>(Unit))
+            {
+                HasSniper = true;
+            }
+        }
+
+        // Chiama SelectUnit solo se ci sono Brawler o Sniper
+        if (HasBrawler || HasSniper)
+        {
+            SelectUnit(ClickedUnit);
+        }
+        else
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("No Brawler or Sniper available. Ending turn."));
+
+            // Set the flags to true to allow turn to end
+            if (!HasBrawler)
+            {
+                bBrawlerMovedThisTurn = true;
+                bBrawlerAttackedThisTurn = true;
+            }
+            if (!HasSniper)
+            {
+                bSniperMovedThisTurn = true;
+                bSniperAttackedThisTurn = true;
+            }
+            if (!HasBrawler && !HasSniper)
+            {
+                //game should end because it has lost 
+            }
+
+        }
     }
     else
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Clicked unit is not a friendly unit"));
-        // Optionally, you could add some other feedback here, like a sound or visual cue
+        
     }
 }
 
 
 
+
+
+
 void AHumanPlayer::HandleEnemyUnitClick()
 {
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode || !GameMode->GameField) return;
+
+    if (!bWaitingForAttackInput) {
+        return;
+    }
+
     if (bIsMyTurn && SelectedUnitForAttack)
     {
-        // 1. Ottieni la tile cliccata
+        // 1. Ottieni l'attore cliccato
         FHitResult Hit = FHitResult(ForceInit);
         GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
-        ATile* ClickedTile = Cast<ATile>(Hit.GetActor());
-        if (!ClickedTile)
+        AActor* ClickedActor = Hit.GetActor();
+
+        if (!ClickedActor)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessuna tile selezionata per l'attacco."));
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun attore selezionato per l'attacco."));
             return;
         }
+
+        ATile* ClickedTile = Cast<ATile>(ClickedActor);
+        IAW_BaseSoldier* ClickedSoldier = Cast<IAW_BaseSoldier>(ClickedActor);
+
+        // 2. Determina se è stata cliccata una tile o un soldato
+        if (ClickedTile)
+        {
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun nemico selezionato per l'attacco."));
+            
+        }
+        else if (ClickedSoldier)
+        {
+            ClickedTile = ClickedSoldier->GetTileIsOnNow();
+            // È stato cliccato un soldato
+        }
+        else
+        {
+            // Cliccato qualcos'altro (non gestito)
+            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Cliccato un attore non valido per l'attacco."));
+            return;
+        }
+
+
+        bWaitingForAttackInput = false;
 
         AAW_Brawler* AttackingBrawler = Cast<AAW_Brawler>(SelectedUnitForAttack);
         AAW_Sniper* AttackingSniper = Cast<AAW_Sniper>(SelectedUnitForAttack);
 
         TArray<ATile*> AttackableTiles;
+
         if (AttackingBrawler)
         {
             AttackableTiles = AttackingBrawler->GetAttackableTiles();
@@ -261,20 +349,20 @@ void AHumanPlayer::HandleEnemyUnitClick()
             // Controllo skip attacco: tile cliccata = tile dell'attaccante
             if (AttackingBrawler->GetTileIsOnNow() == ClickedTile)
             {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("skipping attack even if possible ."));
+                GameMode->GameField->ClearHighlightedAttackTiles(AttackableTiles);
                 bBrawlerAttackedThisTurn = true;
-                CheckAndEndTurn();
-                return;
+                //CheckAndEndTurn();
+                
             }
-
-            // Controllo che la tile cliccata sia fra quelle a portata di tiro
-            if (AttackableTiles.Contains(ClickedTile))
+            else if (AttackableTiles.Contains(ClickedTile))                     // Controllo che la tile cliccata sia fra quelle a portata di tiro
             {
+                GameMode->GameField->ClearHighlightedAttackTiles(AttackableTiles);
                 AttackingBrawler->Shoot(ClickedTile); // Passa la tile cliccata
+                bBrawlerAttackedThisTurn = true;
+
             }
-            else {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Tile fuori portata per l'attacco."));
-                return;
-            }
+            
         }
         else if (AttackingSniper)
         {
@@ -283,20 +371,20 @@ void AHumanPlayer::HandleEnemyUnitClick()
             // Controllo skip attacco: tile cliccata = tile dell'attaccante
             if (AttackingSniper->GetTileIsOnNow() == ClickedTile)
             {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, TEXT("skipping attack even if possible ."));
+                GameMode->GameField->ClearHighlightedAttackTiles(AttackableTiles);
                 bSniperAttackedThisTurn = true;
-                CheckAndEndTurn();
-                return;
-            }
-
-            // Controllo che la tile cliccata sia fra quelle a portata di tiro
-            if (AttackableTiles.Contains(ClickedTile))
+                //CheckAndEndTurn();
+                
+            }                                
+            else if (AttackableTiles.Contains(ClickedTile))             // Controllo che la tile cliccata sia fra quelle a portata di tiro
             {
+                GameMode->GameField->ClearHighlightedAttackTiles(AttackableTiles);
                 AttackingSniper->Shoot(ClickedTile); // Passa la tile cliccata
+                bSniperAttackedThisTurn = true;
+
             }
-            else {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Tile fuori portata per l'attacco."));
-                return;
-            }
+          
         }
         else
         {
@@ -304,8 +392,9 @@ void AHumanPlayer::HandleEnemyUnitClick()
             return;
         }
 
+
         // 7. Resetta il binding dell’input e passa al turno successivo
-        OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+        //OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
         CheckAndEndTurn();
     }
     else
@@ -314,11 +403,6 @@ void AHumanPlayer::HandleEnemyUnitClick()
             TEXT("Attacco non valido: non sei in modalità attacco o SelectedUnitForAttack è nullo."));
     }
 }
-
-
-
-
-
 
 
 
@@ -405,48 +489,36 @@ void AHumanPlayer::HandleTileClick()
     if (HitMove.bBlockingHit && GameMode && GameMode->GameField)
     {
         ATile* ClickedTile = Cast<ATile>(HitMove.GetActor());
-        if (!ClickedTile) return;
+        AActor* HitActor = HitMove.GetActor(); // Ottieni l'attore colpito
 
         AAW_Brawler* SelectedBrawler = Cast<AAW_Brawler>(SelectedUnitForMovement);
         AAW_Sniper* SelectedSniper = Cast<AAW_Sniper>(SelectedUnitForMovement);
 
         if (SelectedBrawler)
         {
-            if (!bBrawlerMovedThisTurn && SelectedBrawler->TilesCanReach.Contains(ClickedTile))
+            if (HitActor == SelectedBrawler) // Se clicchi sul Brawler stesso
+            {
+                //ClickedTile = SelectedBrawler->GetTileIsOnNow(); // Ottieni la tile su cui si trova
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Skipping movement and going into attack phase"));
+                GameMode->GameField->ClearHighlightedTiles(SelectedBrawler->TilesCanReach);
+                bBrawlerMovedThisTurn = true;
+                AttackPhase(SelectedBrawler);
+            }
+            else if (ClickedTile && !bBrawlerMovedThisTurn && SelectedBrawler->TilesCanReach.Contains(ClickedTile))
             {
                 SelectedBrawler->MoveUnit(ClickedTile);
-
                 GameMode->GameField->ClearHighlightedTiles(SelectedBrawler->TilesCanReach);
-                SetWaitingForMoveInput(false, nullptr);
+                //SetWaitingForMoveInput(false, nullptr);
 
-                // Attendi che il Brawler abbia finito di muoversi
-        
                 GetWorldTimerManager().SetTimer(TimerBrawler, [this, SelectedBrawler, GameMode]() {
                     if (!SelectedBrawler->bIsMoving)
                     {
                         bBrawlerMovedThisTurn = true;
                         GetWorldTimerManager().ClearTimer(TimerBrawler);
-                        AttackPhase(SelectedBrawler); // Passa alla fase di attacco (se possibile)
-                        
-                        //CheckAndEndTurn(); // Funzione per controllare e terminare il turno
-                    }
-                    else
-                    {
-                        // Continua a controllare se il Brawler ha finito di muoversi
-                       /* FTimerHandle RetryHandle;
-                        GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedBrawler, GameMode]() {*/
-                          // CheckAndEndTurn();
-
-                        /*    }), 0.1f, false);*/
+                        AttackPhase(SelectedBrawler);
                     }
                     }, 0.1f, true);
             }
-            else if(ClickedTile == SelectedBrawler->GetTileIsOnNow())
-			{
-				GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Skipping movement and going into attack phase"));
-                AttackPhase(SelectedBrawler);
-			}
-			
             else
             {
                 GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler cannot move again or tile not reachable"));
@@ -454,38 +526,28 @@ void AHumanPlayer::HandleTileClick()
         }
         else if (SelectedSniper)
         {
-            if (!bSniperMovedThisTurn && SelectedSniper->TilesCanReach.Contains(ClickedTile))
+            if (HitActor == SelectedSniper) // Se clicchi sullo Sniper stesso
+            {
+               // ClickedTile = SelectedSniper->GetTileIsOnNow(); // Ottieni la tile su cui si trova
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Skipping movement and going into attack phase"));
+                GameMode->GameField->ClearHighlightedTiles(SelectedSniper->TilesCanReach);
+                bSniperMovedThisTurn = true;
+                AttackPhase(SelectedSniper);
+            }
+            else if (ClickedTile && !bSniperMovedThisTurn && SelectedSniper->TilesCanReach.Contains(ClickedTile))
             {
                 SelectedSniper->MoveUnit(ClickedTile);
                 GameMode->GameField->ClearHighlightedTiles(SelectedSniper->TilesCanReach);
-                SetWaitingForMoveInput(false, nullptr);
+                //SetWaitingForMoveInput(false, nullptr);
 
-                // Attendi che lo Sniper abbia finito di muoversi
-                
                 GetWorldTimerManager().SetTimer(TimerSniper, [this, SelectedSniper, GameMode]() {
                     if (!SelectedSniper->bIsMoving)
                     {
                         bSniperMovedThisTurn = true;
                         GetWorldTimerManager().ClearTimer(TimerSniper);
-                        AttackPhase(SelectedSniper); // Passa alla fase di attacco (se possibile)
-
-                        //CheckAndEndTurn(); // Funzione per controllare e terminare il turno
-                    }
-                    else
-                    {
-                        // Continua a controllare se lo Sniper ha finito di muoversi
-                      /*  FTimerHandle RetryHandle;
-                        GetWorldTimerManager().SetTimer(RetryHandle, FTimerDelegate::CreateLambda([this, SelectedSniper, GameMode]() {*/
-                           // CheckAndEndTurn();
-
-                         /*   }), 0.1f, false);*/
+                        AttackPhase(SelectedSniper);
                     }
                     }, 0.1f, true);
-            }
-            else if (ClickedTile == SelectedSniper->GetTileIsOnNow())
-            {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Skipping movement and going into attack phase"));
-                AttackPhase(SelectedSniper);
             }
             else
             {
@@ -526,11 +588,15 @@ void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
         bool bEnemyFound = false;
         for (ATile* Tile : AttackableTiles)
         {
-            IAW_BaseSoldier* SoldierOnTile = Tile->GetSoldier();
-            if (SoldierOnTile && SoldierOnTile->GetOwnerPlayerId() != PlayerId)
+            AActor* SoldierOnTileActor = Tile->GetUnit();
+            if (SoldierOnTileActor)
             {
-                bEnemyFound = true;
-                break;
+                IAW_BaseSoldier* SoldierOnTile = Cast<IAW_BaseSoldier>(SoldierOnTileActor);
+                if (SoldierOnTile && SoldierOnTile->GetOwnerPlayerId() != PlayerId)
+                {
+                    bEnemyFound = true;
+                    break;
+                }
             }
         }
 
@@ -541,12 +607,6 @@ void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
             CheckAndEndTurn();
             return;
         }
-
-
-
-
-
-
 
     }
     else if (AAW_Sniper* SniperUnit = Cast<AAW_Sniper>(SelectedUnit))
@@ -559,12 +619,17 @@ void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
         bool bEnemyFound = false;
         for (ATile* Tile : AttackableTiles)
         {
-            IAW_BaseSoldier* SoldierOnTile = Tile->GetSoldier();
-            if (SoldierOnTile && SoldierOnTile->GetOwnerPlayerId() != PlayerId)
+            AActor* SoldierOnTileActor = Tile->GetUnit();
+            if (SoldierOnTileActor)
             {
-                bEnemyFound = true;
-                break;
+                IAW_BaseSoldier* SoldierOnTile = Cast<IAW_BaseSoldier>(SoldierOnTileActor);
+                if (SoldierOnTile && SoldierOnTile->GetOwnerPlayerId() != PlayerId)
+                {
+                    bEnemyFound = true;
+                    break;
+                }
             }
+
         }
 
         // Se non ci sono nemici, skippa la fase di attacco
@@ -582,6 +647,7 @@ void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
         UE_LOG(LogTemp, Warning, TEXT("AttackPhase: Unit cast fallito."));
         bBrawlerAttackedThisTurn = true;
         bSniperAttackedThisTurn = true;
+       // OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
         CheckAndEndTurn();
         return;
     }
@@ -590,7 +656,7 @@ void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
 
     // Esegui l'highlight e l'attivazione del binding per il click di attacco
     GameMode->GameField->HighlightAttackTiles(AttackableTiles, SelectedUnit->OwnerPlayerId);
-
+    bWaitingForAttackInput = true;
     // Imposta il binding per la gestione del click durante la fase d'attacco
     OnClickAction.BindUObject(this, &AHumanPlayer::HandleEnemyUnitClick);
 }
@@ -610,6 +676,9 @@ void AHumanPlayer::CheckAndEndTurn()
         if(bBrawlerAttackedThisTurn && bSniperAttackedThisTurn)
 		{
 			bIsMyTurn = false;
+            SelectedUnitForAttack = nullptr;
+            SelectedUnitForMovement = nullptr;
+            //OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
 			GameMode->EndTurn();
 		}
 		else
