@@ -80,6 +80,10 @@ public:
     virtual TArray<ATile*> GetAttackableTiles() override;
 
 
+
+    virtual int32 GetOwnerPlayerId() const override;
+
+
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Position")
     ATile* TileIsOnNow;
 
@@ -101,13 +105,15 @@ public:
 
 
 
-    UFUNCTION(BlueprintCallable)
+     UFUNCTION(BlueprintCallable)
      void MoveUnit(ATile* TargetTile) ;
 
 
 
+
      UFUNCTION(BlueprintCallable)
-     void Shoot(IAW_BaseSoldier* Target);
+     void Shoot(ATile* TargetTile);
+    
 
 
 

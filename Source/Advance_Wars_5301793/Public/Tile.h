@@ -13,6 +13,8 @@ enum class ETileStatus : uint8
 	OCCUPIED UMETA(DisplayName = "Occupied")
 };
 
+class IAW_BaseSoldier;
+
 UCLASS()
 class ADVANCE_WARS_5301793_API ATile : public AActor
 {
@@ -53,6 +55,9 @@ public:
 	// Metodo per ottenere il componente Static Mesh
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	UStaticMeshComponent* GetStaticMeshComponent() const;
+
+	UFUNCTION()
+	IAW_BaseSoldier* GetSoldier() const;
 
 
 

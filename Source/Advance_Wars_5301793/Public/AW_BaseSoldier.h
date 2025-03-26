@@ -50,6 +50,7 @@ public:
 
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) = 0;
 
+    virtual int32 GetOwnerPlayerId() const = 0;
     
     int32 OwnerPlayerId;
 

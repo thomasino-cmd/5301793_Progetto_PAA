@@ -91,6 +91,10 @@ public:
     virtual ATile* GetTileIsOnNow() const override;
     virtual void SetTileIsOnNow(ATile* NewTile) override;
 
+
+    virtual int32 GetOwnerPlayerId() const override;
+
+
     UFUNCTION(BlueprintCallable)
     void MoveUnit(ATile* TargetTile) ;
 
@@ -98,7 +102,7 @@ public:
 
 
     UFUNCTION(BlueprintCallable)
-    void Shoot(IAW_BaseSoldier* Target);
+    void Shoot(ATile* TargetTile);
 
 
     

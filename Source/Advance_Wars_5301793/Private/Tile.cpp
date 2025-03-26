@@ -1,4 +1,7 @@
 #include "Tile.h"
+#include "AW_BaseSoldier.h"
+#include "AW_Brawler.h"
+#include "AW_Sniper.h"
 
 // Sets default values
 ATile::ATile()
@@ -151,3 +154,32 @@ UStaticMeshComponent* ATile::GetStaticMeshComponent() const
 	return StaticMeshComponent;
 }
 
+
+
+IAW_BaseSoldier* ATile::GetSoldier() const
+{
+	AActor* OccupyingActor = GetUnit();
+	if (OccupyingActor)
+	{
+		// Tenta il cast a Brawler
+		AAW_Brawler* Brawler = Cast<AAW_Brawler>(OccupyingActor);
+		if (Brawler)
+		{
+			return Brawler;
+		}
+
+		// Se non è un Brawler, tenta il cast a Sniper
+		AAW_Sniper* Sniper = Cast<AAW_Sniper>(OccupyingActor);
+		if (Sniper)
+		{
+			return Sniper;
+		}
+
+		//// Se non è né Brawler né Sniper, tenta il cast a IAW_BaseSoldier
+		//IAW_BaseSoldier* BaseSoldier = Cast<IAW_BaseSoldier>(OccupyingActor);
+		//if (BaseSoldier) {
+		//	return BaseSoldier;
+		//}
+	}
+	return nullptr; // Restituisce nullptr se non c'è un soldato sulla tile
+}

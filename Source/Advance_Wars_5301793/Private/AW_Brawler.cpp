@@ -161,6 +161,14 @@ int32 AAW_Brawler::GetMovementRange() const
 
 
 
+int32 AAW_Brawler::GetOwnerPlayerId() const
+{
+    return OwnerPlayerId;
+}
+
+
+
+
 int32 AAW_Brawler::GetAttackRange() const
 {
     return AttackRange;
@@ -355,20 +363,28 @@ void AAW_Brawler::MoveUnit(ATile* TargetTile)
 
 
 
-void AAW_Brawler::Shoot(IAW_BaseSoldier* Target)
+void AAW_Brawler::Shoot(ATile* TargetTile)
 {
-    if (!Target) return;
+    if (!TargetTile) return;
+
+    AActor* OccupyingActor = TargetTile->GetUnit();
+    IAW_BaseSoldier* TargetSoldier = Cast<IAW_BaseSoldier>(OccupyingActor);
+
+    if (!TargetSoldier)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun bersaglio valido sulla tile."));
+        return;
+    }
+
+    // Controlla se il bersaglio è un nemico (es. tramite un ID giocatore o un tag)
+    if (TargetSoldier->GetOwnerPlayerId() == this->GetOwnerPlayerId()) 
+    {
+        return;
+    }
 
     // Genera un danno casuale nel range 1-6
     int Damage = FMath::RandRange(1, 6);
 
-    // Log (opzionale, per debug)
-//    UE_LOG(LogTemp, Log, TEXT("%s attacca %s con danno %d"), *GetName(), *Target->GetName(), Damage);
-
-    // Applica il danno al bersaglio: il metodo TakeDamage deve gestire la sottrazione dei punti vita
-    Target->TakeDamage(Damage);
-
-    // Se i punti vita del bersaglio scendono a 0 (o al di sotto), il bersaglio dovrà essere eliminato dalla griglia.
-    // Tale logica la gestisce il metodo TakeDamage all'interno della classe concreta che implementa IAW_BaseSoldier.
+    // Applica il danno al bersaglio
+    TargetSoldier->TakeDamage(Damage);
 }
-

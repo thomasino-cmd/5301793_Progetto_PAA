@@ -114,6 +114,8 @@ public:
 	bool bWaitingForMoveInput;
 
 
+	bool bBrawlerAttackedThisTurn;
+	bool bSniperAttackedThisTurn;
 
 
 protected:
