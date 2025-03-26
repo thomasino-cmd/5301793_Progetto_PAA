@@ -106,6 +106,9 @@ void AHumanPlayer::OnTurn()
 
     bWaitingForMoveInput = false;
     bWaitingForAttackInput = false;
+
+    OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+
 }
 
 void AHumanPlayer::OnWin()
@@ -678,6 +681,8 @@ void AHumanPlayer::CheckAndEndTurn()
 			bIsMyTurn = false;
             SelectedUnitForAttack = nullptr;
             SelectedUnitForMovement = nullptr;
+            bWaitingForAttackInput = false;
+            bWaitingForMoveInput = false;
             //OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
 			GameMode->EndTurn();
 		}
@@ -686,5 +691,10 @@ void AHumanPlayer::CheckAndEndTurn()
 			GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("You must attack with all your units"));
 		}
         
+    }
+    else
+    {
+        OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+
     }
 }
