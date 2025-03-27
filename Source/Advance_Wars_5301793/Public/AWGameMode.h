@@ -8,6 +8,7 @@
 #include "GameField.h"
 #include "AW_Brawler.h"
 #include "AW_Sniper.h"
+#include "Coin.h"
 #include "AWGameMode.generated.h"
 
 
@@ -108,13 +109,6 @@ public:
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Sniper> SniperClassAI;
 
-protected:
-
-
-
-   
-
-
     UFUNCTION()
     void SwitchPlayer();
 
@@ -123,6 +117,29 @@ protected:
 
     UFUNCTION()
     void EndGame();
+
+
+    /// ///////////////COIN FLIP////////////////////////
+
+
+    UFUNCTION(BlueprintCallable, Category = "Game Flow")
+    void StartCoinFlip();
+
+    UFUNCTION()
+    void OnCoinFlipResult(int32 StartingPlayerIndex);
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<ACoin> CoinClass;
+
+private:
+    UPROPERTY()
+    ACoin* CoinActor;
+
+
+
+   
+
+
 
 
     

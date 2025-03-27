@@ -24,66 +24,142 @@ AAWGameMode::AAWGameMode()
     FieldSize = 25;
 }
 
+//void AAWGameMode::BeginPlay()
+//{
+//    Super::BeginPlay();
+//    
+//    MoveCounter = 0;
+//    bIsGameOver = false;
+//
+//    AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+//
+//
+//    if (!IsValid(HumanPLayer))
+//    {
+//        UE_LOG(LogTemp, Error, TEXT("No player paen of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
+//        return;
+//    }
+//    if (GameFieldClass != nullptr)
+//    {
+//        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
+//        GameField->Size = FieldSize;
+//        
+//    }
+//    else
+//    {
+//        UE_LOG(LogTemp, Error, TEXT("Game Field is null"));
+//    }
+//
+//    float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
+//    float Zposition = 2500.0f;
+//    FVector CameraPos(CameraPosX, CameraPosX, Zposition);
+//    HumanPLayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
+//
+//    Players.Add(HumanPLayer);
+//
+//
+//    //add a computer player
+//    auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
+//    Players.Add(AIPlayer); 
+//
+//
+//    ChoosePlayerAndStartGame();
+//}
+
+
+
+
+
 void AAWGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    
-    MoveCounter = 0;
-    bIsGameOver = false;
+    StartCoinFlip(); // Inizia il lancio della moneta PRIMA di tutto il resto
+}
 
-    AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
-
-    /*
-    UWorld* World = GetWorld();
-    if (!IsValid(World))
+void AAWGameMode::StartCoinFlip()
+{
+    if (CoinClass) // Assicurati di avere un Blueprint della moneta assegnato in GameMode
     {
-        UE_LOG(LogTemp, Error, TEXT("World is not valid in BeginPlay!"));
-        return; // Esci se il World non è valido.
-    }
-    */
-
-    /*
-    AAWPlayerController* PlayerController = World->GetFirstPlayerController();
-    if (!IsValid(PlayerController))
-    {
-        UE_LOG(LogTemp, Error, TEXT("PlayerController is not valid in BeginPlay!"));
-        return;
-    }
-    */
-
-    //AHumanPlayer* HumanPLayer = PlayerController->GetPawn<AHumanPlayer>();
-
-    if (!IsValid(HumanPLayer))
-    {
-        UE_LOG(LogTemp, Error, TEXT("No player paen of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
-        return;
-    }
-    if (GameFieldClass != nullptr)
-    {
-        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
-        GameField->Size = FieldSize;
-        
+        CoinActor = GetWorld()->SpawnActor<ACoin>(CoinClass, FVector(0, 0, 300), FRotator::ZeroRotator);
+        if (CoinActor)
+        {
+            CoinActor->OnCoinLanded.AddDynamic(this, &AAWGameMode::OnCoinFlipResult);
+            CoinActor->Flip();
+        }
     }
     else
     {
-        UE_LOG(LogTemp, Error, TEXT("Game Field is null"));
+        // Fallback: usa un random semplice se la moneta non è assegnata
+        OnCoinFlipResult(FMath::RandRange(0, 1));
+    }
+}
+
+
+
+
+
+
+
+void AAWGameMode::OnCoinFlipResult(int32 StartingPlayerIndex)
+{
+    CurrentPlayer = StartingPlayerIndex;
+    UE_LOG(LogTemp, Log, TEXT("Coin flip result: Player %d starts!"), CurrentPlayer);
+
+    // **Ora inizializza il gioco**
+    if (GameFieldClass)
+    {
+        GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
+        GameField->Size = FieldSize;
     }
 
-    float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
-    float Zposition = 2500.0f;
-    FVector CameraPos(CameraPosX, CameraPosX, Zposition);
-    HumanPLayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
+    //// Posiziona la telecamera, spawna giocatori, ecc. (come nel tuo codice originale)
+    //AHumanPlayer* HumanPlayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+    //if (HumanPlayer)
+    //{
+    //    float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
+    //    HumanPlayer->SetActorLocationAndRotation(FVector(CameraPosX, CameraPosX, 2500), FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
+    //}
 
-    Players.Add(HumanPLayer);
+    MoveCounter = 0;
+        bIsGameOver = false;
+    
+        AHumanPlayer* HumanPLayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
+    
+    
+        if (!IsValid(HumanPLayer))
+        {
+            UE_LOG(LogTemp, Error, TEXT("No player paen of type '%s' was found."), *AHumanPlayer::StaticClass()->GetName());
+            return;
+        }
+        if (GameFieldClass != nullptr)
+        {
+            GameField = GetWorld()->SpawnActor<AGameField>(GameFieldClass);
+            GameField->Size = FieldSize;
+            
+        }
+        else
+        {
+            UE_LOG(LogTemp, Error, TEXT("Game Field is null"));
+        }
+    
+        float CameraPosX = ((GameField->TileSize * FieldSize) + ((FieldSize - 1) * GameField->TileSize * GameField->CellPadding)) * 0.5f;
+        float Zposition = 2500.0f;
+        FVector CameraPos(CameraPosX, CameraPosX, Zposition);
+        HumanPLayer->SetActorLocationAndRotation(CameraPos, FRotationMatrix::MakeFromX(FVector(0, 0, -1)).Rotator());
+    
+        Players.Add(HumanPLayer);
+    
+    
+        //add a computer player
+        auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
+        Players.Add(AIPlayer); 
 
-
-    //add a computer player
-    auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>(FVector(), FRotator());
-    Players.Add(AIPlayer); 
-
-
-    ChoosePlayerAndStartGame();
+    Players[CurrentPlayer]->OnTurn(); // Inizia il turno del giocatore scelto
 }
+
+
+
+
 
 void AAWGameMode::ChoosePlayerAndStartGame()
 {
@@ -102,11 +178,24 @@ void AAWGameMode::GetNextPlayer()
     
 }
 
+
+
+
 void AAWGameMode::EndTurn()
 {
-    // Cambia il turno al giocatore successivo
+    // First check if the game should end
+    if (CheckWinCondition())
+    {
+        EndGame();
+        return;
+    }
+
+    // If game isn't over, switch players
     SwitchPlayer();
 }
+
+
+
 
 void AAWGameMode::MoveUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
 {
@@ -141,10 +230,32 @@ void AAWGameMode::SwitchPlayer()
 
 }
 
+
+
 bool AAWGameMode::CheckWinCondition()
 {
-    // Controlla se un giocatore ha vinto (implementazione fittizia)
-    // Sostituisci questa implementazione con la tua logica di vittoria effettiva
+    // Check if Player 1 has no units left
+    TArray<AActor*> Player1Units = GetCurrentPlayerUnits(0);
+    if (Player1Units.Num() == 0)
+    {
+        // Player 1 lost, Player 2 wins
+        Players[0]->OnLose();
+        Players[1]->OnWin();
+        bIsGameOver = true;
+        return true;
+    }
+
+    // Check if Player 2 has no units left
+    TArray<AActor*> Player2Units = GetCurrentPlayerUnits(1);
+    if (Player2Units.Num() == 0)
+    {
+        // Player 2 lost, Player 1 wins
+        Players[0]->OnWin();
+        Players[1]->OnLose();
+        bIsGameOver = true;
+        return true;
+    }
+
     return false;
 }
 

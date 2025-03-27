@@ -153,11 +153,11 @@ void AAW_Sniper::TakeDamage(float Damage)
     if (Health <= 0)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
-        // Ottieni il GameMode
+
         AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
         if (GameMode)
         {
-            // Rimuovi l'unità dall'array appropriato
+            // Remove from appropriate array
             if (OwnerPlayerId == 0)
             {
                 GameMode->Player1Snipers.Remove(this);
@@ -166,9 +166,16 @@ void AAW_Sniper::TakeDamage(float Damage)
             {
                 GameMode->Player2Snipers.Remove(this);
             }
+
+            // Check win condition immediately when a unit dies
+            GameMode->CheckWinCondition();
         }
+
         ATile* Tile = this->GetTileIsOnNow();
-        Tile->SetTileStatus(-1, ETileStatus::EMPTY);
+        if (Tile)
+        {
+            Tile->SetTileStatus(-1, ETileStatus::EMPTY);
+        }
         Destroy();
     }
 }

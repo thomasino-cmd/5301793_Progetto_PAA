@@ -153,11 +153,10 @@ void AAW_Brawler::TakeDamage(float Damage)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
 
-        // Ottieni il GameMode
         AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
         if (GameMode)
         {
-            // Rimuovi l'unità dall'array appropriato
+            // Remove from appropriate array
             if (OwnerPlayerId == 0)
             {
                 GameMode->Player1Brawlers.Remove(this);
@@ -166,9 +165,16 @@ void AAW_Brawler::TakeDamage(float Damage)
             {
                 GameMode->Player2Brawlers.Remove(this);
             }
+
+            // Check win condition immediately when a unit dies
+            GameMode->CheckWinCondition();
         }
+
         ATile* Tile = this->GetTileIsOnNow();
-        Tile->SetTileStatus(-1, ETileStatus::EMPTY);
+        if (Tile)
+        {
+            Tile->SetTileStatus(-1, ETileStatus::EMPTY);
+        }
         Destroy();
     }
 }
