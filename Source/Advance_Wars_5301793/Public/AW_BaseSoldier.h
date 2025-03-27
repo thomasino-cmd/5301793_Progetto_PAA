@@ -8,6 +8,11 @@
 
 #include "AW_BaseSoldier.generated.h"
 
+struct FTileNode
+{
+    ATile* Tile;
+    int32 Distance;
+};
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
 class UAW_BaseSoldier : public UInterface
@@ -17,10 +22,6 @@ class UAW_BaseSoldier : public UInterface
 
 /**
  * */
-
-
-
-
 class ADVANCE_WARS_5301793_API IAW_BaseSoldier
 {
     GENERATED_BODY()

@@ -7,6 +7,8 @@
 #include "ComputerPlayer.h"
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
+#include "InGameHUDWidget.h"
+
 
 AAWGameMode::AAWGameMode()
 {
@@ -130,6 +132,17 @@ void AAWGameMode::OnCoinFlipComplete(int32 StartingPlayerIndex)
 
 void AAWGameMode::StartFirstTurn()
 {
+    if (InGameHUDClass)
+    {
+        InGameHUD = CreateWidget<UInGameHUDWidget>(GetWorld(), InGameHUDClass);
+        if (InGameHUD)
+        {
+            InGameHUD->AddToViewport(10);
+
+            // Aggiorna i valori iniziali
+            UpdateHUD();
+        }
+    }
     if (Players.IsValidIndex(CurrentPlayer))
     {
         Players[CurrentPlayer]->OnTurn();
@@ -151,7 +164,43 @@ void AAWGameMode::HandleCoinFlipInput()
 
 
 
+void AAWGameMode::UpdateHUD()
+{
+    if (!InGameHUD) return;
 
+    // 1. Aggiorna indicatore di turno (0=Player1, 1=Player2/AI)
+    InGameHUD->UpdateTurnIndicator(CurrentPlayer == 0);
+
+    // 2. Prepara array ordinati come: Brawler1, Sniper1, Brawler2, Sniper2
+    TArray<float> CurrentHealths;
+    TArray<float> MaxHealths;
+
+    // Assumendo che ci sia sempre 1 brawler e 1 sniper per giocatore
+    if (Player1Brawlers.Num() > 0 && Player1Snipers.Num() > 0 &&
+        Player2Brawlers.Num() > 0 && Player2Snipers.Num() > 0)
+    {
+        // Player 1 Units
+        CurrentHealths.Add(Player1Brawlers[0]->GetHealth());
+        MaxHealths.Add(Player1Brawlers[0]->GetMaxHealth());
+
+        CurrentHealths.Add(Player1Snipers[0]->GetHealth());
+        MaxHealths.Add(Player1Snipers[0]->GetMaxHealth());
+
+        // Player 2 Units
+        CurrentHealths.Add(Player2Brawlers[0]->GetHealth());
+        MaxHealths.Add(Player2Brawlers[0]->GetMaxHealth());
+
+        CurrentHealths.Add(Player2Snipers[0]->GetHealth());
+        MaxHealths.Add(Player2Snipers[0]->GetMaxHealth());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Mancano unità per l'aggiornamento dell'HUD!"));
+    }
+
+    // 3. Invia i dati al widget
+    InGameHUD->UpdateHealthBars(CurrentHealths, MaxHealths);
+}
 
 
 
@@ -178,7 +227,7 @@ void AAWGameMode::EndTurn()
         EndGame();
         return;
     }
-
+    UpdateHUD();
     // If game isn't over, switch players
     SwitchPlayer();
 }
@@ -223,30 +272,18 @@ void AAWGameMode::SwitchPlayer()
 
 bool AAWGameMode::CheckWinCondition()
 {
-    if (MoveCounter > TotalUnitsToPlace)
+    // Controlla se un giocatore ha perso tutte le unità
+    for (int32 PlayerId = 0; PlayerId < Players.Num(); PlayerId++)
     {
-        // Check if Player 1 has no units left
-        TArray<AActor*> Player1Units = GetCurrentPlayerUnits(0);
-        if (Player1Units.Num() == 0)
+        TArray<AActor*> PlayerUnits = GetCurrentPlayerUnits(PlayerId);
+        if (PlayerUnits.Num() == 0)
         {
-            // Player 1 lost, Player 2 wins
-            Players[0]->OnLose();
-            Players[1]->OnWin();
-            bIsGameOver = true;
-            return true;
-        }
-
-        // Check if Player 2 has no units left
-        TArray<AActor*> Player2Units = GetCurrentPlayerUnits(1);
-        if (Player2Units.Num() == 0)
-        {
-            // Player 2 lost, Player 1 wins
-            Players[0]->OnWin();
-            Players[1]->OnLose();
-            bIsGameOver = true;
+            WinningPlayerId = (PlayerId == 0) ? 1 : 0;  // L'altro giocatore vince
             return true;
         }
     }
+
+    // Aggiungi altri criteri di vittoria se necessario
     return false;
 }
 
@@ -257,127 +294,6 @@ void AAWGameMode::EndGame()
     GameField->ResetField();
 }
 
-
-//
-//void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
-//{
-//    if (bIsPlacementPhaseOver || PlayerNumber != CurrentPlayer)
-//    {
-//        return;
-//    }
-//
-//    AActor* UnitToSpawn = nullptr;
-//
-//    if (PlayerNumber == 0) // Giocatore Umano
-//    {
-//        if (UnitsPlaced == 0) // Primo brawler umano
-//        {
-//            UnitToSpawn = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassHuman, GridPosition + FVector(0,0,2), FRotator::ZeroRotator);
-//        }
-//        else if (UnitsPlaced == 2) // Sniper umano
-//        {
-//            UnitToSpawn = GetWorld()->SpawnActor<AAW_Sniper>(SniperClassHuman, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
-//        }
-//    }
-//    else if (PlayerNumber == 1) // Giocatore AI
-//    {
-//        if (UnitsPlaced == 1) // Brawler AI
-//        {
-//            UnitToSpawn = GetWorld()->SpawnActor<AAW_Brawler>(BrawlerClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
-//      
-//        }
-//        else if (UnitsPlaced == 3) // Sniper AI
-//        {
-//            UnitToSpawn = GetWorld()->SpawnActor<AAW_Sniper>(SniperClassAI, GridPosition + FVector(0, 0, 2), FRotator::ZeroRotator);
-//           
-//        }
-//    }
-//
-//    if (UnitToSpawn)
-//    {
-//        UnitToSpawn->SetActorScale3D(FVector(1.0f, 1.0f, 0.2f));
-//
-//
-//        if (PlayerNumber == 0) // Giocatore Umano
-//        {
-//            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
-//            {
-//                Brawler->OwnerPlayerId = PlayerNumber;
-//                Player1Brawlers.Add(Brawler); // Add to Player 1 Brawlers
-//            }
-//            else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
-//            {
-//                Sniper->OwnerPlayerId = PlayerNumber;
-//                Player1Snipers.Add(Sniper); // Add to Player 1 Snipers
-//            }
-//        }
-//        else if (PlayerNumber == 1) // Giocatore AI
-//        {
-//            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(UnitToSpawn))
-//            {
-//                Brawler->OwnerPlayerId = PlayerNumber;
-//                Player2Brawlers.Add(Brawler); // Add to Player 2 Brawlers
-//            }
-//            else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(UnitToSpawn))
-//            {
-//                Sniper->OwnerPlayerId = PlayerNumber;
-//                Player2Snipers.Add(Sniper); // Add to Player 2 Snipers
-//            }
-//        }
-//        UE_LOG(LogTemp, Error, TEXT("UnitsPlaced address: %p, value before increment: %d"), &UnitsPlaced, UnitsPlaced);
-//
-//        UnitsPlaced++;
-//
-//        // Segna la tile come occupata
-//        if (GameField)
-//        {
-//           
-//
-//            FVector2D GridPosition2D = GameField->GetXYPositionByRelativeLocation(GridPosition);
-//
-//            GameField->SetGridCellOccupied(GridPosition2D, PlayerNumber);
-//
-//            // Ottieni la Tile corrispondente alla GridPosition
-//            ATile* Tile = GameField->GetTile(GridPosition2D.X, GridPosition2D.Y);
-//
-//            if (Tile)
-//            {
-//                // Attacca l'unità alla Tile
-//                
-//                //UnitToSpawn->AttachToActor(Tile, FAttachmentTransformRules::KeepRelativeTransform);
-//
-//                 //If it is a Brawler
-//                if (AAW_Brawler* BrawlerSoldier = Cast<AAW_Brawler>(UnitToSpawn))
-//                {
-//                    BrawlerSoldier->SetTileIsOnNow(Tile); // Store the tile reference
-//                }
-//                //If it is a Sniper
-//                else if (AAW_Sniper* SniperSoldier = Cast<AAW_Sniper>(UnitToSpawn))
-//                {
-//                    SniperSoldier->SetTileIsOnNow(Tile);  // Store the tile reference
-//                }
-//            }
-//            else
-//            {
-//                UE_LOG(LogTemp, Error, TEXT("No Tile found at GridPosition: %s"), *GridPosition.ToString());
-//                // Gestisci l'errore: la Tile non è stata trovata
-//                // Potresti voler distruggere l'unità spawnata o fare altro...
-//            }
-//
-//        }
-//
-//       
-//
-//        if (UnitsPlaced >= 4)
-//        {
-//            bIsPlacementPhaseOver = true;
-//           
-//        }
-//
-//        EndTurn();
-//    }
-//}
-//
 
 void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition)
 {
@@ -475,6 +391,7 @@ void AAWGameMode::SetUnitPlacement(const int32 PlayerNumber, const FVector& Grid
             bIsPlacementPhaseOver = true;
         }
 
+        
         EndTurn();
     }
 }

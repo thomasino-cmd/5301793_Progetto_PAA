@@ -185,21 +185,61 @@ FVector AGameField::GetRelativeLocationByXYPosition(const int32 InX, const int32
     return (TileSize * NextCellPositionMultiplier) * FVector(InX, InY, 0);
 }
 
+
+
 void AGameField::ResetField()
 {
-    for (ATile* Obj : TileArray)
+    // Reset all tiles
+    for (ATile* Tile : TileArray)
     {
-        Obj->SetTileStatus(NOT_ASSIGNED, ETileStatus::EMPTY);
+        Tile->SetTileStatus(NOT_ASSIGNED, ETileStatus::EMPTY);
+
+        // Distruggi qualsiasi unità o ostacolo sulla tile
+        if (AActor* Unit = Tile->GetUnit())
+        {
+            Unit->Destroy();
+        }
     }
 
-    // send broadcast event to registered objects 
-    OnResetEvent.Broadcast();
+    // Distruggi tutti gli ostacoli rimanenti (se non associati a tile)
+    TArray<AActor*> Obstacles;
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AObstacle::StaticClass(), Obstacles);
+    for (AActor* Obstacle : Obstacles)
+    {
+        Obstacle->Destroy();
+    }
 
+    // Distruggi tutte le unità rimanenti
+    TArray<AActor*> Soldiers;
+    UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UAW_BaseSoldier::StaticClass(), Soldiers);
+    for (AActor* Soldier : Soldiers)
+    {
+        Soldier->Destroy();
+    }
+
+    // Distruggi la moneta se esiste
+    if (ACoin* Coin = Cast<ACoin>(UGameplayStatics::GetActorOfClass(GetWorld(), ACoin::StaticClass())))
+    {
+        Coin->Destroy();
+    }
+
+    // Resetta gli stati del GameMode
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-    GameMode->bIsGameOver = false;
-    GameMode->MoveCounter = 0;
-   // GameMode->ChoosePlayerAndStartGame();
+    if (GameMode)
+    {
+        GameMode->bIsGameOver = false;
+        GameMode->MoveCounter = 0;
+        GameMode->bIsPlacementPhaseOver = false;
+        GameMode->bCoinFlipCompleted = false;
+    }
+
+    // Broadcast dell'evento di reset
+    OnResetEvent.Broadcast();
 }
+
+
+
+
 
 // Get a tile at the specified grid position
 ATile* AGameField::GetTile(int32 X, int32 Y) const

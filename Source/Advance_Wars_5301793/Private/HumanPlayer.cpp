@@ -345,8 +345,17 @@ void AHumanPlayer::HandleEnemyUnitClick()
         }
         else if (ClickedSoldier)
         {
-            ClickedTile = ClickedSoldier->GetTileIsOnNow();
-            // È stato cliccato un soldato
+            if (ClickedSoldier->GetOwnerPlayerId() != 0 )
+            {
+                ClickedTile = ClickedSoldier->GetTileIsOnNow();
+
+            }
+            else
+            {
+                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("clicca su un nemico oppure su te stesso per skippare attacco."));
+                return;
+            }
+            
         }
         else
         {
@@ -416,6 +425,9 @@ void AHumanPlayer::HandleEnemyUnitClick()
 
         // 7. Resetta il binding dell’input e passa al turno successivo
         //OnClickAction.BindUObject(this, &AHumanPlayer::OnClick);
+        bWaitingForAttackInput = false;
+        SelectedUnitForAttack = nullptr;
+
         CheckAndEndTurn();
     }
     else
@@ -507,10 +519,23 @@ void AHumanPlayer::HandleTileClick()
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, HitMove);
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
+
+    AActor* HitActor = HitMove.GetActor();
+
+    // Se si clicca un'unità amica diversa da quella selezionata, ignora
+    if (HitActor != SelectedUnitForMovement && Cast<IAW_BaseSoldier>(HitActor))
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("finish action before starting another"));
+        return;
+    }
+
+
+
+
     if (HitMove.bBlockingHit && GameMode && GameMode->GameField)
     {
         ATile* ClickedTile = Cast<ATile>(HitMove.GetActor());
-        AActor* HitActor = HitMove.GetActor(); // Ottieni l'attore colpito
+        //AActor* HitActor = HitMove.GetActor(); // Ottieni l'attore colpito
 
         AAW_Brawler* SelectedBrawler = Cast<AAW_Brawler>(SelectedUnitForMovement);
         AAW_Sniper* SelectedSniper = Cast<AAW_Sniper>(SelectedUnitForMovement);
@@ -592,6 +617,7 @@ void AHumanPlayer::HandleTileClick()
 void AHumanPlayer::AttackPhase(IAW_BaseSoldier* SelectedUnit)
 {
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (bWaitingForAttackInput) return;
 
     if (!SelectedUnit)
         return;
@@ -716,3 +742,4 @@ void AHumanPlayer::CheckAndEndTurn()
 
     }
 }
+

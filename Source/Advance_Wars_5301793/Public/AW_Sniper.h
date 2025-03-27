@@ -79,7 +79,8 @@ public:
 
     virtual TArray<ATile*> GetAttackableTiles() override;
 
-
+    int32 GetMaxHealth() const;
+    int32 StartingHealth; 
 
     virtual int32 GetOwnerPlayerId() const override;
 

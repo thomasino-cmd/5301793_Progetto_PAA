@@ -10,7 +10,8 @@ AAW_Sniper::AAW_Sniper()
 {
     // Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
-    Health = 20.0f;
+    StartingHealth = 20.0f;
+    Health = StartingHealth;
     MovementRange = 3;
     AttackRange = 10;
     RangedAttackDamage = FIntPoint(4, 8); // Danno da 4 a 8
@@ -150,11 +151,12 @@ void AAW_Sniper::TakeDamage(float Damage)
     FString DamageString = FString::Printf(TEXT("%f"), Damage);
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
 
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+
     if (Health <= 0)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
 
-        AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
         if (GameMode)
         {
             // Remove from appropriate array
@@ -178,6 +180,7 @@ void AAW_Sniper::TakeDamage(float Damage)
         }
         Destroy();
     }
+    GameMode->UpdateHUD();
 }
 
 float AAW_Sniper::GetHealth() const
@@ -187,11 +190,7 @@ float AAW_Sniper::GetHealth() const
 
 
 
-struct FTileNode
-{
-    ATile* Tile;
-    int32 Distance;
-};
+
 
 TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
 {
@@ -329,6 +328,11 @@ TArray<ATile*> AAW_Sniper::GetAttackableTiles()
     }
 
     return AttackableTiles;
+}
+
+int32 AAW_Sniper::GetMaxHealth() const
+{
+    return StartingHealth;
 }
 
 ATile* AAW_Sniper::GetTileIsOnNow() const

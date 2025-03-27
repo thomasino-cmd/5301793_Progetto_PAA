@@ -14,7 +14,8 @@ AAW_Brawler::AAW_Brawler()
 {
     // Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
     PrimaryActorTick.bCanEverTick = true;
-    Health = 40.0f;
+    StartingHealth = 40.0f;
+    Health = StartingHealth;
     MovementRange = 6;
     AttackRange = 1;
     MeleeAttackDamage = FIntPoint(1, 6); // Danno da 1 a 6
@@ -149,11 +150,12 @@ void AAW_Brawler::TakeDamage(float Damage)
     FString DamageString = FString::Printf(TEXT("%f"), Damage);
     GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
 
-    if (Health <= 0)
+   AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+
+   if (Health <= 0)
     {
         GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
 
-        AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
         if (GameMode)
         {
             // Remove from appropriate array
@@ -177,6 +179,7 @@ void AAW_Brawler::TakeDamage(float Damage)
         }
         Destroy();
     }
+    GameMode->UpdateHUD();
 }
 
 
@@ -208,11 +211,6 @@ int32 AAW_Brawler::GetAttackRange() const
 }
 
 
-struct FTileNode
-{
-    ATile* Tile;
-    int32 Distance;
-};
 
 
 TArray<ATile*> AAW_Brawler::GetAttackableTiles()
@@ -390,6 +388,11 @@ void AAW_Brawler::MoveUnit(ATile* TargetTile)
     CurrentPathIndex = 1; // Inizia dalla prima tile del percorso (dopo quella di partenza)
 
     
+}
+
+int32 AAW_Brawler::GetMaxHealth() const
+{
+    return StartingHealth;
 }
 
 

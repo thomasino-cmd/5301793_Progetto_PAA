@@ -99,7 +99,8 @@ public:
     void MoveUnit(ATile* TargetTile) ;
 
 
-
+    int32 GetMaxHealth() const;
+    int32 StartingHealth;
 
     UFUNCTION(BlueprintCallable)
     void Shoot(ATile* TargetTile);

@@ -33,12 +33,21 @@ public:
     int32 Player2UnitsPlaced = 0;
 
 
+
+    UPROPERTY()
+    class UInGameHUDWidget* InGameHUD;
+
+
+    int32 WinningPlayerId = 0 ;
+
     // tracks if the game is over
     bool bIsGameOver;
 
     bool bIsPlacementPhaseOver;
   
     bool bInCoinTossPhase  = false;
+
+    bool bCoinFlipCompleted = false;
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
@@ -123,6 +132,9 @@ public:
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Sniper> SniperClassAI;
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UInGameHUDWidget> InGameHUDClass;
+
     UFUNCTION()
     void SwitchPlayer();
 
@@ -148,7 +160,8 @@ public:
     UFUNCTION()
     void HandleCoinFlipInput();
 
-    bool bCoinFlipCompleted = false;
+    void UpdateHUD();
+
 
 private:
     void SpawnCoinForFlip();
