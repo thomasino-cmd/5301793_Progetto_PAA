@@ -125,6 +125,15 @@ void AHumanPlayer::OnLose()
 
 
 
+void AHumanPlayer::RequestCoinFlip()
+{
+    // Notifica la GameMode che il giocatore vuole lanciare la moneta
+    OnCoinFlipRequested.Broadcast();
+}
+
+
+
+
 void AHumanPlayer::OnClick()
 {
 
@@ -135,8 +144,17 @@ void AHumanPlayer::OnClick()
     GetWorld()->GetFirstPlayerController()->GetHitResultUnderCursor(ECollisionChannel::ECC_Pawn, true, Hit);
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
+    if (GameMode && GameMode->IsInCoinTossPhase())
+    {
+        // Se siamo nella fase di coin toss, lancia la moneta
+        if (ACoin* Coin = GameMode->GetCoinActor())
+        {
+            Coin->LaunchCoin();
+            return; // Esci per evitare altre logiche
+        }
 
-    if (GameMode->bIsPlacementPhaseOver == false)
+    }
+    else if (GameMode->bIsPlacementPhaseOver == false)
     {
         if (Hit.bBlockingHit && bIsMyTurn)
         {

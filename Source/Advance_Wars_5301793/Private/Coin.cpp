@@ -9,8 +9,12 @@ ACoin::ACoin()
 
     CoinMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CoinMesh"));
     RootComponent = CoinMesh;
-    CoinMesh->SetSimulatePhysics(true);
-    CoinMesh->SetNotifyRigidBodyCollision(true); // Abilita gli eventi di collisione
+    CoinMesh->SetSimulatePhysics(false); // Fisica disattivata inizialmente
+    CoinMesh->SetNotifyRigidBodyCollision(true);
+
+    ImpulseStrength = 150.0f;
+    TorqueStrength = 15000.0f;
+    RotationMultiplier = FMath::RandRange(20.0f, 50.0f);
 }
 
 void ACoin::BeginPlay()
@@ -19,91 +23,76 @@ void ACoin::BeginPlay()
     CoinMesh->OnComponentHit.AddDynamic(this, &ACoin::OnHit);
 }
 
-void ACoin::Flip()
+
+
+// Modifica necessaria in Coin.cpp (funzione LaunchCoin)
+void ACoin::LaunchCoin()
 {
+    if (!CoinMesh) return;
+
+    // 1. Resetta posizione e orientamento
+    FVector NewLocation = GetActorLocation();
+    NewLocation.Z = 100.f;
+    SetActorLocation(NewLocation);
+    SetActorRotation(FRotator(0, 0, 0)); // Resetta la rotazione
+
+    // 2. Attiva fisica
+    CoinMesh->SetSimulatePhysics(true);
     bHasLanded = false;
-
-    // Reset physics state
     CoinMesh->SetPhysicsLinearVelocity(FVector::ZeroVector);
-    //CoinMesh->SetPhysicsAngularVelocity(FVector::ZeroVector);
-    CoinMesh->SetWorldLocation(FVector(0, 0, 200)); // Spawn above ground
-    CoinMesh->SetWorldRotation(FRotator(0, 0, 0)); // Initial orientation
+    CoinMesh->SetPhysicsAngularVelocityInRadians(FVector::ZeroVector);
 
-    // Apply upward impulse (simulates "flipping" force)
-    FVector Impulse = FVector(0, 0, FMath::RandRange(300.f, 500.f)) * CoinMesh->GetMass();
-    CoinMesh->AddImpulse(Impulse);
+    // 3. Applica impulso verticale
+    FVector Impulse = FVector(0, 0, ImpulseStrength * CoinMesh->GetMass());
 
-    // Apply random torque (makes it spin realistically)
+    // 4. MODIFICA CHIAVE: Applica la coppia principalmente sull'asse X (per rotazione frontale)
+    // e una piccola componente casuale sugli altri assi per un effetto più naturale
     FVector Torque = FVector(
-        FMath::RandRange(-2000.f, 2000.f),  // X-axis spin (optional)
-        FMath::RandRange(-2000.f, 2000.f),  // Y-axis spin (optional)
-        FMath::RandRange(1000.f, 3000.f)    // Z-axis spin (main flip rotation)
+        TorqueStrength * CoinMesh->GetMass() * RotationMultiplier, // Asse X principale
+        FMath::RandRange(-TorqueStrength * 0.2f, TorqueStrength * 0.2f) * CoinMesh->GetMass(), // Piccola variazione Y
+        FMath::RandRange(-TorqueStrength * 0.1f, TorqueStrength * 0.1f) * CoinMesh->GetMass() // Piccola variazione Z
     );
-    CoinMesh->AddTorqueInRadians(Torque * CoinMesh->GetMass());
 
-    // Optional: Add slight horizontal movement for realism
-    FVector LateralImpulse = FVector(
-        FMath::RandRange(-50.f, 50.f),
-        FMath::RandRange(-50.f, 50.f),
-        0
-    );
-    CoinMesh->AddImpulse(LateralImpulse * CoinMesh->GetMass());
+    CoinMesh->AddImpulse(Impulse, NAME_None, true);
+    CoinMesh->AddTorqueInRadians(Torque);
+
+    // Debug
+    UE_LOG(LogTemp, Warning, TEXT("Applied Torque - X: %f, Y: %f, Z: %f"), Torque.X, Torque.Y, Torque.Z);
 }
 
 
 
+bool ACoin::IsCoinStable() const
+{
+    if (!CoinMesh) return false;
 
-void ACoin::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+    // Get velocity in cm/s (Unreal units)
+    const FVector LinearVelocity = CoinMesh->GetPhysicsLinearVelocity();
+    // Get angular velocity in radians/s
+    const FVector AngularVelocity = CoinMesh->GetPhysicsAngularVelocityInRadians();
+
+    // Threshold values (adjust based on your needs)
+    const float MaxLinearSpeed = 5.0f;  // 5 cm/s
+    const float MaxAngularSpeed = 0.5f; // ~30 degrees/s
+
+    return LinearVelocity.Size() < MaxLinearSpeed &&
+        AngularVelocity.Size() < MaxAngularSpeed;
+}
+
+void ACoin::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+    UPrimitiveComponent* OtherComp, FVector NormalImpulse,
+    const FHitResult& Hit)
 {
     if (bHasLanded) return;
 
-    // 1. Ottieni la velocità angolare attuale (metodo corretto)
-    FVector AngularVelocity = CoinMesh->GetPhysicsAngularVelocityInRadians();
-
-    // 2. Calcola l'energia cinetica residua
-    float KineticEnergy = AngularVelocity.SizeSquared() * CoinMesh->GetMass();
-    const float EnergyThreshold = 5.0f; // Soglia personalizzabile
-
-    // 3. Se la moneta sta ancora ruotando significativamente, ignora
-    if (KineticEnergy > EnergyThreshold)
+    // Only register landing when physics says we're stable
+    if (IsCoinStable())
     {
-        return;
-    }
+        bHasLanded = true;
+        const float UpDot = FVector::DotProduct(CoinMesh->GetUpVector(), FVector::UpVector);
+        OnLanded.Broadcast(UpDot > 0 ? 0 : 1); // 0=Heads, 1=Tails
 
-    // 4. Determina il risultato (testa/croce)
-    float UpDot = FVector::DotProduct(CoinMesh->GetUpVector(), FVector::UpVector);
-    int32 Result = (UpDot > 0) ? 0 : 1;
-
-    // 5. Gestisci l'atterraggio
-    bHasLanded = true;
-    OnCoinLanded.Broadcast(Result);
-
-    // 6. Opzionale: Disabilita fisica e aggiungi effetti
-    CoinMesh->SetSimulatePhysics(false);
-    SpawnLandingEffects();
-}
-
-void ACoin::SpawnLandingEffects()
-{
-    // Particelle
-    if (LandingParticles)
-    {
-        UGameplayStatics::SpawnEmitterAtLocation(
-            GetWorld(),
-            LandingParticles,
-            GetActorLocation(),
-            FRotator::ZeroRotator,
-            true
-        );
-    }
-
-    // Suono
-    if (LandingSound)
-    {
-        UGameplayStatics::PlaySoundAtLocation(
-            GetWorld(),
-            LandingSound,
-            GetActorLocation()
-        );
+        // Optional: Freeze the coin
+        CoinMesh->SetSimulatePhysics(false);
     }
 }

@@ -6,6 +6,7 @@
 #include "Tile.h"
 #include "AW_Sniper.h"
 #include "AW_Brawler.h"
+#include "AWGameMode.h"
 
 
 AAWPlayerController::AAWPlayerController()
@@ -25,13 +26,26 @@ void AAWPlayerController::BeginPlay()
     }
 }
 
+//void AAWPlayerController::SetupInputComponent()
+//{
+//    Super::SetupInputComponent();
+//
+//    if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
+//    {
+//        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);  
+//    }
+//}
+
 void AAWPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
 
     if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
     {
-        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);  
+        // Bind standard per il click sul grid
+        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);
+
+        
     }
 }
 

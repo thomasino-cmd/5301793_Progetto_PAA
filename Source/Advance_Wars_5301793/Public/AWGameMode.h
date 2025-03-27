@@ -29,12 +29,16 @@ public:
     TArray<AAW_Brawler*> Player2Brawlers;
     TArray<AAW_Sniper*> Player2Snipers;
 
+    int32 Player1UnitsPlaced = 0;
+    int32 Player2UnitsPlaced = 0;
+
 
     // tracks if the game is over
     bool bIsGameOver;
 
     bool bIsPlacementPhaseOver;
   
+    bool bInCoinTossPhase  = false;
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
@@ -61,9 +65,19 @@ public:
 
     virtual void BeginPlay() override;
 
-    void ChoosePlayerAndStartGame();
+    //UFUNCTION(BlueprintCallable)
+    //void StartCoinTossPhase();
 
-  
+
+    bool IsInCoinTossPhase() const;
+
+    //UFUNCTION()
+    //void InitializeGameSetup();
+
+
+
+    UFUNCTION()
+    ACoin* GetCoinActor() const;
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AGameField> GameFieldClass;
@@ -123,22 +137,30 @@ public:
 
 
     UFUNCTION(BlueprintCallable, Category = "Game Flow")
-    void StartCoinFlip();
+    void StartGameSequence();
 
     UFUNCTION()
-    void OnCoinFlipResult(int32 StartingPlayerIndex);
+    void OnCoinFlipComplete(int32 StartingPlayerIndex);
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<ACoin> CoinClass;
 
+    UFUNCTION()
+    void HandleCoinFlipInput();
+
+    bool bCoinFlipCompleted = false;
+
 private:
+    void SpawnCoinForFlip();
+
+    //void SetupCoinFlipInput();
+    
+    void InitializeGameplay();
+    void StartFirstTurn();
+
+
     UPROPERTY()
     ACoin* CoinActor;
-
-
-
-   
-
 
 
 

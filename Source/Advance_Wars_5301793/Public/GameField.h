@@ -44,6 +44,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void GenerateField();
 
+	void CheckCoinFlipStatus();
+
 	UFUNCTION(BlueprintCallable)
 	void SpawnRandomObstacles();
 
@@ -160,6 +162,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Game Field")
 	TSubclassOf<ATile> TileClass;
 
+
+private:
+	FTimerHandle ObstacleSpawnTimerHandle;
 
 
 };

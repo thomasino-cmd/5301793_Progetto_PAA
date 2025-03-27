@@ -8,6 +8,10 @@
 #include "Materials/Material.h"
 #include "Components/StaticMeshComponent.h"
 
+#include "Engine/World.h"
+
+#include "AWGameInstance.h"
+
 // Sets default values
 AGameField::AGameField()
 {
@@ -72,19 +76,36 @@ void AGameField::GenerateField()
     }
     UE_LOG(LogTemp, Warning, TEXT("Game Field Generated!"));
 
-    // Set Timer to call SpawnRandomObstacles after a delay
-    FTimerHandle TimerHandle;
-    GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
-        {
-            SpawnRandomObstacles();
-        }, 1.0f, false);
+    //// Set Timer to call SpawnRandomObstacles after a delay
+    //FTimerHandle TimerHandle;
+    //GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
+    //    {
+    //        SpawnRandomObstacles();
+    //    }, 1.0f, false);
+
+        // Set up a repeating timer to check for coin flip completion
+
+
+    GetWorld()->GetTimerManager().SetTimer(ObstacleSpawnTimerHandle, this, &AGameField::CheckCoinFlipStatus, 0.5f, true);
+
 }
 
+void AGameField::CheckCoinFlipStatus()
+{
+    if (AAWGameMode* GameMode = Cast<AAWGameMode>(UGameplayStatics::GetGameMode(GetWorld())))
+    {
+        if (GameMode->bCoinFlipCompleted)
+        {
+            SpawnRandomObstacles();
+            GetWorld()->GetTimerManager().ClearTimer(ObstacleSpawnTimerHandle);
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("Waiting for coin flip to complete..."));
+        }
+    }
+}
 
-
-#include "Engine/World.h"
-#include "Kismet/GameplayStatics.h"
-#include "AWGameInstance.h"
 
 void AGameField::SpawnRandomObstacles()
 {
@@ -177,7 +198,7 @@ void AGameField::ResetField()
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
     GameMode->bIsGameOver = false;
     GameMode->MoveCounter = 0;
-    GameMode->ChoosePlayerAndStartGame();
+   // GameMode->ChoosePlayerAndStartGame();
 }
 
 // Get a tile at the specified grid position

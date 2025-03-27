@@ -12,6 +12,7 @@
 
 
 DECLARE_DELEGATE(FClickDelegate);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCoinFlipRequested);
 
 UCLASS()
 class ADVANCE_WARS_5301793_API AHumanPlayer : public APawn, public IPlayerInterface
@@ -71,9 +72,12 @@ public:
 
 
 
+	UFUNCTION(BlueprintCallable)
+	void RequestCoinFlip();
 
 
-
+	UPROPERTY(BlueprintAssignable)
+	FOnCoinFlipRequested OnCoinFlipRequested;
 
 
 

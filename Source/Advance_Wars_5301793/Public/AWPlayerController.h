@@ -7,6 +7,11 @@
 #include "EnhancedInputSubsystems.h"
 #include "AWPlayerController.generated.h"
 
+
+class UInputMappingContext;
+class UInputAction;
+
+
 UCLASS()
 class ADVANCE_WARS_5301793_API AAWPlayerController : public APlayerController
 {
@@ -22,21 +27,20 @@ public:
     UInputAction* ClickAction;
 
  
-    
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+    UInputAction* CoinFlipAction;
+
 
     bool bIsMovingUnit;
     bool bHasAttacked;
 
     void ClickOnGrid();
 
-    //void SelectUnit(AHumanPlayer* Unit);
-    //void MoveUnit(ATile* Tile);
-    //void AttackUnit(AHumanPlayer* Unit);
-    //void DeselectUnit();
-
 protected:
     virtual void BeginPlay() override;
     virtual void SetupInputComponent() override;
+
+
 
 
 };
