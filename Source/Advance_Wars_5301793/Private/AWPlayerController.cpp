@@ -24,6 +24,16 @@ void AAWPlayerController::BeginPlay()
     {
         Subsystem->AddMappingContext(InputContext, 0);
     }
+
+    if (MoveHistoryWidgetClass)
+    {
+        MoveHistoryWidget = CreateWidget<UMoveHistoryWidget>(this, MoveHistoryWidgetClass);
+        if (MoveHistoryWidget)
+        {
+            MoveHistoryWidget->AddToViewport();
+            MoveHistoryWidget->SetVisibility(ESlateVisibility::Visible); // Forza la visibilità
+        }
+    }
 }
 
 //void AAWPlayerController::SetupInputComponent()
@@ -53,6 +63,23 @@ void AAWPlayerController::SetupInputComponent()
 
 
 // CLICKONGRID cosi funziona pero vale finora solo per il posizionamento 
+
+void AAWPlayerController::UpdateMoveHistoryUI()
+{
+    if (AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode()))
+    {
+        if (MoveHistoryWidget && GameMode->MoveHistoryManager)
+        {
+            // Convert TArray<TObjectPtr<UMoveEntry>> to TArray<UObject*>
+            TArray<UObject*> MoveHistoryObjects;
+            for (const TObjectPtr<UMoveEntry>& MoveEntry : GameMode->MoveHistoryManager->MoveHistory)
+            {
+                MoveHistoryObjects.Add(MoveEntry.Get());
+            }
+            MoveHistoryWidget->UpdateHistory(MoveHistoryObjects);
+        }
+    }
+}
 
 
 void AAWPlayerController::ClickOnGrid()

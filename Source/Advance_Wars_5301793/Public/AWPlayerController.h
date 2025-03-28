@@ -31,6 +31,15 @@ public:
     UInputAction* CoinFlipAction;
 
 
+    UPROPERTY(EditAnywhere, Category = "UI")
+    TSubclassOf<class UMoveHistoryWidget> MoveHistoryWidgetClass;
+
+    UPROPERTY()
+    class UMoveHistoryWidget* MoveHistoryWidget;
+
+    UFUNCTION()
+    void UpdateMoveHistoryUI();
+
     bool bIsMovingUnit;
     bool bHasAttacked;
 

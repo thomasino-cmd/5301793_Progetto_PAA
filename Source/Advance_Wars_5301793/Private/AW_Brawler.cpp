@@ -5,6 +5,7 @@
 #include "AWGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
+#include "AWPlayerController.h"
 
 
 
@@ -19,8 +20,7 @@ AAW_Brawler::AAW_Brawler()
     MovementRange = 6;
     AttackRange = 1;
     MeleeAttackDamage = FIntPoint(1, 6); // Danno da 1 a 6
-    MoveSpeed = 100.0f;            // Example speed
-    
+    MoveSpeed = 150.0f;          
 
     TileIsOnNow = nullptr;
     OwnerPlayerId = -1;
@@ -365,60 +365,68 @@ void AAW_Brawler::SetTileIsOnNow(ATile* NewTile)
 }
 
 
-
-void AAW_Brawler::MoveUnit(ATile* TargetTile)
-{
-
-    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-
-    //this->DetachFromActor(FDetachmentTransformRules::KeepRelativeTransform);
-
-    MovementPath = GameMode->GameField->FindPath(TileIsOnNow, TargetTile);
-
-    if (MovementPath.Num() <= 0)
-    {
-        return;
-    }
-
-    //Inizializza le variabili per il movimento
-    MovingCurrentTile = TileIsOnNow;
-    MovingTargetTile = TargetTile; //salviamo il target per usarlo alla fine
-    MoveSpeed = 200.0f;
-    bIsMoving = true; // Inizia il movimento
-    CurrentPathIndex = 1; // Inizia dalla prima tile del percorso (dopo quella di partenza)
-
-    
-}
-
 int32 AAW_Brawler::GetMaxHealth() const
 {
     return StartingHealth;
 }
 
 
+void AAW_Brawler::MoveUnit(ATile* TargetTile)
+{
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode || !TargetTile) return;
+
+    // Get grid coordinates
+    FString FromCell = TileIsOnNow ? TileIsOnNow->GetGridCoordinatesAsString() : "Unknown";
+    FString ToCell = TargetTile->GetGridCoordinatesAsString();
+
+    // Log the move
+    FString PlayerID = (OwnerPlayerId == 0) ? "HP" : "AI";
+    GameMode->LogMove(PlayerID, "B", FromCell, ToCell);
+
+    // Existing movement logic
+    MovementPath = GameMode->GameField->FindPath(TileIsOnNow, TargetTile);
+    if (MovementPath.Num() <= 0) return;
+
+    MovingCurrentTile = TileIsOnNow;
+    MovingTargetTile = TargetTile;
+    bIsMoving = true;
+    CurrentPathIndex = 1;
+
+    // Notify UI update
+    if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
+    {
+        PC->UpdateMoveHistoryUI();
+    }
+}
 
 void AAW_Brawler::Shoot(ATile* TargetTile)
 {
     if (!TargetTile) return;
 
-    AActor* OccupyingActor = TargetTile->GetUnit();
-    IAW_BaseSoldier* TargetSoldier = Cast<IAW_BaseSoldier>(OccupyingActor);
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode) return;
 
-    if (!TargetSoldier)
+    // Get target coordinates
+    FString TargetCell = TargetTile->GetGridCoordinatesAsString();
+
+    // Calculate damage and log attack
+    int32 Damage = FMath::RandRange(MeleeAttackDamage.GetMin(), MeleeAttackDamage.GetMax());
+    FString PlayerID = (OwnerPlayerId == 0) ? "HP" : "AI";
+    GameMode->LogAttack(PlayerID, "B", TargetCell, Damage);
+
+    // Existing attack logic
+    if (IAW_BaseSoldier* TargetSoldier = Cast<IAW_BaseSoldier>(TargetTile->GetUnit()))
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun bersaglio valido sulla tile."));
-        return;
+        if (TargetSoldier->GetOwnerPlayerId() != OwnerPlayerId)
+        {
+            TargetSoldier->TakeDamage(Damage);
+        }
     }
 
-    // Controlla se il bersaglio è un nemico (es. tramite un ID giocatore o un tag)
-    if (TargetSoldier->GetOwnerPlayerId() == this->GetOwnerPlayerId()) 
+    // Notify UI update
+    if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
     {
-        return;
+        PC->UpdateMoveHistoryUI();
     }
-
-    // Genera un danno casuale nel range 1-6
-    int Damage = FMath::RandRange(1, 6);
-
-    // Applica il danno al bersaglio
-    TargetSoldier->TakeDamage(Damage);
 }

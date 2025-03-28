@@ -4,6 +4,7 @@
 #include "Tile.h"
 #include "AWGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "AWPlayerController.h"
 
 // Sets default values
 AAW_Sniper::AAW_Sniper()
@@ -371,8 +372,15 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
 {
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode) return;
 
-    //this->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    // Ottieni le coordinate delle celle
+    FString FromCell = TileIsOnNow ? TileIsOnNow->GetGridCoordinatesAsString() : FString("Unknown");
+    FString ToCell = TargetTile->GetGridCoordinatesAsString();
+
+    // Log della mossa (HP = Human Player, S = Sniper)
+    FString PlayerID = (OwnerPlayerId == 0) ? "HP" : "AI";
+    GameMode->LogMove(PlayerID, "S", FromCell, ToCell);
     
     MovementPath = GameMode->GameField->FindPath(TileIsOnNow, TargetTile);
 
@@ -388,7 +396,11 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
     bIsMoving = true; // Inizia il movimento
     CurrentPathIndex = 1; // Inizia dalla prima tile del percorso (dopo quella di partenza)
 
-   
+    // Notify UI update
+    if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
+    {
+        PC->UpdateMoveHistoryUI();
+    }
 }
 
 
@@ -396,6 +408,18 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
 void AAW_Sniper::Shoot(ATile* TargetTile)
 {
     if (!TargetTile) return;
+
+    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
+    if (!GameMode) return;
+
+    // Ottieni le coordinate della cella attaccata
+    FString TargetCell = TargetTile->GetGridCoordinatesAsString();
+
+    // Genera danno e logga l'attacco
+    int Damage = FMath::RandRange(4, 8);
+    FString PlayerID = (OwnerPlayerId == 0) ? "HP" : "AI";
+    GameMode->LogAttack(PlayerID, "S", TargetCell, Damage);
+
 
     AActor* OccupyingActor = TargetTile->GetUnit();
     IAW_BaseSoldier* TargetSoldier = Cast<IAW_BaseSoldier>(OccupyingActor);
@@ -412,9 +436,7 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
        return;
     }
 
-    // Genera un danno casuale nel range 4-8
-    int Damage = FMath::RandRange(4, 8);
-   
+
     // Applica il danno al bersaglio
     TargetSoldier->TakeDamage(Damage);
 
@@ -452,5 +474,11 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
         int CounterDamage = FMath::RandRange(1, 3);
         UE_LOG(LogTemp, Log, TEXT("%s subisce contraccolpo con danno %d"), *GetName(), CounterDamage);
         this->TakeDamage(CounterDamage);
+    }
+
+    // Notify UI update
+    if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
+    {
+        PC->UpdateMoveHistoryUI();
     }
 }

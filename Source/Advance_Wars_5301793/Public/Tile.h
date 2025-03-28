@@ -59,6 +59,9 @@ public:
 	//UFUNCTION()
 	//IAW_BaseSoldier* GetSoldier() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Tile")
+	FString GetGridCoordinatesAsString() const;
+
 
 
 	void SetTileMaterial() const;

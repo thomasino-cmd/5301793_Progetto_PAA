@@ -14,28 +14,22 @@ void UInGameHUDWidget::UpdateHealthBars(const TArray<float>& CurrentHealthValues
         HealthBar_Sniper2
     };
 
-    // Sicurezza: verifica che gli array abbiano esattamente 4 elementi
+    // Verifica integrità dati
     if (CurrentHealthValues.Num() != 4 || MaxHealthValues.Num() != 4)
     {
-        UE_LOG(LogTemp, Error, TEXT("UpdateHealthBars: Richiesti 4 valori! Ricevuti %d current e %d max"),
+        UE_LOG(LogTemp, Error, TEXT("Dati salute non validi! Attesi 4 valori, ricevuti %d/%d"),
             CurrentHealthValues.Num(), MaxHealthValues.Num());
         return;
     }
 
-    // Aggiorna ogni health bar
+    // Aggiorna ogni barra
     for (int32 i = 0; i < HealthBars.Num(); ++i)
     {
         if (HealthBars[i])
         {
-            // Calcola la percentuale (0-1) con sicurezza
-            float Percent = (MaxHealthValues[i] > 0.f) ?
-                (CurrentHealthValues[i] / MaxHealthValues[i]) : 0.f;
-
+            // Calcolo sicuro della percentuale
+            float Percent = FMath::Clamp(CurrentHealthValues[i] / FMath::Max(1.f, MaxHealthValues[i]), 0.f, 1.f);
             HealthBars[i]->SetPercent(Percent);
-
-            // Debug
-            UE_LOG(LogTemp, Verbose, TEXT("Barra %d: %.1f/%.1f (%.0f%%)"),
-                i, CurrentHealthValues[i], MaxHealthValues[i], Percent * 100.f);
         }
     }
 }
@@ -45,24 +39,24 @@ void UInGameHUDWidget::UpdateTurnIndicator(bool bIsHumanTurn)
     if (Text_TurnStatus)
     {
         Text_TurnStatus->SetText(bIsHumanTurn ?
-            FText::FromString("PLAYER TURN") :
+            FText::FromString("HUMAN TURN") :
             FText::FromString("AI TURN"));
 
         Text_TurnStatus->SetColorAndOpacity(bIsHumanTurn ?
-            FSlateColor(FColor::Green) :
+            FSlateColor(FColor::Blue) :
             FSlateColor(FColor::Red));
     }
 }
 
 void UInGameHUDWidget::UpdateScoreDisplay(int32 Player1, int32 Player2, int32 TotalMatches)
 {
-    if (Text_Player1Score && Text_Player2Score && Text_TotalMatches)
-    {
-        Text_Player1Score->SetText(FText::AsNumber(Player1));
-        Text_Player2Score->SetText(FText::AsNumber(Player2));
-        Text_TotalMatches->SetText(FText::Format(
-            FText::FromString("Matches: {0}"),
-            FText::AsNumber(TotalMatches)
-        ));
-    }
+    //if (Text_Player1Score && Text_Player2Score && Text_TotalMatches)
+    //{
+    //    Text_Player1Score->SetText(FText::AsNumber(Player1));
+    //    Text_Player2Score->SetText(FText::AsNumber(Player2));
+    //    Text_TotalMatches->SetText(FText::Format(
+    //        FText::FromString("Matches: {0}"),
+    //        FText::AsNumber(TotalMatches)
+    //    ));
+    //}
 }

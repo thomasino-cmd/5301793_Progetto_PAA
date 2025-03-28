@@ -169,3 +169,12 @@ UStaticMeshComponent* ATile::GetStaticMeshComponent() const
 //	}
 //	return nullptr;
 //}
+
+
+FString ATile::GetGridCoordinatesAsString() const
+{
+	// Esempio: GridPosition = (0, 0) -> "A1"
+	char ColumnChar = 'A' + FMath::Clamp(GridPosition.X, 0, 25); // A-Z
+	int32 RowNumber = GridPosition.Y + 1; // 1-26
+	return FString::Printf(TEXT("%c%d"), ColumnChar, RowNumber);
+}

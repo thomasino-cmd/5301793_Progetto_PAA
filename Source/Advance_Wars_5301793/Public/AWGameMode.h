@@ -9,6 +9,8 @@
 #include "AW_Brawler.h"
 #include "AW_Sniper.h"
 #include "Coin.h"
+#include "WBP_MoveHistory.h"
+#include "MoveHistoryManager.h"
 #include "AWGameMode.generated.h"
 
 
@@ -68,6 +70,16 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
     int32 TurnNumber;
+
+
+
+    // Funzione per registrare una mossa (chiamata da PlayerController/AI)
+    UFUNCTION(BlueprintCallable, Category = "Move History")
+    void LogMove(const FString& PlayerID, const FString& UnitID, const FString& FromCell, const FString& ToCell);
+
+    // Funzione per registrare un attacco
+    UFUNCTION(BlueprintCallable, Category = "Move History")
+    void LogAttack(const FString& PlayerID, const FString& UnitID, const FString& TargetCell, int32 Damage);
 
 
     AAWGameMode();
@@ -132,8 +144,6 @@ public:
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Sniper> SniperClassAI;
 
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<class UInGameHUDWidget> InGameHUDClass;
 
     UFUNCTION()
     void SwitchPlayer();
@@ -145,6 +155,9 @@ public:
     void EndGame();
 
     ////////////////////// WIDGET ///////////////////////
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UInGameHUDWidget> InGameHUDClass;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
     int32 Player1Score = 0;
@@ -161,6 +174,15 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void LoadScores();
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UMoveHistoryWidget> MoveHistoryWidgetClass;
+
+    UMoveHistoryWidget* MoveHistoryWidget;
+
+    // Sostituisci la dichiarazione esistente con:
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Move History")
+    TObjectPtr<UMoveHistoryManager> MoveHistoryManager;
 
     /// ///////////////COIN FLIP////////////////////////
 

@@ -10,6 +10,8 @@
 #include "InGameHUDWidget.h"
 
 
+
+
 AAWGameMode::AAWGameMode()
 {
     // Imposta la classe di default per il PlayerController
@@ -17,6 +19,8 @@ AAWGameMode::AAWGameMode()
 
     // Imposta la classe di default per il Pawn
     DefaultPawnClass = AHumanPlayer::StaticClass();
+
+    
 
     bIsPlacementPhaseOver = false;
     TotalUnitsToPlace = 4;
@@ -32,6 +36,7 @@ AAWGameMode::AAWGameMode()
 void AAWGameMode::BeginPlay()
 {
     Super::BeginPlay();
+    MoveHistoryManager = NewObject<UMoveHistoryManager>(this, TEXT("MoveHistoryManager"));
     StartGameSequence();
    
 }
@@ -141,14 +146,16 @@ void AAWGameMode::StartFirstTurn()
             LoadScores();
             InGameHUD->AddToViewport();
 
-            InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
+            //InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
             // Aggiorna i valori iniziali
-            UpdateHUD();
         }
     }
+
+
     if (Players.IsValidIndex(CurrentPlayer))
     {
         Players[CurrentPlayer]->OnTurn();
+        UpdateHUD();
     }
 }
 
@@ -171,28 +178,44 @@ void AAWGameMode::UpdateHUD()
 {
     if (!InGameHUD) return;
 
-    // Ordine: Brawler1, Sniper1, Brawler2, Sniper2
+    // 1. Aggiorna indicatore di turno
+    InGameHUD->UpdateTurnIndicator(CurrentPlayer == 0);
+
+    // 2. Prepara dati salute in ordine: Brawler1, Sniper1, Brawler2, Sniper2
     TArray<float> CurrentHealths;
     TArray<float> MaxHealths;
 
-    // Player 1 Units
-    CurrentHealths.Add(Player1Brawlers.Num() > 0 ? Player1Brawlers[0]->GetHealth() : 0.f);
-    MaxHealths.Add(Player1Brawlers.Num() > 0 ? Player1Brawlers[0]->GetMaxHealth() : 1.f);
+    // Helper per aggiungere valori in modo sicuro
+    auto AddHealthData = [](TArray<float>& Current, TArray<float>& Max, const TArray<AAW_Brawler*>& Brawlers, const TArray<AAW_Sniper*>& Snipers) {
+        // Brawler
+        if (Brawlers.Num() > 0) {
+            Current.Add(Brawlers[0]->GetHealth());
+            Max.Add(Brawlers[0]->GetMaxHealth());
+        }
+        else {
+            Current.Add(0.f);
+            Max.Add(1.f);
+        }
 
-    CurrentHealths.Add(Player1Snipers.Num() > 0 ? Player1Snipers[0]->GetHealth() : 0.f);
-    MaxHealths.Add(Player1Snipers.Num() > 0 ? Player1Snipers[0]->GetMaxHealth() : 1.f);
+        // Sniper
+        if (Snipers.Num() > 0) {
+            Current.Add(Snipers[0]->GetHealth());
+            Max.Add(Snipers[0]->GetMaxHealth());
+        }
+        else {
+            Current.Add(0.f);
+            Max.Add(1.f);
+        }
+        };
 
-    // Player 2 Units
-    CurrentHealths.Add(Player2Brawlers.Num() > 0 ? Player2Brawlers[0]->GetHealth() : 0.f);
-    MaxHealths.Add(Player2Brawlers.Num() > 0 ? Player2Brawlers[0]->GetMaxHealth() : 1.f);
+    // Player 1 (Brawler1, Sniper1)
+    AddHealthData(CurrentHealths, MaxHealths, Player1Brawlers, Player1Snipers);
 
-    CurrentHealths.Add(Player2Snipers.Num() > 0 ? Player2Snipers[0]->GetHealth() : 0.f);
-    MaxHealths.Add(Player2Snipers.Num() > 0 ? Player2Snipers[0]->GetMaxHealth() : 1.f);
+    // Player 2 (Brawler2, Sniper2)
+    AddHealthData(CurrentHealths, MaxHealths, Player2Brawlers, Player2Snipers);
 
+    // 3. Invia i dati (garantiamo sempre 4 elementi)
     InGameHUD->UpdateHealthBars(CurrentHealths, MaxHealths);
-
-    // Aggiorna l'indicatore del turno
-    InGameHUD->UpdateTurnIndicator(CurrentPlayer == 0);
 }
 
 
@@ -220,7 +243,6 @@ void AAWGameMode::EndTurn()
         EndGame();
         return;
     }
-    UpdateHUD();
     // If game isn't over, switch players
     SwitchPlayer();
 }
@@ -257,6 +279,8 @@ void AAWGameMode::SwitchPlayer()
     MoveCounter ++;
  
     GetNextPlayer();
+    UpdateHUD();
+
     Players[CurrentPlayer]->OnTurn();
 
 }
@@ -285,28 +309,28 @@ bool AAWGameMode::CheckWinCondition()
 
 void AAWGameMode::EndGame()
 {
-    TotalMatchesPlayed++;
+    //TotalMatchesPlayed++;
 
-    // Assegna punti al vincitore
-    if (WinningPlayerId == 0)
-    {
-        Player1Score += 1; 
-        
-    }
-    else
-    {
-        Player2Score += 1;
-        
-    }
+    //// Assegna punti al vincitore
+    //if (WinningPlayerId == 0)
+    //{
+    //    Player1Score += 1; 
+    //    
+    //}
+    //else
+    //{
+    //    Player2Score += 1;
+    //    
+    //}
 
     // Aggiorna HUD
-    if (InGameHUD)
+  /*  if (InGameHUD)
     {
         InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
-    }
+    }*/
 
     // Salva i progressi
-    SaveScores();
+    //SaveScores();
 
 
     GameField->ResetField();
@@ -461,31 +485,35 @@ TArray<AActor*> AAWGameMode::GetCurrentPlayerUnits(int32 PlayerId)
 
 void AAWGameMode::SaveScores()
 {
-    TSharedPtr<FJsonObject> SaveObject = MakeShared<FJsonObject>();
-    SaveObject->SetNumberField("Player1Score", Player1Score);
-    SaveObject->SetNumberField("Player2Score", Player2Score);
-    SaveObject->SetNumberField("TotalMatches", TotalMatchesPlayed);
 
-    FString OutputString;
-    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
-    FJsonSerializer::Serialize(SaveObject.ToSharedRef(), Writer);
-
-    FFileHelper::SaveStringToFile(OutputString, TEXT("YourSaveGame.sav"));
 }
 
 void AAWGameMode::LoadScores()
 {
-    FString LoadData;
-    if (FFileHelper::LoadFileToString(LoadData, TEXT("YourSaveGame.sav")))
-    {
-        TSharedPtr<FJsonObject> LoadObject;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(LoadData);
 
-        if (FJsonSerializer::Deserialize(Reader, LoadObject))
-        {
-            Player1Score = LoadObject->GetIntegerField("Player1Score");
-            Player2Score = LoadObject->GetIntegerField("Player2Score");
-            TotalMatchesPlayed = LoadObject->GetIntegerField("TotalMatches");
-        }
+}
+
+
+void AAWGameMode::LogMove(const FString& PlayerID, const FString& UnitID, const FString& FromCell, const FString& ToCell)
+{
+    if (MoveHistoryManager) // TObjectPtr ha un operatore bool sovraccaricato
+    {
+        MoveHistoryManager->LogMove(PlayerID, UnitID, FromCell, ToCell);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MoveHistoryManager is null in LogMove"));
+    }
+}
+
+void AAWGameMode::LogAttack(const FString& PlayerID, const FString& UnitID, const FString& TargetCell, int32 Damage)
+{
+    if (MoveHistoryManager) // Stesso controllo qui
+    {
+        MoveHistoryManager->LogAttack(PlayerID, UnitID, TargetCell, Damage);
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("MoveHistoryManager is null in LogAttack"));
     }
 }

@@ -44,6 +44,8 @@ public:
 
 
 
+	//TArray<AActor*> HumanUnits;
+
 	//mi serve per passare a handletileclick l'unità che si sta muovendo 
 	AActor* SelectedUnitForMovement ;
 
