@@ -144,6 +144,23 @@ public:
     UFUNCTION()
     void EndGame();
 
+    ////////////////////// WIDGET ///////////////////////
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+    int32 Player1Score = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+    int32 Player2Score = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+    int32 TotalMatchesPlayed = 0;
+
+    // Salva/carica i punteggi
+    UFUNCTION(BlueprintCallable)
+    void SaveScores();
+
+    UFUNCTION(BlueprintCallable)
+    void LoadScores();
 
     /// ///////////////COIN FLIP////////////////////////
 

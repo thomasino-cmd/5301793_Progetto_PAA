@@ -137,8 +137,11 @@ void AAWGameMode::StartFirstTurn()
         InGameHUD = CreateWidget<UInGameHUDWidget>(GetWorld(), InGameHUDClass);
         if (InGameHUD)
         {
-            InGameHUD->AddToViewport(10);
 
+            LoadScores();
+            InGameHUD->AddToViewport();
+
+            InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
             // Aggiorna i valori iniziali
             UpdateHUD();
         }
@@ -168,38 +171,28 @@ void AAWGameMode::UpdateHUD()
 {
     if (!InGameHUD) return;
 
-    // 1. Aggiorna indicatore di turno (0=Player1, 1=Player2/AI)
-    InGameHUD->UpdateTurnIndicator(CurrentPlayer == 0);
-
-    // 2. Prepara array ordinati come: Brawler1, Sniper1, Brawler2, Sniper2
+    // Ordine: Brawler1, Sniper1, Brawler2, Sniper2
     TArray<float> CurrentHealths;
     TArray<float> MaxHealths;
 
-    // Assumendo che ci sia sempre 1 brawler e 1 sniper per giocatore
-    if (Player1Brawlers.Num() > 0 && Player1Snipers.Num() > 0 &&
-        Player2Brawlers.Num() > 0 && Player2Snipers.Num() > 0)
-    {
-        // Player 1 Units
-        CurrentHealths.Add(Player1Brawlers[0]->GetHealth());
-        MaxHealths.Add(Player1Brawlers[0]->GetMaxHealth());
+    // Player 1 Units
+    CurrentHealths.Add(Player1Brawlers.Num() > 0 ? Player1Brawlers[0]->GetHealth() : 0.f);
+    MaxHealths.Add(Player1Brawlers.Num() > 0 ? Player1Brawlers[0]->GetMaxHealth() : 1.f);
 
-        CurrentHealths.Add(Player1Snipers[0]->GetHealth());
-        MaxHealths.Add(Player1Snipers[0]->GetMaxHealth());
+    CurrentHealths.Add(Player1Snipers.Num() > 0 ? Player1Snipers[0]->GetHealth() : 0.f);
+    MaxHealths.Add(Player1Snipers.Num() > 0 ? Player1Snipers[0]->GetMaxHealth() : 1.f);
 
-        // Player 2 Units
-        CurrentHealths.Add(Player2Brawlers[0]->GetHealth());
-        MaxHealths.Add(Player2Brawlers[0]->GetMaxHealth());
+    // Player 2 Units
+    CurrentHealths.Add(Player2Brawlers.Num() > 0 ? Player2Brawlers[0]->GetHealth() : 0.f);
+    MaxHealths.Add(Player2Brawlers.Num() > 0 ? Player2Brawlers[0]->GetMaxHealth() : 1.f);
 
-        CurrentHealths.Add(Player2Snipers[0]->GetHealth());
-        MaxHealths.Add(Player2Snipers[0]->GetMaxHealth());
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("Mancano unità per l'aggiornamento dell'HUD!"));
-    }
+    CurrentHealths.Add(Player2Snipers.Num() > 0 ? Player2Snipers[0]->GetHealth() : 0.f);
+    MaxHealths.Add(Player2Snipers.Num() > 0 ? Player2Snipers[0]->GetMaxHealth() : 1.f);
 
-    // 3. Invia i dati al widget
     InGameHUD->UpdateHealthBars(CurrentHealths, MaxHealths);
+
+    // Aggiorna l'indicatore del turno
+    InGameHUD->UpdateTurnIndicator(CurrentPlayer == 0);
 }
 
 
@@ -272,26 +265,52 @@ void AAWGameMode::SwitchPlayer()
 
 bool AAWGameMode::CheckWinCondition()
 {
-    // Controlla se un giocatore ha perso tutte le unità
-    for (int32 PlayerId = 0; PlayerId < Players.Num(); PlayerId++)
+    if (MoveCounter > TotalUnitsToPlace * 2)
     {
-        TArray<AActor*> PlayerUnits = GetCurrentPlayerUnits(PlayerId);
-        if (PlayerUnits.Num() == 0)
+        // Controlla se un giocatore ha perso tutte le unità
+        for (int32 PlayerId = 0; PlayerId < Players.Num(); PlayerId++)
         {
-            WinningPlayerId = (PlayerId == 0) ? 1 : 0;  // L'altro giocatore vince
-            return true;
+            TArray<AActor*> PlayerUnits = GetCurrentPlayerUnits(PlayerId);
+            if (PlayerUnits.Num() == 0)
+            {
+                WinningPlayerId = (PlayerId == 0) ? 1 : 0;  // L'altro giocatore vince
+                return true;
+            }
         }
-    }
 
+    }
     // Aggiungi altri criteri di vittoria se necessario
     return false;
 }
 
 void AAWGameMode::EndGame()
 {
-    // Termina il gioco (implementazione fittizia)
-    // Sostituisci questa implementazione con la tua logica di fine gioco effettiva
+    TotalMatchesPlayed++;
+
+    // Assegna punti al vincitore
+    if (WinningPlayerId == 0)
+    {
+        Player1Score += 1; 
+        
+    }
+    else
+    {
+        Player2Score += 1;
+        
+    }
+
+    // Aggiorna HUD
+    if (InGameHUD)
+    {
+        InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
+    }
+
+    // Salva i progressi
+    SaveScores();
+
+
     GameField->ResetField();
+
 }
 
 
@@ -436,4 +455,37 @@ TArray<AActor*> AAWGameMode::GetCurrentPlayerUnits(int32 PlayerId)
     }
 
     return PlayerUnits;
+}
+
+
+
+void AAWGameMode::SaveScores()
+{
+    TSharedPtr<FJsonObject> SaveObject = MakeShared<FJsonObject>();
+    SaveObject->SetNumberField("Player1Score", Player1Score);
+    SaveObject->SetNumberField("Player2Score", Player2Score);
+    SaveObject->SetNumberField("TotalMatches", TotalMatchesPlayed);
+
+    FString OutputString;
+    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutputString);
+    FJsonSerializer::Serialize(SaveObject.ToSharedRef(), Writer);
+
+    FFileHelper::SaveStringToFile(OutputString, TEXT("YourSaveGame.sav"));
+}
+
+void AAWGameMode::LoadScores()
+{
+    FString LoadData;
+    if (FFileHelper::LoadFileToString(LoadData, TEXT("YourSaveGame.sav")))
+    {
+        TSharedPtr<FJsonObject> LoadObject;
+        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(LoadData);
+
+        if (FJsonSerializer::Deserialize(Reader, LoadObject))
+        {
+            Player1Score = LoadObject->GetIntegerField("Player1Score");
+            Player2Score = LoadObject->GetIntegerField("Player2Score");
+            TotalMatchesPlayed = LoadObject->GetIntegerField("TotalMatches");
+        }
+    }
 }

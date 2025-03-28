@@ -23,12 +23,8 @@ public:
     UFUNCTION(BlueprintCallable)
     void UpdateHealthBars(const TArray<float>& CurrentHealthValues, const TArray<float>& MaxHealthValues);
 
-
-    //UFUNCTION(BlueprintCallable)
-    //void UpdateUnitHealth(int32 UnitIndex, float CurrentHealth, float MaxHealth);
-
-    //UFUNCTION(BlueprintCallable)
-    //void UpdateScore(int32 PlayerScore, int32 AIScore);
+    UFUNCTION(BlueprintCallable)
+    void UpdateScoreDisplay(int32 Player1, int32 Player2, int32 TotalMatches);
 
     // Esponi le properties per il binding
     UPROPERTY(meta = (BindWidget))
