@@ -51,9 +51,11 @@ void AAWGameMode::StartGameSequence()
     // Fase 1: Spawn e setup degli elementi base
     InitializeGameplay();
 
+    bInCoinTossPhase = true;
+
     // Fase 2: Lancio della moneta
     SpawnCoinForFlip();
-    bInCoinTossPhase = true;
+    
 
 }
 
@@ -174,9 +176,11 @@ void AAWGameMode::StartFirstTurn()
 
 void AAWGameMode::HandleCoinFlipInput()
 {
+    UE_LOG(LogTemp, Warning, TEXT("HandleCoinFlipInput called. CoinActor: %p, bInCoinTossPhase: %d"),
+        CoinActor, bInCoinTossPhase);
+
     if (CoinActor && bInCoinTossPhase)
     {
-        // Parametri aumentati per altezza e rotazione
         CoinActor->LaunchCoin();
         bInCoinTossPhase = false;
     }
@@ -299,52 +303,95 @@ void AAWGameMode::SwitchPlayer()
 
 bool AAWGameMode::CheckWinCondition()
 {
-    if (MoveCounter > TotalUnitsToPlace * 2)
+    // Controlla se un giocatore ha perso tutte le unità
+    for (int32 PlayerId = 0; PlayerId < Players.Num(); PlayerId++)
     {
-        // Controlla se un giocatore ha perso tutte le unità
-        for (int32 PlayerId = 0; PlayerId < Players.Num(); PlayerId++)
+        TArray<AActor*> PlayerUnits = GetCurrentPlayerUnits(PlayerId);
+        int32 AliveUnits = 0;
+
+        for (AActor* Unit : PlayerUnits)
         {
-            TArray<AActor*> PlayerUnits = GetCurrentPlayerUnits(PlayerId);
-            if (PlayerUnits.Num() == 0)
+            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(Unit))
             {
-                WinningPlayerId = (PlayerId == 0) ? 1 : 0;  // L'altro giocatore vince
-                return true;
+                if (Brawler->GetHealth() > 0) AliveUnits++;
+            }
+            else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(Unit))
+            {
+                if (Sniper->GetHealth() > 0) AliveUnits++;
             }
         }
 
+        if (AliveUnits == 0 && MoveCounter > 4)
+        {
+            WinningPlayerId = (PlayerId == 0) ? 1 : 0;  // L'altro giocatore vince
+            return true;
+        }
     }
-    // Aggiungi altri criteri di vittoria se necessario
+
     return false;
 }
 
 void AAWGameMode::EndGame()
 {
-    //TotalMatchesPlayed++;
-
-    //// Assegna punti al vincitore
-    //if (WinningPlayerId == 0)
-    //{
-    //    Player1Score += 1; 
-    //    
-    //}
-    //else
-    //{
-    //    Player2Score += 1;
-    //    
-    //}
-
-    // Aggiorna HUD
-  /*  if (InGameHUD)
+    if (GameField)
     {
-        InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
-    }*/
+        GameField->ResetField();
 
-    // Salva i progressi
-    //SaveScores();
+        // Distruggi tutti gli ostacoli rimanenti
+        for (TActorIterator<AActor> ActorItr(GetWorld()); ActorItr; ++ActorItr)
+        {
+            if (ActorItr->ActorHasTag(FName("Obstacle")))
+            {
+                ActorItr->Destroy();
+            }
+        }
+    }
+
+    // Distruggi tutte le unità rimanenti
+    for (AAW_Brawler* Brawler : Player1Brawlers)
+    {
+        if (Brawler) Brawler->Destroy();
+    }
+    for (AAW_Sniper* Sniper : Player1Snipers)
+    {
+        if (Sniper) Sniper->Destroy();
+    }
+    for (AAW_Brawler* Brawler : Player2Brawlers)
+    {
+        if (Brawler) Brawler->Destroy();
+    }
+    for (AAW_Sniper* Sniper : Player2Snipers)
+    {
+        if (Sniper) Sniper->Destroy();
+    }
+
+    Player1Brawlers.Empty();
+    Player1Snipers.Empty();
+    Player2Brawlers.Empty();
+    Player2Snipers.Empty();
 
 
-    GameField->ResetField();
 
+      
+    // Mostra il widget di fine partita
+    if (GameOverWidgetClass)
+    {
+        GameOverWidget = CreateWidget<UEndGameWidget>(GetWorld(), GameOverWidgetClass);
+        if (GameOverWidget)
+        {
+            GameOverWidget->AddToViewport();
+            GameOverWidget->SetWinnerText(WinningPlayerId);
+
+            // Imposta lo ZOrder alto per sovrapporsi a tutto
+           // GameOverWidget->SetZOrder(100);
+           GameOverWidget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f));
+        }
+    }
+    
+
+
+    // Aggiorna lo stato del gioco
+    bIsGameOver = true;
 }
 
 
@@ -549,4 +596,42 @@ void AAWGameMode::LogAttack(const FString& PlayerID, const FString& UnitID, cons
     {
         UE_LOG(LogTemp, Warning, TEXT("MoveHistoryManager is null in LogAttack"));
     }
+}
+
+
+
+void AAWGameMode::RestartGame()
+{
+    // Rimuovi il widget di fine partita
+    if (GameOverWidget)
+    {
+        GameOverWidget->RemoveFromParent();
+        GameOverWidget = nullptr;
+    }
+
+    // Resetta tutte le variabili di stato
+    bIsGameOver = false;
+    bIsPlacementPhaseOver = false;
+    bInCoinTossPhase = false; // Aggiungi questa linea
+    bCoinFlipCompleted = false; // Aggiungi questa linea
+    Player1UnitsPlaced = 0;
+    Player2UnitsPlaced = 0;
+    MoveCounter = 0;
+    WinningPlayerId = 0;
+
+    // Pulisci gli array delle unità
+    Player1Brawlers.Empty();
+    Player1Snipers.Empty();
+    Player2Brawlers.Empty();
+    Player2Snipers.Empty();
+
+    // Distruggi la moneta esistente se presente
+    if (CoinActor)
+    {
+        CoinActor->Destroy();
+        CoinActor = nullptr;
+    }
+
+    // Ricomincia la sequenza di gioco PROPERLY
+    StartGameSequence(); // Questo chiamerà InitializeGameplay e SpawnCoinForFlip
 }

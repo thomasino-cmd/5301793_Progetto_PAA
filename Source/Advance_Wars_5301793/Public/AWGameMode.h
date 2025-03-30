@@ -9,6 +9,8 @@
 #include "AW_Brawler.h"
 #include "AW_Sniper.h"
 #include "Coin.h"
+#include "InGameHUDWidget.h"
+#include "EndGameWidget.h"
 #include "WBP_MoveHistory.h"
 #include "MoveHistoryManager.h"
 #include "AWGameMode.generated.h"
@@ -130,6 +132,10 @@ public:
     TArray<AActor*> GetCurrentPlayerUnits(int32 PlayerId);
 
 
+    UFUNCTION(BlueprintCallable)
+    void RestartGame();
+
+
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AAW_Brawler> BrawlerClassHuman;
@@ -168,6 +174,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
     int32 TotalMatchesPlayed = 0;
 
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UEndGameWidget> GameOverWidgetClass;
+
+    UPROPERTY(VisibleAnywhere, Category = "UI")
+    TObjectPtr<UEndGameWidget> GameOverWidget;
+   
     // Salva/carica i punteggi
     UFUNCTION(BlueprintCallable)
     void SaveScores();
