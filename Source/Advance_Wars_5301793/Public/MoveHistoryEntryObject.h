@@ -19,7 +19,7 @@ public:
 	FString DisplayString;
 	
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* EntryText;
+	class UTextBlock* EntryTexting ;
 
 	UFUNCTION(BlueprintCallable)
 	void SetupEntry(const FString& Text);

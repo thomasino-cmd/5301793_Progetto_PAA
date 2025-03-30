@@ -137,21 +137,31 @@ void AAWGameMode::OnCoinFlipComplete(int32 StartingPlayerIndex)
 
 void AAWGameMode::StartFirstTurn()
 {
-    if (InGameHUDClass)
+    // 1. Crea e aggiungi l'HUD principale (se non esiste già)
+    if (InGameHUDClass && !InGameHUD)
     {
         InGameHUD = CreateWidget<UInGameHUDWidget>(GetWorld(), InGameHUDClass);
         if (InGameHUD)
         {
-
-            LoadScores();
+            //LoadScores();
             InGameHUD->AddToViewport();
-
-            //InGameHUD->UpdateScoreDisplay(Player1Score, Player2Score, TotalMatchesPlayed);
-            // Aggiorna i valori iniziali
         }
     }
 
+    // 2. Crea e aggiungi il widget dello storico delle mosse (WBP_MoveHistory)
+    if (MoveHistoryWidgetClass && !MoveHistoryWidget) // Assicurati di aver definito MoveHistoryWidgetClass e MoveHistoryWidget nella GameMode
+    {
+        MoveHistoryWidget = CreateWidget<UMoveHistoryWidget>(GetWorld(), MoveHistoryWidgetClass);
+        if (MoveHistoryWidget)
+        {
+            MoveHistoryWidget->AddToViewport();
 
+            // Opzionale: Imposta una posizione o uno ZOrder specifico per sovrapporlo correttamente
+            //MoveHistoryWidget->SetZOrder(10); // Più alto = più in primo piano
+        }
+    }
+
+    // 3. Avvia il turno del giocatore corrente
     if (Players.IsValidIndex(CurrentPlayer))
     {
         Players[CurrentPlayer]->OnTurn();
@@ -494,15 +504,25 @@ void AAWGameMode::LoadScores()
 }
 
 
+// In AAWGameMode.cpp
 void AAWGameMode::LogMove(const FString& PlayerID, const FString& UnitID, const FString& FromCell, const FString& ToCell)
 {
-    if (MoveHistoryManager) // TObjectPtr ha un operatore bool sovraccaricato
+    if (MoveHistoryManager)
     {
         MoveHistoryManager->LogMove(PlayerID, UnitID, FromCell, ToCell);
-    }
-    else
-    {
-        UE_LOG(LogTemp, Warning, TEXT("MoveHistoryManager is null in LogMove"));
+
+        // Converti TArray<TObjectPtr<UMoveEntry>> in TArray<UObject*>
+        TArray<UObject*> Entries;
+        for (const auto& Entry : MoveHistoryManager->MoveHistory)
+        {
+            Entries.Add(Entry.Get());
+        }
+
+        // Aggiorna il widget (esempio: se hai un riferimento al widget)
+        if (MoveHistoryWidget)
+        {
+            MoveHistoryWidget->UpdateHistory(Entries);
+        }
     }
 }
 
@@ -511,6 +531,19 @@ void AAWGameMode::LogAttack(const FString& PlayerID, const FString& UnitID, cons
     if (MoveHistoryManager) // Stesso controllo qui
     {
         MoveHistoryManager->LogAttack(PlayerID, UnitID, TargetCell, Damage);
+
+        // Converti TArray<TObjectPtr<UMoveEntry>> in TArray<UObject*>
+        TArray<UObject*> Entries;
+        for (const auto& Entry : MoveHistoryManager->MoveHistory)
+        {
+            Entries.Add(Entry.Get());
+        }
+
+        // Aggiorna il widget (esempio: se hai un riferimento al widget)
+        if (MoveHistoryWidget)
+        {
+            MoveHistoryWidget->UpdateHistory(Entries);
+        }
     }
     else
     {

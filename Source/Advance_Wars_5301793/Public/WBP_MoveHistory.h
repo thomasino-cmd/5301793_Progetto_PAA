@@ -33,5 +33,9 @@ public:
     UFUNCTION()
     FString CreateDisplayString(UMoveEntry* Entry);
 
+private:
+    static const int32 MAX_HISTORY_ENTRIES = 5;
+    void ReverseItemOrder(TArray<UObject*>& Items) const;
+
     
 };

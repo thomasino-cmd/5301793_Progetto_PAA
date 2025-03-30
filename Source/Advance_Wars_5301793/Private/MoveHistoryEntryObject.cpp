@@ -7,8 +7,8 @@
 
 void UMoveHistoryEntryObject::SetupEntry(const FString& Text)
 {
-    if (EntryText)
-    {
-        EntryText->SetText(FText::FromString(Text));
-    }
+    //if (EntryText)
+    //{
+    //    EntryText->SetText(FText::FromString(Text));
+    //}
 }

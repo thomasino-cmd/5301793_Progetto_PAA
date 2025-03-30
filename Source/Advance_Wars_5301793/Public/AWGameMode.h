@@ -175,14 +175,17 @@ public:
     UFUNCTION(BlueprintCallable)
     void LoadScores();
 
-    UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UMoveHistoryWidget> MoveHistoryWidgetClass;
+   
+    //UMoveHistoryWidget* MoveHistoryWidget;
 
-    UMoveHistoryWidget* MoveHistoryWidget;
-
-    // Sostituisci la dichiarazione esistente con:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Move History")
     TObjectPtr<UMoveHistoryManager> MoveHistoryManager;
+
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<UMoveHistoryWidget> MoveHistoryWidgetClass; 
+    UPROPERTY(VisibleAnywhere, Category = "UI")
+    TObjectPtr<UMoveHistoryWidget> MoveHistoryWidget; // Riferimento al widget creato
 
     /// ///////////////COIN FLIP////////////////////////
 
