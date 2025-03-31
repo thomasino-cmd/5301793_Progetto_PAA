@@ -6,7 +6,7 @@
 #include "AStarComputerPlayer.generated.h"
 
 UCLASS()
-class ADVANCE_WARS_5301793_API AAStarComputerPlayer : public AComputerPlayer              //public APawn, public IPlayerInterface      // invece che public ComputerPlayer
+class ADVANCE_WARS_5301793_API AAStarComputerPlayer : public AComputerPlayer 
 {
     GENERATED_BODY()
 

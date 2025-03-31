@@ -25,7 +25,6 @@ void ACoin::BeginPlay()
 
 
 
-// Modifica necessaria in Coin.cpp (funzione LaunchCoin)
 void ACoin::LaunchCoin()
 {
     if (!CoinMesh) return;
@@ -45,8 +44,6 @@ void ACoin::LaunchCoin()
     // 3. Applica impulso verticale
     FVector Impulse = FVector(0, 0, ImpulseStrength * CoinMesh->GetMass());
 
-    // 4. MODIFICA CHIAVE: Applica la coppia principalmente sull'asse X (per rotazione frontale)
-    // e una piccola componente casuale sugli altri assi per un effetto più naturale
     FVector Torque = FVector(
         TorqueStrength * CoinMesh->GetMass() * RotationMultiplier, // Asse X principale
         FMath::RandRange(-TorqueStrength * 0.2f, TorqueStrength * 0.2f) * CoinMesh->GetMass(), // Piccola variazione Y
@@ -57,7 +54,7 @@ void ACoin::LaunchCoin()
     CoinMesh->AddTorqueInRadians(Torque);
 
     // Debug
-    UE_LOG(LogTemp, Warning, TEXT("Applied Torque - X: %f, Y: %f, Z: %f"), Torque.X, Torque.Y, Torque.Z);
+    //UE_LOG(LogTemp, Warning, TEXT("Applied Torque - X: %f, Y: %f, Z: %f"), Torque.X, Torque.Y, Torque.Z);
 }
 
 

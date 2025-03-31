@@ -64,7 +64,7 @@ void AComputerPlayer::OnTurn()
             if (CurrentState == EComputerMoveState::Idle)
             {
                 CurrentState = EComputerMoveState::Moving;
-                GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, TEXT("AI: turno di MUOVERE"));
+              //  GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Green, TEXT("AI: turno di MUOVERE"));
                 MakeMove();
             }
             //Se lo stato non è idle non fare nulla, altrimenti MakeMove viene chiamata più volte.
@@ -84,7 +84,7 @@ void AComputerPlayer::MakeMove()
 
     if (!GameMode)
     {
-        UE_LOG(LogTemp, Error, TEXT("AComputerPlayer::OnTurn - GameMode nullo"));
+       // UE_LOG(LogTemp, Error, TEXT("AComputerPlayer::OnTurn - GameMode nullo"));
         return;
     }
 
@@ -131,7 +131,7 @@ void AComputerPlayer::MakeMove()
         if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(RandomUnit))
         {
             SelectedBrawler = Brawler;
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI: Selezionato Brawler"));
+         //   GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI: Selezionato Brawler"));
 
             FTimerHandle TimerHandle;
             GetWorldTimerManager().SetTimer(TimerHandle, this, &AComputerPlayer::MoveBrawler, 1.0f, false);
@@ -139,22 +139,20 @@ void AComputerPlayer::MakeMove()
         else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(RandomUnit))
         {
             SelectedSniper = Sniper;
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI: Selezionato Sniper"));
+          //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI: Selezionato Sniper"));
 
             FTimerHandle TimerHandle;
             GetWorldTimerManager().SetTimer(TimerHandle, this, &AComputerPlayer::MoveSniper, 1.0f, false);
         }
         else
         {
-            UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer: L'unità selezionata non è né Brawler né Sniper."));
+           // UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer: L'unità selezionata non è né Brawler né Sniper."));
             GameMode->EndTurn();
         }
     }
     else
     {
-        UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer: L'unità selezionata non è più valida."));
-        // Se l'unità non è valida, è importante gestire questo caso per evitare errori.
-        // Potresti voler rimuovere l'unità dall'array AIUnits o semplicemente passare al turno successivo.
+       // UE_LOG(LogTemp, Warning, TEXT("AComputerPlayer: L'unità selezionata non è più valida."));
         GameMode->EndTurn();
     }
 
@@ -173,34 +171,15 @@ void AComputerPlayer::MakeMove()
 }
 
 
-
-
-
-
-
-
-void AComputerPlayer::OnWin()
-{
-    // ... (Logica per la vittoria del computer) ...
-}
-
-void AComputerPlayer::OnLose()
-{
-    // ... (Logica per la sconfitta del computer) ...
-}
-
 void AComputerPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 
-
-
-
 void AComputerPlayer::PlaceUnit()
 {
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Random) Turn"));
+   // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI (Random) Turn"));
     GameIstance->SetTurnMessage(TEXT("AI (Random) Turn"));
     FTimerHandle TimerHandle;
     GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
@@ -228,8 +207,8 @@ void AComputerPlayer::PlaceUnit()
                 // --- Debug Message for RandomX and RandomY ---
                 if (GEngine)
                 {
-                    FString DebugMessage = FString::Printf(TEXT("RandomX = %d, RandomY = %d"), RandomX, RandomY);
-                    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage, true);
+                    //FString DebugMessage = FString::Printf(TEXT("RandomX = %d, RandomY = %d"), RandomX, RandomY);
+                    //GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Yellow, DebugMessage, true);
                 }
                 // --- End Debug Message ---
                 // 2. Check if the tile is valid and empty
@@ -237,6 +216,8 @@ void AComputerPlayer::PlaceUnit()
                 {
                     // 3. Get the tile's position
                     FVector TileLocation = RandomTile->GetActorLocation();
+
+                    /*
                     // --- Debug Drawing ---
                     float LineLength = GameField->GetTileSize() / 2.0f;
                     FVector LineStart1 = TileLocation + FVector(-LineLength, -LineLength, 50.0f);
@@ -246,10 +227,9 @@ void AComputerPlayer::PlaceUnit()
                     DrawDebugLine(GetWorld(), LineStart1, LineEnd1, FColor::Red, false, 5.0f, 0, 2.0f);
                     DrawDebugLine(GetWorld(), LineStart2, LineEnd2, FColor::Red, false, 5.0f, 0, 2.0f);
                     // --- End Debug Drawing ---
+                    */
                     // 4. Call SetUnitPlacement
                     GameMode->SetUnitPlacement(1, TileLocation);
-                    //GameMode->EndTurn();
-                    // Exit the function after placing the unit
                     return;
                 }
             }
@@ -299,7 +279,7 @@ void AComputerPlayer::MoveBrawler()
         ATile* TargetTile = ReachableTiles[RandomTileIndex];
         if (TargetTile)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString::Printf(TEXT("Brawler si muove verso %s"), *TargetTile->GetName()));
+            //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, FString::Printf(TEXT("Brawler si muove verso %s"), *TargetTile->GetName()));
             SelectedBrawler->MoveUnit(TargetTile);
            
         }
@@ -326,15 +306,10 @@ void AComputerPlayer::MoveBrawler()
             }
             else
             {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler si sta muovendo"));
+               // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler si sta muovendo"));
             }
         }, 1.0f, true);
 }
-
-
-
-
-
 
 
 void AComputerPlayer::MoveSniper()
@@ -354,15 +329,13 @@ void AComputerPlayer::MoveSniper()
     TArray<ATile*> ReachableTiles = SelectedSniper->TilesCanReach;
     
  
-    
-    //GetReachableTiles(SelectedSniper->GetMovementRange());
     if (ReachableTiles.Num() > 0)
     {
         RandomTileIndex = FMath::RandRange(0, ReachableTiles.Num() - 1);
         ATile* TargetTile = ReachableTiles[RandomTileIndex];
         if (TargetTile)
         {
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::Printf(TEXT("Sniper si muove verso %s"), *TargetTile->GetName()));
+          //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, FString::Printf(TEXT("Sniper si muove verso %s"), *TargetTile->GetName()));
             SelectedSniper->MoveUnit(TargetTile);
             
         }
@@ -387,7 +360,7 @@ void AComputerPlayer::MoveSniper()
             }
             else
             {
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Sniper si sta muovendo"));
+              //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Sniper si sta muovendo"));
             }
         }, 1.0f, true);
 }
@@ -405,7 +378,7 @@ void AComputerPlayer::ContinueWithNextUnit()
     // Se entrambe le unità hanno completato il movimento E l'attacco, termina il turno
     if (bBrawlerMoved && bSniperMoved && bBrawlerAttackedThisTurn && bSniperAttackedThisTurn)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI: Turno completato"));
+       // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI: Turno completato"));
         CurrentState = EComputerMoveState::Idle;
         GameMode->EndTurn();
         return;
@@ -509,13 +482,13 @@ void AComputerPlayer::PerformAttack(AActor* AttackingUnit)
         {
             Brawler->Shoot(TargetTile);
             bBrawlerAttackedThisTurn = true;
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler Attacking"));
+          //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Brawler Attacking"));
         }
         else if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(AttackingUnit))
         {
             Sniper->Shoot(TargetTile);
             bSniperAttackedThisTurn = true;
-            GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Sniper Attacking"));
+           // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Sniper Attacking"));
         }
     }
     else
@@ -531,4 +504,3 @@ void AComputerPlayer::PerformAttack(AActor* AttackingUnit)
         }
     }
 }
-

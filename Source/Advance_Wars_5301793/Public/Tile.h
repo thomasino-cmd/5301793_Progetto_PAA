@@ -58,23 +58,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	UStaticMeshComponent* GetStaticMeshComponent() const;
 
-	//UFUNCTION()
-	//IAW_BaseSoldier* GetSoldier() const;
-
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	FString GetGridCoordinatesAsString() const;
-
-
 
 	void SetTileMaterial() const;
 
 	FString GetTileMaterialPath() const;
 
 protected:
-	// Called when the game starts or when spawned
+
 	virtual void BeginPlay() override;
 
-	// Scene component for the tile
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USceneComponent* Scene;
 
@@ -87,8 +81,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Materials")
 	UMaterialInterface* HighlightedMaterial;
-
-
 
 	// Status of the tile
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Tile")

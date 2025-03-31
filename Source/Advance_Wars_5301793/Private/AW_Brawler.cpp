@@ -27,19 +27,15 @@ AAW_Brawler::AAW_Brawler()
     CurrentPathIndex = 0;
     MovingCurrentTile = nullptr;
 
-
     // Scene component for the tile
     Scene = CreateDefaultSubobject<USceneComponent>(TEXT("Scene"));
     RootComponent = Scene; // Imposta Scene come RootComponent
-
-
 
     // Static mesh component for the tile's visual representation
     BrawlerStaticMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
     BrawlerStaticMeshComponent->SetupAttachment(RootComponent);
     bIsMoving = false;
 
-  
 }
 
 // Called when the game starts or when spawned
@@ -67,8 +63,6 @@ void AAW_Brawler::Tick(float DeltaTime)
 
             // Calcola quanto muoversi in questo frame.
             float FrameMovement = MoveSpeed * DeltaTime;
-
-;
 
             UE_LOG(LogTemp, Log, TEXT("Current Location: %s, Target Location: %s, Direction: %s, Distance: %f, FrameMovement: %f"),
                 *this->GetActorLocation().ToString(), *TargetLocation.ToString(), *Direction.ToString(), DistanceToTarget, FrameMovement);
@@ -118,43 +112,26 @@ void AAW_Brawler::Tick(float DeltaTime)
             MovingTargetTile = nullptr; 
             MovementPath.Empty();
             bIsMoving = false;
-            //OnMoveCompleted0.Broadcast(); // Trigger the event        
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 void AAW_Brawler::Attack()
 {
    
 }
 
-
-
-
-
 void AAW_Brawler::TakeDamage(float Damage)
 {
     Health -= Damage;
     FString DamageString = FString::Printf(TEXT("%f"), Damage);
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
+   // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
 
    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
    if (Health <= 0)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
+       // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
 
         if (GameMode)
         {
@@ -182,9 +159,6 @@ void AAW_Brawler::TakeDamage(float Damage)
     GameMode->UpdateHUD();
 }
 
-
-
-
 float AAW_Brawler::GetHealth() const
 {
     return Health;
@@ -195,23 +169,15 @@ int32 AAW_Brawler::GetMovementRange() const
     return MovementRange;
 }
 
-
-
 int32 AAW_Brawler::GetOwnerPlayerId() const
 {
     return OwnerPlayerId;
 }
 
-
-
-
 int32 AAW_Brawler::GetAttackRange() const
 {
     return AttackRange;
 }
-
-
-
 
 TArray<ATile*> AAW_Brawler::GetAttackableTiles()
 {
@@ -271,11 +237,8 @@ TArray<ATile*> AAW_Brawler::GetAttackableTiles()
             }
         }
     }
-
     return AttackableTiles;
 }
-
-
 
 TArray<ATile*> AAW_Brawler::GetReachableTiles(int32 Range)
 {
@@ -423,7 +386,6 @@ void AAW_Brawler::Shoot(ATile* TargetTile)
             TargetSoldier->TakeDamage(Damage);
         }
     }
-
     // Notify UI update
     if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
     {

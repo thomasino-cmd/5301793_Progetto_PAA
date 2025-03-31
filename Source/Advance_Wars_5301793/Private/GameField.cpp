@@ -7,9 +7,7 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Materials/Material.h"
 #include "Components/StaticMeshComponent.h"
-
 #include "Engine/World.h"
-
 #include "AWGameInstance.h"
 
 // Sets default values
@@ -211,15 +209,12 @@ FVector2D AGameField::GetXYPositionByRelativeLocation(const FVector& Location) c
     return FVector2D(x, y);
 }
 
-
-
 // Get the relative location of a tile based on its grid position
 FVector AGameField::GetRelativeLocationByXYPosition(const int32 InX, const int32 InY) const
 {
     // Calculate the relative location of the tile based on its grid position, tile size, and the multiplier
     return (TileSize * NextCellPositionMultiplier) * FVector(InX, InY, 0);
 }
-
 
 
 void AGameField::ResetField()
@@ -351,59 +346,7 @@ void AGameField::ResetGameStatusField()
             CurrentTile->SetTileStatus(-1, ETileStatus::EMPTY);
         }
     }
-
-    //PROBABLY NOT NECESSARY  SetSelectedTile(FVector2D(-1, -1));
 }
-
-
-void AGameField::SetLegalMoves(const TArray<FVector2D>& NewLegalMoves)
-{
-    LegalMovesArray = NewLegalMoves;
-}
-
-
-void AGameField::ShowLegalMovesInTheField()
-{
-    AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
-    if (!GameMode)
-    {
-        UE_LOG(LogTemp, Error, TEXT("GameMode is null in ShowLegalMovesInTheField!"));
-        return; // Exit if GameMode is invalid
-    }
-
-    for (const FVector2D& Position : LegalMovesArray)
-    {
-        ATile* CurrentTile = *TileMap.Find(Position);
-      
-        if (CurrentTile) // Check if the tile is valid
-        {
-            ////in realtà io dovrei potermi muovere solo su tiles che sono empty quindi ancora inizializzate a -1. 
-            //if (CurrentTile->GetTileOwner() != GameMode->CurrentPlayer &&  CurrentTile->GetTileOwner() != -1)
-            //{
-            //    //CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OBSTACLE); // Or a new status like CAN_ATTACK
-            //    UE_LOG(LogTemp, Warning, TEXT("Must have clicked on an obstacle"))
-            //}
-            //else
-            //{
-            //    CurrentTile->SetTileStatus(CurrentTile->GetTileOwner(), ETileStatus::OCCUPIED);
-            //}
-
-            if (CurrentTile->GetTileStatus() != ETileStatus::OCCUPIED && CurrentTile->GetTileStatus() != ETileStatus::OBSTACLE) 
-            {
-                CurrentTile->SetTileMaterial();
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
-            }  
-
-
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Tile not found at position: %s"), *Position.ToString());
-        }
-    }
-}
-
-
 
 void AGameField::HighlightReachableTiles(const TArray<ATile*>& ReachableTiles)
 {
@@ -426,8 +369,6 @@ void AGameField::ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles)
         }
     }
 }
-
-
 
 void AGameField::HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int32 PlayerId)
 {
@@ -458,14 +399,6 @@ void AGameField::HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int
                     }
                 }
             }
-            //else
-            //{
-            //    UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent();
-            //    if (TileMesh) {
-            //        UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0);
-            //        TileMesh->SetMaterial(0, BaseMaterial); //resetto il materiale all'originale.
-            //    }
-            //}
         }
     }
 }
@@ -524,6 +457,7 @@ TArray<ATile*> AGameField::GetNeighborTiles(ATile* CurrentTile) const
     if (Neighbor) Neighbors.Add(Neighbor);
 
     return Neighbors;
+
 }
 
 

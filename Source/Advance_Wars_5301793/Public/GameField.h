@@ -19,17 +19,7 @@ public:
 	UPROPERTY(Transient)
 	TArray<ATile*> TileArray;
 
-	// Keeps track of LegalMoves
-	UPROPERTY(Transient)
-	TArray<FVector2D> LegalMovesArray;
-
-	// Returns the legal moves for the piece at the given position
-	//TArray<FVector2D> LegalMoves(FVector2D Position) const;
-
 	static const int32 NOT_ASSIGNED = -1;
-
-	// BlueprintAssignable Usable with Multicast Delegates only. Exposes the property for assigning in Blueprints.
-    // Declare a variable of type FOnReset (delegate)
 	 
 	UPROPERTY(BlueprintAssignable)
 	FOnReset OnResetEvent;
@@ -75,9 +65,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	float GetTileSize() const;
 
-
-
-
 	UFUNCTION(BlueprintCallable)
 	void SetGridCellOccupied(const FVector2D& GridPosition, int32 PlayerNumber);
 
@@ -96,17 +83,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ResetGameStatusField();
 
-
 	void HighlightReachableTiles(const TArray<ATile*>& ReachableTiles);
-	void ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles);
 
+	void ClearHighlightedTiles(const TArray<ATile*>& ReachableTiles);
 
 	void HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int32 PlayerId);
 
 	void ClearHighlightedAttackTiles(const TArray<ATile*>& AttackableTiles);
 
 	TArray<ATile*> GetNeighborTiles(ATile* CurrentTile) const;
-
 
 	TArray<ATile*> FindPath(ATile* StartTile, ATile* GoalTile);
 
@@ -120,20 +105,12 @@ public:
 
 	TArray<ATile*> ReconstructPath(const TMap<ATile*, ATile*>& CameFrom, ATile* Current);
 
-
-
-	void SetLegalMoves(const TArray<FVector2D>& NewLegalMoves);
-
-	void ShowLegalMovesInTheField();
-
 	// Size of the game field (number of tiles in each dimension)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
 	int32 Size;
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
 	float CellPadding;
-
 
 	// Tile size in world units
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
@@ -148,14 +125,12 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<AObstacle> MountainClass;
 
-
 protected:
 	// Called when an instance of this class is placed (in editor) or spawned
 	virtual void OnConstruction(const FTransform& Transform) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	float NextCellPositionMultiplier;
-
 
 	// Distance between tiles in world units
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Game Field")
@@ -167,10 +142,7 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Game Field")
 	TSubclassOf<ATile> TileClass;
-
-
 private:
 	FTimerHandle ObstacleSpawnTimerHandle;
-
 
 };

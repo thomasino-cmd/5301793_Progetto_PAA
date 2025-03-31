@@ -27,6 +27,12 @@ class ADVANCE_WARS_5301793_API AAWGameMode : public AGameModeBase
     GENERATED_BODY()
 
 public:
+    AAWGameMode();
+
+    virtual void BeginPlay() override;
+
+    // array of player interfaces
+    TArray<IPlayerInterface*> Players;
 
     // Arrays to store player units
     TArray<AAW_Brawler*> Player1Brawlers;
@@ -83,39 +89,9 @@ public:
 
     bool IsInCoinTossPhase() const;
 
+    void InitializeGameplay();
 
-    // array of player interfaces
-    TArray<IPlayerInterface*> Players;
-
-
-    // tracks the number of moves in order to signal a drawn game
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
-    int32 MoveCounter;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
-    int32 UnitsPlaced; 
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
-    int32 TotalUnitsToPlace;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
-    int32 CurrentPlayer;
-
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
-    int32 TurnNumber;
-
-
-
-    AAWGameMode();
-
-    virtual void BeginPlay() override;
-
-
-
-
-
-
-
+    void StartFirstTurn();
 
 
 
@@ -130,14 +106,6 @@ public:
     int32 FieldSize;
 
 
-    UFUNCTION(BlueprintCallable)
-    void MoveUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY);
-
-    UFUNCTION(BlueprintCallable)
-    void AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY);
-    
-
-
     /// ///////////////////////// UNIT PLACEMENT /////////////////////////
 
 
@@ -147,7 +115,11 @@ public:
     UFUNCTION(BlueprintCallable)
     TArray<AActor*> GetCurrentPlayerUnits(int32 PlayerId);
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+    int32 UnitsPlaced; 
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+    int32 TotalUnitsToPlace;
 
     ////////////////////////////// GAME FLOW //////////////////////////////
 
@@ -168,6 +140,17 @@ public:
 
     UFUNCTION(BlueprintCallable)
     void RestartGame();
+
+
+    // tracks the number of moves in order to signal a drawn game
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+    int32 MoveCounter;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+    int32 CurrentPlayer;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Game State")
+    int32 TurnNumber;
 
     ////////////////////// WIDGET ///////////////////////
 
@@ -195,13 +178,6 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "UI")
     TObjectPtr<UEndGameWidget> GameOverWidget;
    
-    // Salva/carica i punteggi
-    UFUNCTION(BlueprintCallable)
-    void SaveScores();
-
-    UFUNCTION(BlueprintCallable)
-    void LoadScores();
-
 
     //////////////////MOVE HISTORY////////////////////////
 
@@ -241,16 +217,7 @@ public:
     UFUNCTION()
     void HandleCoinFlipInput();
 
-
-
-private:
     void SpawnCoinForFlip();
-
-    //void SetupCoinFlipInput();
-    
-    void InitializeGameplay();
-    void StartFirstTurn();
-
 
     UPROPERTY()
     ACoin* CoinActor;

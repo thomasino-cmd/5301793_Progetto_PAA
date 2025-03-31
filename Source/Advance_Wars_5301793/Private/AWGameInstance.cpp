@@ -6,7 +6,7 @@
 
 void UAWGameInstance::EndGame()
 {
-    // ... Handle game end logic ...
+
 }
 
 
@@ -20,5 +20,3 @@ void UAWGameInstance::SetTurnMessage(FString Message)
 {
     CurrentTurnMessage = Message; 
 }
-
-// ... other functions ...

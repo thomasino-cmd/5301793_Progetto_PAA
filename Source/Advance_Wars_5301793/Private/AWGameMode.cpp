@@ -58,10 +58,7 @@ void AAWGameMode::StartGameSequence()
             
         }
     }
-
-
-   // NON QUI  StartGameAfterSelection();
-    
+ 
 
 }
 
@@ -134,7 +131,7 @@ void AAWGameMode::SpawnCoinForFlip()
 {
     if (!CoinClass) return;
 
-    // Calcola manualmente il centro se GameField non ha il metodo
+    
     FVector CoinLocation = FVector::ZeroVector;
     if (GameField)
     {
@@ -196,9 +193,6 @@ void AAWGameMode::StartFirstTurn()
         if (MoveHistoryWidget)
         {
             MoveHistoryWidget->AddToViewport();
-
-            // Opzionale: Imposta una posizione o uno ZOrder specifico per sovrapporlo correttamente
-            //MoveHistoryWidget->SetZOrder(10); // Più alto = più in primo piano
         }
     }
 
@@ -303,27 +297,7 @@ void AAWGameMode::EndTurn()
 
 
 
-void AAWGameMode::MoveUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
-{
-    // Ottieni il giocatore corrente
-    AHumanPlayer* CurrentPlayerPawn = Cast<AHumanPlayer>(UGameplayStatics::GetPlayerPawn(this, CurrentPlayer));
-    if (CurrentPlayerPawn)
-    {
-        // Sposta l'unità del giocatore
-        //CurrentPlayerPawn->MoveUnit(FromX, FromY, ToX, ToY);
-    }
-}
 
-void AAWGameMode::AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY)
-{
-    // Ottieni il giocatore corrente
-    AHumanPlayer* CurrentPlayerPawn = Cast<AHumanPlayer>(UGameplayStatics::GetPlayerPawn(this, CurrentPlayer));
-    if (CurrentPlayerPawn)
-    {
-        // Fai attaccare l'unità del giocatore
-        //CurrentPlayerPawn->AttackUnit(FromX, FromY, ToX, ToY);
-    }
-}
 
 
 void AAWGameMode::SwitchPlayer()
@@ -579,15 +553,6 @@ TArray<AActor*> AAWGameMode::GetCurrentPlayerUnits(int32 PlayerId)
 
 
 
-void AAWGameMode::SaveScores()
-{
-
-}
-
-void AAWGameMode::LoadScores()
-{
-
-}
 
 
 // In AAWGameMode.cpp

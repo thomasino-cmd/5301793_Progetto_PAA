@@ -217,7 +217,7 @@ void AAStarComputerPlayer::MakeMove()
     if (BestBrawler && !bBrawlerMoved)
     {
         SelectedBrawler = BestBrawler;
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI: Selezionato Brawler per movimento A*"));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI: Selezionato Brawler per movimento A*"));
 
         FTimerHandle TimerHandle;
         GetWorldTimerManager().SetTimer(TimerHandle, this, &AAStarComputerPlayer::MoveBrawler, 1.0f, false);
@@ -225,7 +225,7 @@ void AAStarComputerPlayer::MakeMove()
     else if (BestSniper && !bSniperMoved)
     {
         SelectedSniper = BestSniper;
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI: Selezionato Sniper per movimento A*"));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI: Selezionato Sniper per movimento A*"));
 
         FTimerHandle TimerHandle;
         GetWorldTimerManager().SetTimer(TimerHandle, this, &AAStarComputerPlayer::MoveSniper, 1.0f, false);
@@ -261,7 +261,7 @@ void AAStarComputerPlayer::ContinueWithNextUnit_AStar()
     // Se entrambe le unità hanno mosso e attaccato, termina il turno
     if (bBrawlerMoved && bSniperMoved && bBrawlerAttackedThisTurn && bSniperAttackedThisTurn)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI A*: Turno completato"));
+        //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("AI A*: Turno completato"));
         GameMode->EndTurn();
         return;
     }
@@ -286,42 +286,6 @@ void AAStarComputerPlayer::ContinueWithNextUnit_AStar()
         }
     }
 
-    /*
-    
-      // Se il Brawler non ha ancora mosso, muovilo
-    if (!bBrawlerMoved)
-    {
-        for (AActor* Unit : AIUnits)
-        {
-            if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(Unit))
-            {
-                SelectedBrawler = Brawler;
-                FTimerHandle TimerHandle;
-                GetWorldTimerManager().SetTimer(TimerHandle, this, &AComputerPlayer::MoveBrawler, 1.0f, false);
-                return;
-            }
-        }
-    }
-
-    // Se lo Sniper non ha ancora mosso, muovilo
-    if (!bSniperMoved)
-    {
-        for (AActor* Unit : AIUnits)
-        {
-            if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(Unit))
-            {
-                SelectedSniper = Sniper;
-                FTimerHandle TimerHandle;
-                GetWorldTimerManager().SetTimer(TimerHandle, this, &AComputerPlayer::MoveSniper, 1.0f, false);
-                return;
-            }
-        }
-    }
-    
-    
-    */
-
-
     // Se il Brawler non ha ancora mosso, muovilo
     if (!bBrawlerMoved)
     {
@@ -330,7 +294,7 @@ void AAStarComputerPlayer::ContinueWithNextUnit_AStar()
             if (AAW_Brawler* Brawler = Cast<AAW_Brawler>(Unit))
             {
                 SelectedBrawler = Brawler;
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI A*: Passo al prossimo Brawler"));
+              //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Emerald, TEXT("AI A*: Passo al prossimo Brawler"));
                 FTimerHandle TimerHandle;
                 GetWorldTimerManager().SetTimer(TimerHandle, this, &AAStarComputerPlayer::MoveBrawler, 1.0f, false);
                 return;
@@ -346,7 +310,7 @@ void AAStarComputerPlayer::ContinueWithNextUnit_AStar()
             if (AAW_Sniper* Sniper = Cast<AAW_Sniper>(Unit))
             {
                 SelectedSniper = Sniper;
-                GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI A*: Passo al prossimo Sniper"));
+              //  GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Orange, TEXT("AI A*: Passo al prossimo Sniper"));
                 FTimerHandle TimerHandle;
                 GetWorldTimerManager().SetTimer(TimerHandle, this, &AAStarComputerPlayer::MoveSniper, 1.0f, false);
                 return;
@@ -354,15 +318,6 @@ void AAStarComputerPlayer::ContinueWithNextUnit_AStar()
         }
     }
 }
-
-
-
-
-
-
-
-
-
 
 
 ATile* AAStarComputerPlayer::FindTileToGetCloserToEnemy(AAW_Brawler* Brawler)
@@ -439,13 +394,6 @@ ATile* AAStarComputerPlayer::FindTileToGetCloserToEnemy(AAW_Brawler* Brawler)
 }
 
 
-
-
-
-
-
-
-
 // Funzione per verificare se il Brawler può attaccare
 bool AAStarComputerPlayer::CanBrawlerAttack(AAW_Brawler* Brawler)
 {
@@ -462,9 +410,6 @@ bool AAStarComputerPlayer::CanBrawlerAttack(AAW_Brawler* Brawler)
     return false;
 }
 
-
-
-
 void AAStarComputerPlayer::MoveBrawler()
 {
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
@@ -474,7 +419,6 @@ void AAStarComputerPlayer::MoveBrawler()
     SelectedBrawler->TilesCanReach = SelectedBrawler->GetReachableTiles(SelectedBrawler->GetMovementRange());
     GameMode->GameField->HighlightReachableTiles(SelectedBrawler->TilesCanReach);
 
-    // 2. Trova la tile ottimale (con pathfinding A*)
     ATile* TargetTile = FindOptimalAttackTile(SelectedBrawler);
 
     // 3. Se non trovato un bersaglio valido, cerca di avvicinarsi al nemico (ma senza muoversi a caso)
@@ -504,8 +448,6 @@ void AAStarComputerPlayer::MoveBrawler()
     }
 
 }
-
-
 
 void AAStarComputerPlayer::MoveSniper()
 {
@@ -547,10 +489,6 @@ void AAStarComputerPlayer::MoveSniper()
     }
 }
 
-
-
-
-
 // Funzione per verificare se lo Sniper è in grado di sparare
 bool AAStarComputerPlayer::CanSniperAttack(AAW_Sniper* Sniper)
 {
@@ -566,11 +504,6 @@ bool AAStarComputerPlayer::CanSniperAttack(AAW_Sniper* Sniper)
 
     return false;
 }
-
-
-
-
-
 
 
 ATile* AAStarComputerPlayer::FindOptimalAttackTile(AActor* Unit)
@@ -749,11 +682,6 @@ ATile* AAStarComputerPlayer::FindNearestTileToEnemy(AAW_Sniper* Sniper)
 }
 
 
-
-
-
-
-
 void AAStarComputerPlayer::ExecuteAttack(AActor* AttackingUnit)
 {
     if (!AttackingUnit) return;
@@ -798,7 +726,6 @@ void AAStarComputerPlayer::ExecuteAttack(AActor* AttackingUnit)
             }
         }
     }
-
     // Esegui l'attacco
     if (WeakestEnemy)
     {
@@ -831,9 +758,6 @@ void AAStarComputerPlayer::ExecuteAttack(AActor* AttackingUnit)
         }
     }
 }
-
-
-
 
 
 float AAStarComputerPlayer::HeuristicCost(ATile* A, ATile* B)

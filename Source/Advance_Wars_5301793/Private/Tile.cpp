@@ -62,16 +62,9 @@ AActor* ATile::GetUnit() const
     // Recupera tutti gli attori attaccati (figli) a questo tile
     GetAttachedActors(AttachedActors);
 
-    // Se c'è almeno un attore, lo consideriamo come unità occupante
     if (AttachedActors.Num() > 0)
     {
-		// mayeb if i cult have many :
-        // for (AActor* Actor : AttachedActors)
-        // {
-        //     if (Actor->IsA(AAW_BaseSoldier::StaticClass()))
-        //         return Actor;
-        // }
-        // Per semplicità, ritorniamo il primo 
+
         return AttachedActors[0];
     }
     return nullptr;
@@ -166,22 +159,6 @@ UStaticMeshComponent* ATile::GetStaticMeshComponent() const
 {
 	return StaticMeshComponent;
 }
-
-
-
-
-//IAW_BaseSoldier* ATile::GetSoldier() const {
-//	AActor* OccupyingActor = GetUnit();
-//	if (OccupyingActor) {
-//		// Check if the actor implements the IAW_BaseSoldier interface
-//		if (OccupyingActor->GetClass()->ImplementsInterface(UAW_BaseSoldier::StaticClass())) {
-//			// If it does, cast the actor to IAW_BaseSoldier*
-//			IAW_BaseSoldier* BaseSoldier = Cast<IAW_BaseSoldier>(OccupyingActor);
-//			return BaseSoldier;
-//		}
-//	}
-//	return nullptr;
-//}
 
 
 FString ATile::GetGridCoordinatesAsString() const

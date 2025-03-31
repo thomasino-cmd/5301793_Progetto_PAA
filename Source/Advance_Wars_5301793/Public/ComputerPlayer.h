@@ -56,16 +56,6 @@ public:
     UFUNCTION()
     void PerformAttack(AActor* AttackingUnit);
 
-
-    //UFUNCTION()
-    //void OnBrawlerMoveCompleted();
-
-    //UFUNCTION()
-    //void OnSniperMoveCompleted();
-
-    //void CheckIfBothMoved();
-
-
     bool bAttackInProgress;
 
 
@@ -74,8 +64,6 @@ public:
 
     // Implement interface functions (OnTurn, OnWin, OnLose)
     virtual void OnTurn() override;
-    virtual void OnWin() override;
-    virtual void OnLose() override;
 
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override; 
 

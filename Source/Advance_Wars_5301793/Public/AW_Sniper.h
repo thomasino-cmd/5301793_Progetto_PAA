@@ -4,10 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "AW_BaseSoldier.h" // Include the interface header
+#include "AW_BaseSoldier.h" 
 #include "AW_Delegates.h"
 #include "Delegates/Delegate.h"
-
 #include "AW_Sniper.generated.h"
 
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnMoveCompleted);
@@ -21,13 +20,6 @@ class ADVANCE_WARS_5301793_API AAW_Sniper : public AActor, public IAW_BaseSoldie
 public:
     // Sets default values for this actor's properties
     AAW_Sniper();
-
-
-    // Event to be called when the unit finishes moving.
-    //FOnMoveCompleted OnMoveCompleted1;
-
-
-
 
     // Range of damage for the ranged attack
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sniper")
@@ -45,7 +37,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Soldier")
     int32 AttackRange;
 
-
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Unit")
     int32 OwnerPlayerId;
 
@@ -58,20 +49,16 @@ public:
     UStaticMeshComponent* BrawlerStaticMeshComponent;
 
 protected:
-    // Called when the game starts or when spawned
+
     virtual void BeginPlay() override;
-
 public:
-    // Called every frame
-    virtual void Tick(float DeltaTime) override;
 
+    virtual void Tick(float DeltaTime) override;
 
     virtual void Attack() override;
     virtual void TakeDamage(float Damage) override;
     virtual float GetHealth() const override;
     
-
-  
     // Function to get the reachable cells based on MovementRange
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
 
@@ -90,44 +77,29 @@ public:
     TArray<class ATile*> TilesCanReach;
 
     virtual ATile* GetTileIsOnNow() const override;
+
     virtual void SetTileIsOnNow(ATile* NewTile) override;
 
     virtual int32 GetMovementRange() const override;
 
     virtual int32 GetAttackRange() const override;
 
+    UFUNCTION(BlueprintCallable)
+    void MoveUnit(ATile* TargetTile) ;
 
-
-
-
-
-
-
-
-     UFUNCTION(BlueprintCallable)
-     void MoveUnit(ATile* TargetTile) ;
-
-
-
-
-     UFUNCTION(BlueprintCallable)
-     void Shoot(ATile* TargetTile);
-    
-
-
+    UFUNCTION(BlueprintCallable)
+    void Shoot(ATile* TargetTile);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     TArray<ATile*> MovementPath;
 
-
-
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     bool bIsMoving;
 
-
-
     ATile* MovingCurrentTile;
+
     ATile* MovingTargetTile;
+
     float MoveSpeed;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
@@ -135,5 +107,4 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Movement")
     int32 CurrentPathIndex;
-  
 };

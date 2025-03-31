@@ -119,25 +119,10 @@ void AAW_Sniper::Tick(float DeltaTime)
             MovingCurrentTile = nullptr;
             MovingTargetTile = nullptr;
             MovementPath.Empty();
-            bIsMoving = false;
-            //OnMoveCompleted1.Broadcast(); // Trigger the event        
+            bIsMoving = false;                 
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 void AAW_Sniper::Attack()
@@ -150,13 +135,13 @@ void AAW_Sniper::TakeDamage(float Damage)
 {
     Health -= Damage;
     FString DamageString = FString::Printf(TEXT("%f"), Damage);
-    GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
+   // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Subiti %s danni :/ "), *DamageString));
 
     AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode());
 
     if (Health <= 0)
-    {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
+    { 
+        //GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("vita esaurita. morte "));
 
         if (GameMode)
         {
@@ -188,10 +173,6 @@ float AAW_Sniper::GetHealth() const
 {
     return Health;
 }
-
-
-
-
 
 TArray<ATile*> AAW_Sniper::GetReachableTiles(int32 Range)
 {
@@ -327,7 +308,6 @@ TArray<ATile*> AAW_Sniper::GetAttackableTiles()
             }
         }
     }
-
     return AttackableTiles;
 }
 
@@ -356,12 +336,6 @@ int32 AAW_Sniper::GetAttackRange() const
 {
     return AttackRange;
 }
-
-
-
-
-
-
 
 void AAW_Sniper::MoveUnit(ATile* TargetTile)
 {
@@ -398,8 +372,6 @@ void AAW_Sniper::MoveUnit(ATile* TargetTile)
     }
 }
 
-
-
 void AAW_Sniper::Shoot(ATile* TargetTile)
 {
     if (!TargetTile) return;
@@ -421,7 +393,7 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
 
     if (!TargetSoldier)
     {
-        GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun bersaglio valido sulla tile."));
+       // GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, TEXT("Nessun bersaglio valido sulla tile."));
         return;
     }
 
@@ -448,7 +420,6 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
         FVector2D TargetPos = TargetTile->GetGridPosition();
         Distance = FMath::Abs(AttackerPos.X - TargetPos.X) + FMath::Abs(TargetPos.Y - TargetPos.Y);
     }
-
     // Se il bersaglio è uno Sniper, il contraccolpo è sempre applicato
     if (Cast<AAW_Sniper>(TargetSoldier))
     {
@@ -462,7 +433,6 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
             bCounterattack = true;
         }
     }
-
     // Se si applica il contraccolpo, genera un danno random nel range 1-3 e applicalo allo Sniper stesso
     if (bCounterattack)
     {
@@ -470,7 +440,6 @@ void AAW_Sniper::Shoot(ATile* TargetTile)
         UE_LOG(LogTemp, Log, TEXT("%s subisce contraccolpo con danno %d"), *GetName(), CounterDamage);
         this->TakeDamage(CounterDamage);
     }
-
     // Notify UI update
     if (AAWPlayerController* PC = Cast<AAWPlayerController>(GetWorld()->GetFirstPlayerController()))
     {

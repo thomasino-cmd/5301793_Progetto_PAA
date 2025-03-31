@@ -36,16 +36,6 @@ void AAWPlayerController::BeginPlay()
     }
 }
 
-//void AAWPlayerController::SetupInputComponent()
-//{
-//    Super::SetupInputComponent();
-//
-//    if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent))
-//    {
-//        EnhancedInputComponent->BindAction(ClickAction, ETriggerEvent::Triggered, this, &AAWPlayerController::ClickOnGrid);  
-//    }
-//}
-
 void AAWPlayerController::SetupInputComponent()
 {
     Super::SetupInputComponent();
@@ -60,17 +50,12 @@ void AAWPlayerController::SetupInputComponent()
 }
 
 
-
-
-// CLICKONGRID cosi funziona pero vale finora solo per il posizionamento 
-
 void AAWPlayerController::UpdateMoveHistoryUI()
 {
     if (AAWGameMode* GameMode = Cast<AAWGameMode>(GetWorld()->GetAuthGameMode()))
     {
         if (MoveHistoryWidget && GameMode->MoveHistoryManager)
         {
-            // Convert TArray<TObjectPtr<UMoveEntry>> to TArray<UObject*>
             TArray<UObject*> MoveHistoryObjects;
             for (const TObjectPtr<UMoveEntry>& MoveEntry : GameMode->MoveHistoryManager->MoveHistory)
             {
@@ -99,29 +84,3 @@ void AAWPlayerController::ClickOnGrid()
         }
     }
 }
-
-//
-//void AAWPlayerController::ClickOnGrid()
-//{
-//    const auto HumanPlayer = Cast<AHumanPlayer>(GetPawn());
-//    if (IsValid(HumanPlayer))
-//    {
-//        if (HumanPlayer->bWaitingForMoveInput)
-//        {
-//            HumanPlayer->HandleTileClick(CurrentTile, ReachableTiles); 
-//               
-//        }
-//        else
-//        {
-//            HumanPlayer->OnClick(); // Chiama OnClick per la gestione normale dei clic
-//        }
-//    }
-//}
-
-
-
-
-
-
-
-

@@ -37,6 +37,4 @@ public:
 
     UPROPERTY(EditAnywhere)
     FString CurrentTurnMessage = "Current Player";
-
-    // ... other functions to manage game state ...
 };

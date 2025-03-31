@@ -4,14 +4,11 @@
 #include "GameFramework/Actor.h"
 #include "Obstacle.generated.h"
 
-
-// Enum to define the different types of obstacles
 UENUM(BlueprintType)
 enum class EObstacleType : uint8
 {
     Mountain UMETA(DisplayName = "Mountain"),
     Tree UMETA(DisplayName = "Tree"),
-    // ... other members ...
 };
 
 

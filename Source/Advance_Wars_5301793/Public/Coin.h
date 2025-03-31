@@ -14,7 +14,7 @@ public:
     // Delegato per risultato (0=Testa, 1=Croce)
     DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCoinLanded, int32, Result);
     UPROPERTY(BlueprintAssignable)
-    FOnCoinLanded OnLanded;  // Rinominato per coerenza con la tua implementazione
+    FOnCoinLanded OnLanded;  
 
     // Funzioni essenziali
     UFUNCTION(BlueprintCallable)
