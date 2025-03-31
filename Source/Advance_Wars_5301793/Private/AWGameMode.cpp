@@ -8,6 +8,7 @@
 #include "EngineUtils.h"
 #include "Kismet/GameplayStatics.h"
 #include "InGameHUDWidget.h"
+#include "AStarComputerPlayer.h"
 
 
 
@@ -48,16 +49,42 @@ bool AAWGameMode::IsInCoinTossPhase() const
 
 void AAWGameMode::StartGameSequence()
 {
-    // Fase 1: Spawn e setup degli elementi base
-    InitializeGameplay();
+    if (ChooseAIWidgetClass)
+    {
+        ChooseAIWidget = CreateWidget<UChooseAIWidget>(GetWorld(), ChooseAIWidgetClass);
+        if (ChooseAIWidget)
+        {
+            ChooseAIWidget->AddToViewport();
+            
+        }
+    }
 
-    bInCoinTossPhase = true;
 
-    // Fase 2: Lancio della moneta
-    SpawnCoinForFlip();
+   // NON QUI  StartGameAfterSelection();
     
 
 }
+
+void AAWGameMode::SetAIType(bool bUseAStar)
+{
+    bUseAStarAI = bUseAStar;
+}
+
+void AAWGameMode::StartGameAfterSelection()
+{
+    // Rimuovi il widget di selezione
+    if (ChooseAIWidget)
+    {
+        ChooseAIWidget->RemoveFromParent();
+        ChooseAIWidget = nullptr;
+    }
+
+    // Procedi con l'inizializzazione normale del gioco
+    InitializeGameplay();
+    SpawnCoinForFlip();
+    bInCoinTossPhase = true;
+}
+
 
 void AAWGameMode::InitializeGameplay()
 {
@@ -77,7 +104,19 @@ void AAWGameMode::InitializeGameplay()
     AHumanPlayer* HumanPlayer = GetWorld()->GetFirstPlayerController()->GetPawn<AHumanPlayer>();
     if (!HumanPlayer) return;
 
-    auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>();
+    //auto* AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>();
+
+    AComputerPlayer* AIPlayer = nullptr;
+    if (bUseAStarAI)
+    {
+        AIPlayer = GetWorld()->SpawnActor<AAStarComputerPlayer>();
+    }
+    else
+    {
+        AIPlayer = GetWorld()->SpawnActor<AComputerPlayer>();
+    }
+
+
     Players.Add(HumanPlayer);
     Players.Add(AIPlayer);
 
@@ -635,3 +674,8 @@ void AAWGameMode::RestartGame()
     // Ricomincia la sequenza di gioco PROPERLY
     StartGameSequence(); // Questo chiamerà InitializeGameplay e SpawnCoinForFlip
 }
+
+
+
+
+

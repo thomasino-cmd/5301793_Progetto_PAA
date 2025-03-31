@@ -13,6 +13,7 @@
 #include "EndGameWidget.h"
 #include "WBP_MoveHistory.h"
 #include "MoveHistoryManager.h"
+#include "ChooseAIWidget.h"
 #include "AWGameMode.generated.h"
 
 
@@ -36,15 +37,42 @@ public:
     int32 Player1UnitsPlaced = 0;
     int32 Player2UnitsPlaced = 0;
 
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Brawler> BrawlerClassHuman;
 
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Sniper> SniperClassHuman;
+
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Brawler> BrawlerClassAI;
+
+    UPROPERTY(EditDefaultsOnly)
+    TSubclassOf<AAW_Sniper> SniperClassAI;
+
+
+    ///////////////////////// AI /////////////////////////
+
+    UFUNCTION(BlueprintCallable)
+    void SetAIType(bool bUseAStar);
+
+    UFUNCTION(BlueprintCallable)
+    void StartGameAfterSelection();
+
+
+    UPROPERTY(BlueprintReadOnly)
+    bool bUseAStarAI = false;
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UChooseAIWidget> ChooseAIWidgetClass;
 
     UPROPERTY()
-    class UInGameHUDWidget* InGameHUD;
+    UChooseAIWidget* ChooseAIWidget;
 
-
-    int32 WinningPlayerId = 0 ;
 
     // tracks if the game is over
+    int32 WinningPlayerId = 0 ;
+
     bool bIsGameOver;
 
     bool bIsPlacementPhaseOver;
@@ -52,6 +80,9 @@ public:
     bool bInCoinTossPhase  = false;
 
     bool bCoinFlipCompleted = false;
+
+    bool IsInCoinTossPhase() const;
+
 
     // array of player interfaces
     TArray<IPlayerInterface*> Players;
@@ -75,32 +106,18 @@ public:
 
 
 
-    // Funzione per registrare una mossa (chiamata da PlayerController/AI)
-    UFUNCTION(BlueprintCallable, Category = "Move History")
-    void LogMove(const FString& PlayerID, const FString& UnitID, const FString& FromCell, const FString& ToCell);
-
-    // Funzione per registrare un attacco
-    UFUNCTION(BlueprintCallable, Category = "Move History")
-    void LogAttack(const FString& PlayerID, const FString& UnitID, const FString& TargetCell, int32 Damage);
-
-
     AAWGameMode();
 
     virtual void BeginPlay() override;
 
-    //UFUNCTION(BlueprintCallable)
-    //void StartCoinTossPhase();
-
-
-    bool IsInCoinTossPhase() const;
-
-    //UFUNCTION()
-    //void InitializeGameSetup();
 
 
 
-    UFUNCTION()
-    ACoin* GetCoinActor() const;
+
+
+
+
+
 
     UPROPERTY(EditDefaultsOnly)
     TSubclassOf<AGameField> GameFieldClass;
@@ -108,21 +125,20 @@ public:
     UPROPERTY(VisibleAnywhere)
     AGameField* GameField;
     
-    UFUNCTION(BlueprintCallable, Category = "Game Logic")
-    void GetNextPlayer();
-
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Settings")
     int32 FieldSize;
 
-    UFUNCTION(BlueprintCallable)
-    void EndTurn();
 
     UFUNCTION(BlueprintCallable)
     void MoveUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY);
 
     UFUNCTION(BlueprintCallable)
     void AttackUnit(int32 FromX, int32 FromY, int32 ToX, int32 ToY);
+    
+
+
+    /// ///////////////////////// UNIT PLACEMENT /////////////////////////
 
 
     void SetUnitPlacement(const int32 PlayerNumber, const FVector& GridPosition);
@@ -132,38 +148,37 @@ public:
     TArray<AActor*> GetCurrentPlayerUnits(int32 PlayerId);
 
 
-    UFUNCTION(BlueprintCallable)
-    void RestartGame();
 
-
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AAW_Brawler> BrawlerClassHuman;
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AAW_Sniper> SniperClassHuman;
-
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AAW_Brawler> BrawlerClassAI;
-
-    UPROPERTY(EditDefaultsOnly)
-    TSubclassOf<AAW_Sniper> SniperClassAI;
-
+    ////////////////////////////// GAME FLOW //////////////////////////////
 
     UFUNCTION()
     void SwitchPlayer();
 
+    UFUNCTION(BlueprintCallable, Category = "Game Logic")
+    void GetNextPlayer();
+
     UFUNCTION()
     bool CheckWinCondition();
+
+    UFUNCTION(BlueprintCallable)
+    void EndTurn();
 
     UFUNCTION()
     void EndGame();
 
+    UFUNCTION(BlueprintCallable)
+    void RestartGame();
+
     ////////////////////// WIDGET ///////////////////////
+
+
+    UPROPERTY()
+    class UInGameHUDWidget* InGameHUD;
 
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<class UInGameHUDWidget> InGameHUDClass;
+
+    void UpdateHUD();
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
     int32 Player1Score = 0;
@@ -187,20 +202,32 @@ public:
     UFUNCTION(BlueprintCallable)
     void LoadScores();
 
-   
-    //UMoveHistoryWidget* MoveHistoryWidget;
+
+    //////////////////MOVE HISTORY////////////////////////
+
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Move History")
     TObjectPtr<UMoveHistoryManager> MoveHistoryManager;
 
-
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<UMoveHistoryWidget> MoveHistoryWidgetClass; 
+    TSubclassOf<UMoveHistoryWidget> MoveHistoryWidgetClass;
+
     UPROPERTY(VisibleAnywhere, Category = "UI")
-    TObjectPtr<UMoveHistoryWidget> MoveHistoryWidget; // Riferimento al widget creato
+    TObjectPtr<UMoveHistoryWidget> MoveHistoryWidget; 
+
+    // Funzione per registrare una mossa (chiamata da PlayerController/AI)
+    UFUNCTION(BlueprintCallable, Category = "Move History")
+    void LogMove(const FString& PlayerID, const FString& UnitID, const FString& FromCell, const FString& ToCell);
+
+    // Funzione per registrare un attacco
+    UFUNCTION(BlueprintCallable, Category = "Move History")
+    void LogAttack(const FString& PlayerID, const FString& UnitID, const FString& TargetCell, int32 Damage);
+
 
     /// ///////////////COIN FLIP////////////////////////
 
+    UFUNCTION()
+    ACoin* GetCoinActor() const;
 
     UFUNCTION(BlueprintCallable, Category = "Game Flow")
     void StartGameSequence();
@@ -214,7 +241,6 @@ public:
     UFUNCTION()
     void HandleCoinFlipInput();
 
-    void UpdateHUD();
 
 
 private:
