@@ -71,9 +71,7 @@ public:
     virtual float GetHealth() const override;
     
 
-    // Function to calculate counter-attack damage
-    float CalculateCounterAttackDamage(AActor* Attacker);
-
+  
     // Function to get the reachable cells based on MovementRange
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
 

@@ -24,8 +24,8 @@ protected:
     UPROPERTY(meta = (BindWidget))
     UTextBlock* WinnerText;
 
-    UPROPERTY(meta = (BindWidget))
-    UButton* PlayAgainButton;
+    //UPROPERTY(meta = (BindWidget))
+    //UButton* PlayAgainButton;
 
 private:
     UFUNCTION()

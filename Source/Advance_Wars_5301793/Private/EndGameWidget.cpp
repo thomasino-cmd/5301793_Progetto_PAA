@@ -9,10 +9,10 @@ void UEndGameWidget::NativeConstruct()
     Super::NativeConstruct();
 
     // Bind del click del bottone
-    if (PlayAgainButton)
-    {
-        PlayAgainButton->OnClicked.AddDynamic(this, &UEndGameWidget::OnPlayAgainClicked);
-    }
+    //if (PlayAgainButton)
+    //{
+    //    PlayAgainButton->OnClicked.AddDynamic(this, &UEndGameWidget::OnPlayAgainClicked);
+    //}
 }
 
 void UEndGameWidget::SetWinnerText(int32 WinningPlayerId)

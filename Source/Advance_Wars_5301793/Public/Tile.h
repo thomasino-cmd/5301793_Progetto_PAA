@@ -48,6 +48,8 @@ public:
 	// Get the player owner of the tile
 	int32 GetTileOwner() const;
 
+	UFUNCTION(BlueprintCallable, Category = "Tile")
+	bool IsWalkable() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Tile")
 	void Highlight(bool ShouldHighlight);

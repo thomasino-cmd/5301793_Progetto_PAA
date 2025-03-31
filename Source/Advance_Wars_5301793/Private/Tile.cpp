@@ -101,6 +101,19 @@ int32 ATile::GetTileOwner() const
 	return PlayerOwner;
 }
 
+
+bool ATile::IsWalkable() const
+{
+	if (Status == ETileStatus::EMPTY)
+	{
+	return true;
+	}
+	else {
+		return false;
+	}
+}
+
+
 void ATile::SetTileMaterial() const
 {
 	const FString MaterialPath = GetTileMaterialPath();

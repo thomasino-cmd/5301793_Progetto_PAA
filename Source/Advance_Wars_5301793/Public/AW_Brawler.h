@@ -89,6 +89,7 @@ public:
     virtual TArray<class ATile*> GetReachableTiles(int32 Range) override;
 
     virtual ATile* GetTileIsOnNow() const override;
+
     virtual void SetTileIsOnNow(ATile* NewTile) override;
 
 

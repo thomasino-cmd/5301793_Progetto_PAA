@@ -49,6 +49,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SpawnRandomObstacles();
 
+	bool IsGameFieldAccessible();
+
 	UFUNCTION()
 	FVector2D GetXYPositionByRelativeLocation(const FVector& Location) const;
 
@@ -72,6 +74,8 @@ public:
 	// Get the tile size in world units
 	UFUNCTION(BlueprintCallable)
 	float GetTileSize() const;
+
+
 
 
 	UFUNCTION(BlueprintCallable)
@@ -100,6 +104,8 @@ public:
 	void HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int32 PlayerId);
 
 	void ClearHighlightedAttackTiles(const TArray<ATile*>& AttackableTiles);
+
+	TArray<ATile*> GetNeighborTiles(ATile* CurrentTile) const;
 
 
 	TArray<ATile*> FindPath(ATile* StartTile, ATile* GoalTile);

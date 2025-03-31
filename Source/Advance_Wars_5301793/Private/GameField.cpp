@@ -76,14 +76,7 @@ void AGameField::GenerateField()
     }
     UE_LOG(LogTemp, Warning, TEXT("Game Field Generated!"));
 
-    //// Set Timer to call SpawnRandomObstacles after a delay
-    //FTimerHandle TimerHandle;
-    //GetWorld()->GetTimerManager().SetTimer(TimerHandle, [&]()
-    //    {
-    //        SpawnRandomObstacles();
-    //    }, 1.0f, false);
 
-        // Set up a repeating timer to check for coin flip completion
 
 
     GetWorld()->GetTimerManager().SetTimer(ObstacleSpawnTimerHandle, this, &AGameField::CheckCoinFlipStatus, 0.5f, true);
@@ -109,63 +102,105 @@ void AGameField::CheckCoinFlipStatus()
 
 void AGameField::SpawnRandomObstacles()
 {
-    // 1. Calculate the number of obstacles to spawn
     int32 totalTiles = Size * Size;
-    int32 targetObstacleCount = FMath::RoundToInt(totalTiles * 0.10f); // 10%
-
+    int32 targetObstacleCount = FMath::RoundToInt(totalTiles * 0.20f); // 10%
     int32 obstacleCount = 0;
+    int32 maxAttempts = 1000; // Limite per evitare loop infiniti
 
-   
-   
-    // 2. Spawn obstacles until the target is reached
-    
-    while (obstacleCount < targetObstacleCount)
+    while (obstacleCount < targetObstacleCount && maxAttempts-- > 0)
     {
-        
-       
-                
-                int32 x = FMath::RandRange(0, Size - 1);
-                int32 y = FMath::RandRange(0, Size - 1);
+        int32 x = FMath::RandRange(0, Size - 1);
+        int32 y = FMath::RandRange(0, Size - 1);
+        ATile* tile = GetTile(x, y);
 
-                ATile* tile = GetTile(x, y);
+        if (tile && tile->GetTileStatus() == ETileStatus::EMPTY)
+        {
+            // Simula temporaneamente l'ostacolo
+            tile->SetTileStatus(-2, ETileStatus::OBSTACLE);
 
-                // 3. Check if the tile is valid and empty
+            // Verifica se il campo rimane accessibile
+            if (IsGameFieldAccessible())
+            {
+                // Se sì, spawna l'ostacolo definitivamente
+                TSubclassOf<AObstacle> obstacleClass = MountainClass;
+                float randomValue = FMath::FRand();
+                if (randomValue < 0.4f) obstacleClass = Tree1Class;
+                else if (randomValue < 0.7f) obstacleClass = Tree2Class;
+
+                FVector spawnLocation = tile->GetActorLocation();
+                AObstacle* obstacle = GetWorld()->SpawnActor<AObstacle>(obstacleClass, spawnLocation, FRotator::ZeroRotator);
+
+                if (obstacle)
+                {
+                    obstacle->AttachToActor(tile, FAttachmentTransformRules::KeepWorldTransform);
+                    obstacleCount++;
+                }
+            }
+            else
+            {
+                // Altrimenti, annulla il cambiamento
+                tile->SetTileStatus(0, ETileStatus::EMPTY);
+            }
+        }
+    }
+}
+
+bool AGameField::IsGameFieldAccessible()
+{
+    // Usa BFS per verificare che tutti i tile vuoti siano raggiungibili
+    TArray<FIntPoint> emptyTiles;
+
+    // Trova tutti i tile vuoti
+    for (int32 y = 0; y < Size; ++y)
+    {
+        for (int32 x = 0; x < Size; ++x)
+        {
+            ATile* tile = GetTile(x, y);
+            if (tile && tile->GetTileStatus() == ETileStatus::EMPTY)
+            {
+                emptyTiles.Add(FIntPoint(x, y));
+            }
+        }
+    }
+
+    if (emptyTiles.Num() == 0) return true; // Nessun tile vuoto
+
+    // Esegui BFS a partire dal primo tile vuoto
+    TSet<FIntPoint> visited;
+    TQueue<FIntPoint> queue;
+    queue.Enqueue(emptyTiles[0]);
+    visited.Add(emptyTiles[0]);
+
+    int32 connectedCount = 0;
+    const int32 Directions[4][2] = { {-1, 0}, {1, 0}, {0, -1}, {0, 1} };
+
+    while (!queue.IsEmpty())
+    {
+        FIntPoint current;
+        queue.Dequeue(current);
+        connectedCount++;
+
+        for (const auto& dir : Directions)
+        {
+            int32 nx = current.X + dir[0];
+            int32 ny = current.Y + dir[1];
+            FIntPoint neighbor(nx, ny);
+
+            if (nx >= 0 && nx < Size && ny >= 0 && ny < Size &&
+                !visited.Contains(neighbor))
+            {
+                ATile* tile = GetTile(nx, ny);
                 if (tile && tile->GetTileStatus() == ETileStatus::EMPTY)
                 {
-                    // 4. Determine the obstacle class using weighted randomization
-                    TSubclassOf<AObstacle> obstacleClass = MountainClass; // Default to mountain
-
-                    float randomValue = FMath::FRand();
-                    if (randomValue < 0.4f) // 40% chance for Tree1
-                    {
-                        obstacleClass = Tree1Class;
-                    }
-                    else if (randomValue < 0.7f) // 30% chance for Tree2
-                    {
-                        obstacleClass = Tree2Class;
-                    }
-                    // else 30% Mountain
-
-                    // 5. Spawn the obstacle
-                    FVector spawnLocation = tile->GetActorLocation();
-                    AObstacle* obstacle = GetWorld()->SpawnActor<AObstacle>(obstacleClass, spawnLocation, FRotator::ZeroRotator);
-
-                    if (obstacle)
-                    {
-                        //Parent the obstacle to the tile
-                        obstacle->AttachToActor(tile, FAttachmentTransformRules::KeepWorldTransform);
-
-                        // 6. Mark the tile as occupied
-                        tile->SetTileStatus(-2, ETileStatus::OBSTACLE); // Or use a specific value to indicate an obstacle
-                        obstacleCount++;
-
-                        
-                    }
+                    visited.Add(neighbor);
+                    queue.Enqueue(neighbor);
                 }
-                
-
+            }
+        }
     }
-    
+
+    // Se tutti i tile vuoti sono connessi, ritorna true
+    return (connectedCount == emptyTiles.Num());
 }
 
 
@@ -403,8 +438,8 @@ void AGameField::HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int
         if (Tile)
         {
             int32 TilePlayerId = Tile->GetTileOwner(); // Assumiamo che ATile abbia un metodo GetPlayerId()
-
-            if (TilePlayerId != PlayerId && TilePlayerId != -1) // Verifica se la tile è occupata da un altro giocatore
+            ETileStatus TileStat = Tile->GetTileStatus();
+            if(TilePlayerId != PlayerId && TilePlayerId != -2 && TilePlayerId != -1)                          //(TilePlayerId != PlayerId && TileStat != ETileStatus::OBSTACLE) // Verifica se la tile è occupata da un altro giocatore
             {
                 UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent(); // Assumiamo che ATile abbia un componente StaticMesh
 
@@ -423,13 +458,14 @@ void AGameField::HighlightAttackTiles(const TArray<ATile*>& AttackableTiles, int
                     }
                 }
             }
-            else {
-                // UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent();
-                //if(TileMesh){
-                //   UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0);
-                //  TileMesh->SetMaterial(0,BaseMaterial); //resetto il materiale all'originale.
-                //}
-            }
+            //else
+            //{
+            //    UStaticMeshComponent* TileMesh = Tile->GetStaticMeshComponent();
+            //    if (TileMesh) {
+            //        UMaterialInterface* BaseMaterial = TileMesh->GetMaterial(0);
+            //        TileMesh->SetMaterial(0, BaseMaterial); //resetto il materiale all'originale.
+            //    }
+            //}
         }
     }
 }
@@ -455,6 +491,40 @@ void AGameField::ClearHighlightedAttackTiles(const TArray<ATile*>& AttackableTil
     }
 }
 
+
+TArray<ATile*> AGameField::GetNeighborTiles(ATile* CurrentTile) const
+{
+    TArray<ATile*> Neighbors;
+
+    if (!CurrentTile) return Neighbors;
+
+    // Ottieni le coordinate della tile
+    FVector2D TilePos = CurrentTile->GetGridPosition();
+
+    int32 X = TilePos.X;
+    int32 Y = TilePos.Y;
+
+    // Controlla le 4 direzioni cardinali (senza diagonali)
+    ATile* Neighbor;
+
+    // Sopra
+    Neighbor = GetTile(X, Y + 1);
+    if (Neighbor) Neighbors.Add(Neighbor);
+
+    // Sotto
+    Neighbor = GetTile(X, Y - 1);
+    if (Neighbor) Neighbors.Add(Neighbor);
+
+    // Sinistra
+    Neighbor = GetTile(X - 1, Y);
+    if (Neighbor) Neighbors.Add(Neighbor);
+
+    // Destra
+    Neighbor = GetTile(X + 1, Y);
+    if (Neighbor) Neighbors.Add(Neighbor);
+
+    return Neighbors;
+}
 
 
 

@@ -357,12 +357,7 @@ int32 AAW_Sniper::GetAttackRange() const
     return AttackRange;
 }
 
-// Function to calculate counter-attack damage
-float AAW_Sniper::CalculateCounterAttackDamage(AActor* Attacker)
-{
-    // Simplified logic (no need to check attacker type)
-    return FMath::RandRange(1, 3);
-}
+
 
 
 

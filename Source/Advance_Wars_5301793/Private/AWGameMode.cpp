@@ -190,7 +190,7 @@ void AAWGameMode::StartFirstTurn()
     }
 
     // 2. Crea e aggiungi il widget dello storico delle mosse (WBP_MoveHistory)
-    if (MoveHistoryWidgetClass && !MoveHistoryWidget) // Assicurati di aver definito MoveHistoryWidgetClass e MoveHistoryWidget nella GameMode
+    if (MoveHistoryWidgetClass && !MoveHistoryWidget)
     {
         MoveHistoryWidget = CreateWidget<UMoveHistoryWidget>(GetWorld(), MoveHistoryWidgetClass);
         if (MoveHistoryWidget)
